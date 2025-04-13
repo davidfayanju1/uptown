@@ -1,7 +1,14 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "helvetica";
+  src: url("/fonts/Helvetica.ttf") format("ttf");
+  font-style: normal;
+}
+
 body {
-  font-family: "Boldonse", system-ui;
+  font-family: "helvetica";
   font-weight: 400;
   font-style: normal;
+  /* font-family: Arial, Helvetica, sans-serif; */
 }

@@ -7,9 +7,13 @@ const Nav = () => {
   ];
 
   return (
-    <div className="main-nav backdrop-blur-sm border-b-[1px] border-gray-400 w-full h-[5rem] fixed top-0 left-0 flex items-center justify-between p-3">
+    <div className="main-nav backdrop-blur-[7px] border-b-[1px] border-gray-400 w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between p-3">
       <div className="title-container cursor-pointer">
-        <h1 className="font-semibold text-[1.2rem]">Uptown.</h1>
+        <img
+          src="/images/companylogo.png"
+          alt=""
+          className="w-[7rem] h-[7rem]"
+        />
       </div>
 
       <div className="nav-link"></div>
