@@ -7,7 +7,7 @@ const Home = () => {
       <div className="page-container overflow-hidden min-h-screen">
         <section className="image-section flex items-center justify-center relative h-[40rem]">
           <div className="text-container absolute inset-0 h-full w-full flex flex-col items-center justify-center bg-black/30">
-            <span className="block text-[1.4rem] font-bold mx-auto text-center md:w-[50%] w-[80%] text-white mb-[2rem]">
+            <span className="block md:text-[1.4rem] text-[.9rem] font-bold mx-auto text-center md:w-[50%] w-[80%] text-white mb-[2rem]">
               A statement piece, not an everyday cap. Crafted with precision.
               Released in rarity
             </span>
