@@ -49,7 +49,7 @@ const Nav = () => {
             {links.map((item, index) => (
               <small
                 key={index}
-                className="block text-white font-semibold text-[.65rem] mt-[.7rem]"
+                className="block text-black font-semibold text-[.65rem] mt-[.7rem]"
               >
                 {item}
               </small>
@@ -61,7 +61,7 @@ const Nav = () => {
       <div className="nav-link flex items-center relative gap-2 ">
         <button
           onClick={() => setToggle(!toggle)}
-          className="dropdown-component text-white hover:bg-white/40 py-2 flex items-center px-2 gap-2 rounded-[7px]"
+          className="dropdown-component text-black hover:bg-white/40 py-2 flex items-center px-2 gap-2 rounded-[7px]"
         >
           {input.icon}
           {input.name}
@@ -108,20 +108,20 @@ const Nav = () => {
           </option>
         </select> */}
 
-        <div className="input-container gap-3 py-2 rounded-full bg-white/40 md:flex hidden items-center justify-center px-2 cursor-pointer">
+        <div className="input-container gap-3 py-2 rounded-full bg-gray-300/30 md:flex hidden items-center justify-center px-2 cursor-pointer">
           <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full hover:bg-gray-300">
-            <IoSearch color="white" />
+            <IoSearch color="gray" />
           </button>
 
           <input
             type="text"
             placeholder="Search..."
-            className="placeholder:!text-[.7rem] text-gray-500 outline-none border-none placeholder:text-white"
+            className="placeholder:!text-[.7rem] text-gray-500 outline-none border-none placeholder:text-gray-400"
           />
         </div>
 
         <button className="h-[2.5rem] w-[2.5rem] flex items-center justify-center  rounded-full hover:bg-white/20 transition-all ease-in-out delay-75 cursor-pointer">
-          <RiShoppingCartLine color="white" />
+          <RiShoppingCartLine color="black" />
         </button>
       </div>
     </div>
