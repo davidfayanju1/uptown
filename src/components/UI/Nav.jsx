@@ -37,7 +37,7 @@ const Nav = () => {
   const links = ["SHOP", "REGISTRY", "SUPPORT"];
 
   return (
-    <div className="main-nav backdrop-blur-[7px] border-b-[1px] border-gray-400 w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between md:p-3 p-1">
+    <div className="main-nav backdrop-blur-[7px] w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between md:p-3 p-1">
       <div className="title-container cursor-pointer">
         <div className="image-text-container flex items-center gap-2">
           <img
