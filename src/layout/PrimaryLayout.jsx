@@ -6,7 +6,6 @@ const PrimaryLayout = ({ children }) => {
   return (
     <div className="page-container">
       {/* nav */}
-
       <Nav />
       <div className="main-content">{children}</div>
       {/* footer */}

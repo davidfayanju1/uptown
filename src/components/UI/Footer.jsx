@@ -5,7 +5,7 @@ const Footer = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="footer-section min-h-[10rem] pt-3 px-5 border-t-[1px] border-gray-200">
+    <div className="footer-section min-h-[5rem] pt-3 px-5 border-t-[1px] border-gray-200">
       <div className="flex items-center justify-between">
         <div className="flex-container">
           <span className="font-semibold block text-[.9rem] text-black">
