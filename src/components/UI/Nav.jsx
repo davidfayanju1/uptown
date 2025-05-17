@@ -68,7 +68,7 @@ const Nav = () => {
   };
 
   return (
-    <div className="main-nav backdrop-blur-[7px] bg-white w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between md:p-3 p-1">
+    <div className="main-nav backdrop-blur-[7px] bg-white w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between md:p-3 p-2">
       {/* Desktop logo container */}
       <div className="title-container cursor-pointer md:block hidden">
         <div className="image-text-container flex items-center gap-2">
@@ -91,7 +91,7 @@ const Nav = () => {
       </div>
 
       {/* Mobile logo container */}
-      <div className="mobile-container md:hidden">
+      <div className="mobile-container md:hidden flex items-center justify-between">
         <button onClick={() => setOpen(true)} className="">
           <RxHamburgerMenu color="black" size={30} />
         </button>
@@ -185,9 +185,14 @@ const Nav = () => {
           />
         </div>
 
-        <button className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-white/20 transition-all ease-in-out delay-75 cursor-pointer">
-          <RiShoppingCartLine color="black" />
-        </button>
+        <div className="item-container flex items-center gap-1">
+          <button className="cursor-pointer flex items-center justify-center rounded-full hover:bg-gray-300">
+            <IoSearch color="gray" size={25} />
+          </button>
+          <button className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-white/20 transition-all ease-in-out delay-75 cursor-pointer">
+            <RiShoppingCartLine color="gray" size={25} />
+          </button>
+        </div>
       </div>
     </div>
   );
