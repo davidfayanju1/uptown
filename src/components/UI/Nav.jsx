@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence, stagger } from "framer-motion";
-import { IoSearch } from "react-icons/io5";
+import { motion, AnimatePresence } from "framer-motion";
+import { IoSearch, IoClose } from "react-icons/io5";
 import { RiShoppingCartLine } from "react-icons/ri";
 import { TbCurrencyNaira } from "react-icons/tb";
 import { FaDollarSign, FaPoundSign, FaAngleDown } from "react-icons/fa";
-import { MdOutlineEuroSymbol, MdClose } from "react-icons/md";
+import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
 
 const Nav = () => {
   const [toggle, setToggle] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [openSidebar, setOpenSidebar] = useState(false);
+  const [openSearch, setOpenSearch] = useState(false);
 
   const currency = [
     { name: "Naira", icon: <TbCurrencyNaira /> },
@@ -28,10 +29,18 @@ const Nav = () => {
   const menuItems = [
     { name: "Home", url: "" },
     { name: "Brand", url: "" },
-    { name: "Cloths", url: "" },
+    { name: "Clothing", url: "" },
     { name: "Sell", url: "" },
     { name: "Bid", url: "" },
     { name: "Pricing", url: "" },
+  ];
+
+  const quickLinks = [
+    { name: "New Arrivals", url: "" },
+    { name: "Best Sellers", url: "" },
+    { name: "Deals", url: "" },
+    { name: "Gift Cards", url: "" },
+    { name: "Store Locator", url: "" },
   ];
 
   // Animation variants
@@ -50,6 +59,27 @@ const Nav = () => {
       transition: {
         ease: "easeInOut",
         duration: 0.3,
+      },
+    },
+  };
+
+  const searchSidebarVariants = {
+    hidden: { y: -20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+      },
+    },
+    exit: {
+      y: -20,
+      opacity: 0,
+      transition: {
+        ease: "easeInOut",
+        duration: 0.2,
       },
     },
   };
@@ -75,7 +105,7 @@ const Nav = () => {
           <img
             src="/images/companylogo.png"
             alt=""
-            className="w-[7rem] h-[7rem]"
+            className="md:w-[7rem] w-[8rem] h-[8rem] md:h-[7rem]"
           />
           <div className="flex-container md:flex hidden items-center gap-3">
             {links.map((item, index) => (
@@ -91,16 +121,23 @@ const Nav = () => {
       </div>
 
       {/* Mobile logo container */}
-      <div className="mobile-container md:hidden flex items-center justify-between">
-        <button onClick={() => setOpen(true)} className="">
+      <div className="mobile-container md:hidden flex items-center justify-between w-full px-4">
+        <button onClick={() => setOpenSidebar(true)}>
           <RxHamburgerMenu color="black" size={30} />
         </button>
+        <img
+          src="/images/companylogo.png"
+          alt=""
+          className="w-[7rem] h-[7rem]"
+        />
+        <button onClick={() => setOpenSearch(true)}>
+          <IoSearch color="gray" size={25} />
+        </button>
       </div>
-      <img src="/images/companylogo.png" alt="" className="w-[7rem] h-[7rem]" />
 
-      {/* Animated Sidebar */}
+      {/* Main Navigation Sidebar */}
       <AnimatePresence>
-        {open && (
+        {openSidebar && (
           <motion.div
             className="overlay bg-black/40 md:hidden block z-50 fixed h-screen w-full left-0 top-0"
             initial={{ opacity: 0 }}
@@ -108,20 +145,20 @@ const Nav = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-full top-0 left-0 bg-white/50 backdrop-blur-3xl"
+              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-full top-0 left-0 bg-white backdrop-blur-3xl"
               variants={sidebarVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
             >
-              <button onClick={() => setOpen(false)}>
-                <MdClose size={30} />
+              <button onClick={() => setOpenSidebar(false)} className="mb-8">
+                <IoClose size={30} />
               </button>
-              <div className="nav-item-container flex flex-col gap-6 items-end mt-[6rem]">
+              <div className="nav-item-container mt-[4rem] items-end flex flex-col gap-6">
                 {menuItems.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="text-[1.4rem]"
+                    className="text-[1.4rem] font-medium"
                     variants={menuItemVariants}
                     custom={index}
                     initial="hidden"
@@ -136,6 +173,68 @@ const Nav = () => {
         )}
       </AnimatePresence>
 
+      {/* Search Sidebar */}
+      <AnimatePresence>
+        {openSearch && (
+          <motion.div
+            className="overlay bg-black/40 md:hidden block z-50 fixed h-screen w-full left-0 top-0"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="absolute md:hidden block h-screen pt-[2rem] px-6 w-full top-0 left-0 bg-white backdrop-blur-3xl"
+              variants={sidebarVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              <div className="flex justify-between items-center mb-8">
+                <h2 className="text-xl font-semibold">Search</h2>
+                <button onClick={() => setOpenSearch(false)}>
+                  <IoClose size={30} />
+                </button>
+              </div>
+
+              {/* Search input with bottom border only */}
+              <div className="relative mb-10">
+                <input
+                  type="text"
+                  placeholder="Search Uptown"
+                  className="w-full py-4 text-lg outline-none border-b-2 border-gray-300 focus:border-black placeholder-gray-400"
+                  autoFocus
+                />
+                <button className="absolute right-0 top-1/2 transform -translate-y-1/2">
+                  <IoSearch size={24} color="gray" />
+                </button>
+              </div>
+
+              {/* Quick Links Section */}
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                  QUICK LINKS
+                </h3>
+                <div className="space-y-5">
+                  {quickLinks.map((link, index) => (
+                    <motion.div
+                      key={index}
+                      className="text-lg font-medium"
+                      variants={menuItemVariants}
+                      custom={index}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {link.name}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Navigation */}
       <div className="nav-link flex items-center relative gap-2">
         <div className="dropdown-container md:block hidden">
           <button
@@ -149,7 +248,7 @@ const Nav = () => {
 
           {toggle && (
             <motion.div
-              className="items-container w-[6rem] absolute bottom-[-129px] bg-white p-2 rounded-[8px]"
+              className="items-container w-[6rem] absolute bottom-[-129px] bg-white p-2 rounded-[8px] shadow-lg"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
@@ -164,7 +263,7 @@ const Nav = () => {
                     });
                     setToggle(false);
                   }}
-                  className="small-container cursor-pointer mb-2 hover:bg-gray-100 flex items-center gap-2"
+                  className="small-container cursor-pointer mb-2 hover:bg-gray-100 flex items-center gap-2 p-1"
                 >
                   {item.icon}
                   <small>{item.name}</small>
@@ -185,10 +284,7 @@ const Nav = () => {
           />
         </div>
 
-        <div className="item-container flex items-center gap-1">
-          <button className="cursor-pointer flex items-center justify-center rounded-full hover:bg-gray-300">
-            <IoSearch color="gray" size={25} />
-          </button>
+        <div className="item-container flex  items-center gap-1">
           <button className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-white/20 transition-all ease-in-out delay-75 cursor-pointer">
             <RiShoppingCartLine color="gray" size={25} />
           </button>
