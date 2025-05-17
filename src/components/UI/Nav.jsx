@@ -91,16 +91,12 @@ const Nav = () => {
       </div>
 
       {/* Mobile logo container */}
-      <div className="mobile-container md:hidden flex items-center justify-between w-[65%]">
+      <div className="mobile-container md:hidden">
         <button onClick={() => setOpen(true)} className="">
           <RxHamburgerMenu color="black" size={30} />
         </button>
-        <img
-          src="/images/companylogo.png"
-          alt=""
-          className="w-[7rem] h-[7rem]"
-        />
       </div>
+      <img src="/images/companylogo.png" alt="" className="w-[7rem] h-[7rem]" />
 
       {/* Animated Sidebar */}
       <AnimatePresence>
@@ -112,7 +108,7 @@ const Nav = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-[25rem] top-0 left-0 bg-white/50 backdrop-blur-3xl"
+              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-full top-0 left-0 bg-white/50 backdrop-blur-3xl"
               variants={sidebarVariants}
               initial="hidden"
               animate="visible"
