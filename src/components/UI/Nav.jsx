@@ -39,7 +39,7 @@ const Nav = () => {
     { name: "New Arrivals", url: "" },
     { name: "Best Sellers", url: "" },
     { name: "Deals", url: "" },
-    { name: "Gift Cards", url: "" },
+    // { name: "Gift Cards", url: "" },
     { name: "Store Locator", url: "" },
   ];
 
