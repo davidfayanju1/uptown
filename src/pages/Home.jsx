@@ -1,7 +1,10 @@
 import React from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
+  const navigate = useNavigate();
+
   return (
     <PrimaryLayout>
       <div className="page-container bg-black  overflow-hidden mt-[5.6rem] min-h-[47rem]">
@@ -12,7 +15,10 @@ const Home = () => {
               Released in rarity
             </span>
 
-            <button className="rounded-full text-black w-[12rem] bg-white border-none outline-none px-2 py-3 flex items-center justify-center text-[.9rem]">
+            <button
+              onClick={() => navigate("/product")}
+              className="rounded-full text-black w-[12rem] bg-white border-none outline-none px-2 py-3 flex items-center justify-center text-[.9rem]"
+            >
               Request Access
             </button>
           </div>

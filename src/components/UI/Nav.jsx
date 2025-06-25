@@ -28,7 +28,7 @@ const Nav = () => {
 
   const menuItems = [
     { name: "Home", url: "" },
-    { name: "Brand", url: "" },
+    { name: "Registry", url: "" },
     { name: "Clothing", url: "" },
     { name: "Sell", url: "" },
     { name: "Bid", url: "" },
