@@ -6,6 +6,7 @@ import { TbCurrencyNaira } from "react-icons/tb";
 import { FaDollarSign, FaPoundSign, FaAngleDown } from "react-icons/fa";
 import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
+import { Link } from "react-router-dom";
 
 const Nav = () => {
   const [toggle, setToggle] = useState(false);
@@ -102,11 +103,13 @@ const Nav = () => {
       {/* Desktop logo container */}
       <div className="title-container cursor-pointer md:block hidden">
         <div className="image-text-container flex items-center gap-2">
-          <img
-            src="/images/companylogo.png"
-            alt=""
-            className="md:w-[7rem] w-[8rem] h-[8rem] md:h-[7rem]"
-          />
+          <Link to={"/"}>
+            <img
+              src="/images/companylogo.png"
+              alt=""
+              className="md:w-[7rem] w-[8rem] h-[8rem] md:h-[7rem]"
+            />
+          </Link>
           <div className="flex-container md:flex hidden items-center gap-3">
             {links.map((item, index) => (
               <small
@@ -248,7 +251,7 @@ const Nav = () => {
 
           {toggle && (
             <motion.div
-              className="items-container w-[6rem] absolute bottom-[-129px] bg-white p-2 rounded-[8px] shadow-lg"
+              className="items-container w-[6rem] absolute bg-white p-2 rounded-[8px] cursor-pointer shadow-lg"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
