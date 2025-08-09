@@ -16,10 +16,10 @@ const Home = () => {
             </span>
 
             <button
-              onClick={() => navigate("/product")}
-              className="rounded-full text-black w-[12rem] bg-white border-none outline-none px-2 py-3 flex items-center justify-center text-[.9rem]"
+              onClick={() => navigate("/explore")}
+              className="rounded-full text-black cursor-pointer w-[10rem] bg-white border-none outline-none px-2 py-3 flex items-center justify-center text-[.9rem]"
             >
-              Request Access
+              Explore
             </button>
           </div>
           <img

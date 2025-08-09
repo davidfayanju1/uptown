@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
+import { Link } from "react-router-dom";
 
 const Product = () => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
@@ -100,9 +101,11 @@ const Product = () => {
                   />
                 </div>
                 <div className="mt-4">
-                  <h3 className="text-sm font-medium text-gray-900">
-                    {product.name}
-                  </h3>
+                  <Link to={`/product/${index}`}>
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {product.name}
+                    </h3>
+                  </Link>
                   <p className="mt-1 text-sm text-gray-700">{product.price}</p>
                   <div className="mt-2 flex space-x-1">
                     {product.colors.map((color, i) => (
