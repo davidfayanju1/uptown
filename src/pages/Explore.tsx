@@ -49,7 +49,7 @@ const Explore = () => {
 
         {/* Second Flex Container - Image on Left */}
         <div className="container mx-auto px-4 flex flex-col md:flex-row-reverse items-center md:gap-18 gap-6">
-          <div className="md:w-1/2">
+          <div className="md:w-1/2 text-right">
             <h2 className="text-4xl font-bold mb-6 tracking-tight">
               STREET-READY <span className="text-primary">STYLE</span>
             </h2>
