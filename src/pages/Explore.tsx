@@ -48,7 +48,7 @@ const Explore = () => {
       {/* Content Section */}
       <section className="py-12 mx-auto max-w-[74rem] mt-[3rem] relative bg-white bg-opacity-90">
         {/* First Flex Container - Image on Right */}
-        <div className="container mx-auto px-4 flex flex-col md:flex-row items-center gap-16 mb-16">
+        <div className="container mx-auto md:px-4 px-3 flex flex-col md:flex-row items-center gap-16 mb-16">
           <div className="md:w-1/2">
             <h2 className="md:text-4xl text-2xl font-bold mb-6 tracking-tight">
               A TESTAMENT TO CRAFTSMANSHIP
@@ -58,10 +58,10 @@ const Explore = () => {
                 <br /> <span className="text-red-500"> EXCLUSIVITY</span>
               </span>
             </h2>
-            <p className="md:text-lg text-md mb-8 text-gray-700 md:w-[80%]">
-              Our latest collection fuses cutting-edge technology with premium
-              materials to give you the competitive edge. Experience the perfect
-              balance of support, flexibility, and style.
+            <p className="md:text-lg text-md mb-8 text-gray-700 md:w-[80%] w-[88%]">
+              Our Apparel are not created for the crowd they are reserved for
+              the uncompromising. Every detail is intentional, shaped with quiet
+              mastery.
             </p>
             <button
               onClick={() => navigate("/product")}

@@ -124,9 +124,9 @@ const Nav = () => {
       </div>
 
       {/* Mobile logo container */}
-      <div className="mobile-container md:hidden flex items-center justify-between w-full px-4">
+      <div className="mobile-container md:hidden flex items-center justify-between w-full md:px-4 px-2">
         <button onClick={() => setOpenSidebar(true)}>
-          <RxHamburgerMenu color="black" size={30} />
+          <RxHamburgerMenu color="black" size={27} />
         </button>
         <img
           src="/images/companylogo.png"
