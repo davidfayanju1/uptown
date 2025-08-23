@@ -7,8 +7,8 @@ const Home = () => {
 
   return (
     <PrimaryLayout>
-      <div className="page-container bg-black  overflow-hidden mt-[5.6rem] md:min-h-[47rem]">
-        <section className="image-section bg-gray-100 flex items-center justify-center relative md:h-[50rem] h-[77vh]">
+      <div className="page-container bg-black  overflow-hidden mt-[5.6rem] md:min-h-[40rem]">
+        <section className="image-section bg-gray-100 flex items-center justify-center relative md:h-[40rem] h-[77vh]">
           <div className="text-container absolute inset-0 bg-black/20 h-full w-full flex flex-col items-center justify-center">
             <span className="block md:text-[1.4rem] text-[1.1rem] font-bold mx-auto text-center md:w-[50%] w-[80%] text-white mb-[2rem]">
               A statement piece, not an everyday cap. Crafted with precision.

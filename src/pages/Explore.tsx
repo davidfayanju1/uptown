@@ -51,9 +51,14 @@ const Explore = () => {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center gap-16 mb-16">
           <div className="md:w-1/2">
             <h2 className="md:text-4xl text-2xl font-bold mb-6 tracking-tight">
-              ENGINEERED FOR <span className="text-primary">PERFORMANCE</span>
+              A TESTAMENT TO CRAFTSMANSHIP
+              <span className="text-primary">
+                {" "}
+                &
+                <br /> <span className="text-red-500"> EXCLUSIVITY</span>
+              </span>
             </h2>
-            <p className="md:text-lg text-md mb-8 text-gray-700 md:w-[90%]">
+            <p className="md:text-lg text-md mb-8 text-gray-700 md:w-[80%]">
               Our latest collection fuses cutting-edge technology with premium
               materials to give you the competitive edge. Experience the perfect
               balance of support, flexibility, and style.
@@ -67,7 +72,7 @@ const Explore = () => {
           </div>
           <div className="md:w-[45%]">
             <img
-              src="/images/product5.jpg"
+              src="/images/victory2.jpeg"
               alt="Performance shoes"
               className="md:h-[38rem] h-[30rem] object-cover w-full md:shadow-xl"
             />
