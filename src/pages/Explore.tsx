@@ -1,9 +1,36 @@
 import React from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Explore = () => {
   const navigate = useNavigate();
+
+  const productList = [
+    {
+      name: "PLAIN TEE",
+      img: "/images/product1.jpg",
+      price: "$29.99",
+      colors: ["Black", "White", "Gray"],
+    },
+    {
+      name: "ROLLERS TEE",
+      img: "/images/product2.jpg",
+      price: "$34.99",
+      colors: ["Red", "Blue", "Green"],
+    },
+    {
+      name: "PLAIN TEE",
+      img: "/images/product3.jpg",
+      price: "$27.99",
+      colors: ["Navy", "Beige"],
+    },
+    {
+      name: "ROLLERS TEE",
+      img: "/images/product4.jpg",
+      price: "$31.99",
+      colors: ["Yellow", "Orange"],
+    },
+  ];
 
   return (
     <PrimaryLayout>
@@ -71,6 +98,40 @@ const Explore = () => {
               alt="Urban style shoes"
               className="md:h-[38rem] h-[30rem] object-top object-cover w-full md:shadow-xl"
             />
+          </div>
+        </div>
+
+        <div className="container mt-[6rem] mx-auto px-4">
+          <h2 className="text-4xl font-bold mb-6 tracking-tight">Discover</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
+            {productList.map((product, index) => (
+              <div key={index} className="group relative w-full">
+                <div className="h-[22rem] w-full overflow-hidden bg-gray-200">
+                  <img
+                    src={product.img}
+                    alt={product.name}
+                    className="h-full w-full object-cover object-top group-hover:opacity-75 transition-opacity"
+                  />
+                </div>
+                <div className="mt-4">
+                  <Link to={`/product/${index}`}>
+                    <h3 className="text-sm font-medium text-gray-900">
+                      {product.name}
+                    </h3>
+                  </Link>
+                  <p className="mt-1 text-sm text-gray-700">{product.price}</p>
+                  <div className="mt-2 flex space-x-1">
+                    {product.colors.map((color, i) => (
+                      <span
+                        key={i}
+                        className="h-4 w-4 rounded-full border border-gray-300"
+                        style={{ backgroundColor: color.toLowerCase() }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>

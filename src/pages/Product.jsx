@@ -90,7 +90,7 @@ const Product = () => {
 
         {/* Products display */}
         {viewMode === "grid" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
             {productList.map((product, index) => (
               <div key={index} className="group relative w-full">
                 <div className="h-[22rem] w-full overflow-hidden rounded-md bg-gray-200">

@@ -6,13 +6,13 @@ import { TbCurrencyNaira } from "react-icons/tb";
 import { FaDollarSign, FaPoundSign, FaAngleDown } from "react-icons/fa";
 import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Nav = () => {
   const [toggle, setToggle] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
-
+  const navigate = useNavigate();
   const currency = [
     { name: "Naira", icon: <TbCurrencyNaira /> },
     { name: "Dollar", icon: <FaDollarSign /> },
@@ -28,7 +28,7 @@ const Nav = () => {
   const links = ["SHOP", "REGISTRY", "SUPPORT"];
 
   const menuItems = [
-    { name: "Home", url: "" },
+    { name: "Home", url: "/" },
     { name: "Registry", url: "" },
     { name: "Clothing", url: "" },
     { name: "Sell", url: "" },
@@ -99,7 +99,7 @@ const Nav = () => {
   };
 
   return (
-    <div className="main-nav backdrop-blur-[7px] bg-white w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between md:p-3 p-2">
+    <div className="main-nav backdrop-blur-[7px] bg-white w-full z-50 h-[5rem] fixed top-0 left-0 flex items-center justify-between md:p-3">
       {/* Desktop logo container */}
       <div className="title-container cursor-pointer md:block hidden">
         <div className="image-text-container flex items-center gap-2">
@@ -166,6 +166,7 @@ const Nav = () => {
                     custom={index}
                     initial="hidden"
                     animate="visible"
+                    onClick={() => navigate(item?.url)}
                   >
                     {item.name}
                   </motion.div>
