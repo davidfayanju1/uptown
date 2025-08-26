@@ -10,27 +10,27 @@ const Explore = () => {
     {
       name: "UPTOWN REINCARNATION TEE",
       img: "/images/shirt1.png",
-      price: "$29.99",
+      price: "$24.99",
       colors: ["Black", "White", "Gray"],
     },
     {
       name: "UPTOWN NO DEFEAT TEE",
       img: "/images/shirt2.png",
-      price: "$34.99",
+      price: "$79.99",
       colors: ["Red", "Blue", "Green"],
     },
     {
-      name: "PLAIN TEE",
+      name: "UPTOWN DAILY PROJECT BASEBALL CAP",
       img: "/images/cap1.webp",
-      price: "$27.99",
+      price: "$15.99",
       colors: ["Navy", "Beige"],
     },
-    {
-      name: "ROLLERS TEE",
-      img: "/images/product4.jpg",
-      price: "$31.99",
-      colors: ["Yellow", "Orange"],
-    },
+    // {
+    //   name: "ROLLERS TEE",
+    //   img: "/images/product4.jpg",
+    //   price: "$31.99",
+    //   colors: ["Yellow", "Orange"],
+    // },
   ];
 
   // Animation variants

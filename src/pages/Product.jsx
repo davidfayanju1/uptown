@@ -6,29 +6,29 @@ const Product = () => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
   const productList = [
     {
-      name: "PLAIN TEE",
-      img: "/images/product1.jpg",
-      price: "$29.99",
+      name: "UPTOWN REINCARNATION TEE",
+      img: "/images/shirt1.png",
+      price: "$24.99",
       colors: ["Black", "White", "Gray"],
     },
     {
-      name: "ROLLERS TEE",
-      img: "/images/product2.jpg",
-      price: "$34.99",
+      name: "UPTOWN NO DEFEAT TEE",
+      img: "/images/shirt2.png",
+      price: "$79.99",
       colors: ["Red", "Blue", "Green"],
     },
     {
-      name: "PLAIN TEE",
-      img: "/images/product3.jpg",
-      price: "$27.99",
+      name: "UPTOWN DAILY PROJECT BASEBALL CAP",
+      img: "/images/cap1.webp",
+      price: "$15.99",
       colors: ["Navy", "Beige"],
     },
-    {
-      name: "ROLLERS TEE",
-      img: "/images/product4.jpg",
-      price: "$31.99",
-      colors: ["Yellow", "Orange"],
-    },
+    // {
+    //   name: "ROLLERS TEE",
+    //   img: "/images/product4.jpg",
+    //   price: "$31.99",
+    //   colors: ["Yellow", "Orange"],
+    // },
   ];
 
   return (
