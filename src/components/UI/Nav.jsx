@@ -25,7 +25,20 @@ const Nav = () => {
     icon: <TbCurrencyNaira />,
   });
 
-  const links = ["SHOP", "REGISTRY", "SUPPORT"];
+  const links = [
+    {
+      name: "SHOP",
+      url: "/product",
+    },
+    {
+      name: "REGISTRY",
+      url: "/registry",
+    },
+    {
+      name: "SUPPORT",
+      url: "/support",
+    },
+  ];
 
   const menuItems = [
     { name: "Home", url: "/" },
@@ -113,10 +126,11 @@ const Nav = () => {
           <div className="flex-container md:flex hidden items-center gap-3">
             {links.map((item, index) => (
               <small
+                onClick={() => navigate(item?.url)}
                 key={index}
-                className="block text-black font-semibold text-[.65rem] mt-[.7rem]"
+                className="block text-black cursor-pointer font-semibold text-[.65rem] mt-[.7rem]"
               >
-                {item}
+                {item.name}
               </small>
             ))}
           </div>

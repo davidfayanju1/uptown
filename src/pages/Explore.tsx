@@ -80,15 +80,17 @@ const Explore = () => {
         </div>
 
         {/* Second Flex Container - Image on Left */}
-        <div className="container mx-auto px-4 flex flex-col md:flex-row-reverse items-center md:gap-18 gap-6">
-          <div className="md:w-1/2 text-right">
+        <div className="container mx-auto px-4 flex md:justify-between flex-col md:flex-row-reverse items-center md:gap-22 gap-6">
+          <div className="md:w-[40%] text-right">
             <h2 className="text-4xl font-bold mb-6 tracking-tight">
-              STREET-READY <span className="text-primary">STYLE</span>
+              AUTHENTIC UPTOWN
+              <br />
+              <span className="text-red-500">EXCLUSIVE</span>
             </h2>
-            <p className="text-lg mb-8 text-gray-700">
-              Designed for the urban athlete. Our lifestyle collection brings
-              professional-grade comfort to your everyday wear without
-              compromising on aesthetics.
+            <p className="text-lg mb-8 text-right w-full text-gray-700">
+              Uptown Exclusive is crafted for the discerning few. Each release
+              is meticulously limited, authenticated through embedded NFC, and
+              accompanied by access to our private NFT collections.
             </p>
             <button
               onClick={() => navigate("/product")}
@@ -99,9 +101,9 @@ const Explore = () => {
           </div>
           <div className="md:w-[45%] w-full">
             <img
-              src="/images/product3.jpg"
+              src="/images/Cap.png"
               alt="Urban style shoes"
-              className="md:h-[38rem] h-[30rem] object-top object-cover w-full md:shadow-xl"
+              className="md:h-[38rem] h-[30rem] object-top object-cover w-full"
             />
           </div>
         </div>
