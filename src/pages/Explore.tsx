@@ -50,10 +50,9 @@ const Explore = () => {
         {/* First Flex Container - Image on Right */}
         <div className="container mx-auto md:px-4 px-3 flex flex-col md:flex-row items-center gap-16 mb-16">
           <div className="md:w-1/2">
-            <h2 className="md:text-4xl text-2xl font-bold mb-6 tracking-tight">
+            <h2 className="text-4xl font-bold mb-6 tracking-tight">
               A TESTAMENT TO CRAFTSMANSHIP
               <span className="text-primary">
-                {" "}
                 &
                 <br /> <span className="text-red-500"> EXCLUSIVITY</span>
               </span>
@@ -96,7 +95,7 @@ const Explore = () => {
               onClick={() => navigate("/product")}
               className="border-solid px-6 py-2 border-black border-[1px] rounded-full hover:bg-black hover:text-white transition-all"
             >
-              Shop Now
+              Request Access
             </button>
           </div>
           <div className="md:w-[45%] w-full">
@@ -108,7 +107,7 @@ const Explore = () => {
           </div>
         </div>
 
-        <div className="container mt-[6rem] mx-auto px-4">
+        <div className="container md:mt-[6rem] mx-auto px-4">
           <h2 className="text-4xl font-bold mb-6 tracking-tight">Discover</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
             {productList.map((product, index) => (
