@@ -148,21 +148,6 @@ const Registry = () => {
           <FiArrowLeft size={20} />
         </motion.button>
 
-        {/* Logo Placement */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute top-[-2.5rem] md:top-[-5rem] right-0 z-20"
-        >
-          {/* Replace this with your actual logo image */}
-          <img
-            src="/images/companylogo.png" // Update this path to your logo
-            alt="Your Company Logo"
-            className="h-[10rem] md:h-[15rem] object-contain" // Adjust height as needed
-          />
-        </motion.div>
-
         {/* Video Controls */}
         <div className="absolute bottom-6 right-6 z-20 flex space-x-4">
           <button
