@@ -7,6 +7,7 @@ import Explore from "./pages/Explore";
 import Signup from "./pages/Signup";
 import Signin from "./pages/Signin";
 import NotFoundPage from "./pages/404";
+import Registry from "./pages/Registry";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/product" element={<Product />} />
         <Route path="/signin" element={<Signin />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/registry" element={<Registry />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/*" element={<NotFoundPage />} />
       </Routes>
