@@ -42,11 +42,9 @@ const Nav = () => {
 
   const menuItems = [
     { name: "Home", url: "/" },
-    { name: "Registry", url: "" },
-    { name: "Clothing", url: "" },
-    { name: "Sell", url: "" },
-    { name: "Bid", url: "" },
-    { name: "Pricing", url: "" },
+    { name: "Shop", url: "/product" },
+    { name: "Registry", url: "/registry" },
+    { name: "Support", url: "/" },
   ];
 
   const quickLinks = [

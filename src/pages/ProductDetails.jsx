@@ -11,9 +11,9 @@ const ProductDetails = () => {
 
   const product = {
     id: id,
-    name: "Nike Air Max Pulse",
+    name: "DAILY PROJECT FITTED CAP",
     description: "Extraordinary comfort and style for your everyday life.",
-    price: 129.99,
+    price: 14.99,
     colors: [
       { name: "Black", value: "#000000" },
       { name: "White", value: "#ffffff" },
@@ -28,10 +28,10 @@ const ProductDetails = () => {
       "Classic Air Max cushioning",
     ],
     images: [
-      "/images/product1.jpg",
-      "/images/product2.jpg",
-      "/images/product3.jpg",
-      "/images/product4.jpg",
+      "/images/uptown1.png",
+      "/images/uptown2.png",
+      "/images/uptown3.png",
+      "/images/uptown1.png",
     ],
   };
 
