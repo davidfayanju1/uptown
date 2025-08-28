@@ -153,7 +153,7 @@ const Registry = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="absolute top-[-2.5rem] md:top-[-5rem] right-6 z-20"
+          className="absolute top-[-2.5rem] md:top-[-5rem] right-0 z-20"
         >
           {/* Replace this with your actual logo image */}
           <img
