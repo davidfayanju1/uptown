@@ -130,7 +130,7 @@ const Registry = () => {
             playsInline
             className="w-full h-full object-cover"
           >
-            <source src="/images/video2.mov" type="video/webm" />
+            <source src="/images/video2.mov" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           <div className="absolute inset-0 bg-black/40"></div>
