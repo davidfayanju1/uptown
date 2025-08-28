@@ -301,7 +301,10 @@ const Nav = () => {
         </div>
 
         <div className="item-container flex  items-center gap-1">
-          <button className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-white/20 transition-all ease-in-out delay-75 cursor-pointer">
+          <button
+            onClick={() => navigate("/signup")}
+            className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-white/20 transition-all ease-in-out delay-75 cursor-pointer"
+          >
             <RiShoppingCartLine color="gray" size={25} />
           </button>
         </div>
