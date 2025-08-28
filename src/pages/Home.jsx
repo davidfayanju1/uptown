@@ -39,9 +39,9 @@ const Home = () => {
       text: "Where heritage meets contemporary design. For those who appreciate the finer details.",
       buttonText: "Shop Now",
       buttonClass:
-        "rounded-none text-white cursor-pointer w-[10rem] bg-black border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
-      mediaType: "image",
-      mediaSrc: "/images/slider1.jpeg", // Replace with your image path
+        "rounded-none text-white cursor-pointer w-[10rem] bg-transparent border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
+      mediaType: "video",
+      mediaSrc: "/images/video2.mov", // Replace with your image path
     },
   ];
 
