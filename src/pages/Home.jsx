@@ -105,7 +105,7 @@ const Home = () => {
     <PrimaryLayout>
       <div className="page-container bg-black overflow-hidden md:min-h-[40rem] relative">
         {/* Slider container */}
-        <div className="slider-container relative w-full h-[87vh] md:h-[40rem] overflow-hidden">
+        <div className="slider-container relative w-full h-[82vh] md:h-[40rem] overflow-hidden">
           {slides.map((slide, index) => (
             <div
               key={index}
