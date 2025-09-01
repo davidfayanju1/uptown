@@ -181,7 +181,7 @@ const Nav = () => {
 
   return (
     <div
-      className={`main-nav backdrop-blur-[7px] w-full z-50 fixed top-0 left-0 ${navBg}`}
+      className={`main-nav md:backdrop-blur-[7px] w-full z-50 fixed top-0 left-0 ${navBg}`}
     >
       {/* Main navbar content */}
       <div className="h-[5rem] flex items-center justify-between md:p-3 relative">
