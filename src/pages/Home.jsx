@@ -14,6 +14,17 @@ const Home = () => {
     React.createRef(),
   ]);
 
+  // Prevent scrolling on mount
+  useEffect(() => {
+    // Disable scroll
+    document.body.style.overflow = "hidden";
+
+    // Cleanup: Re-enable scroll when component unmounts
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   // Slide data - you can customize this as needed
   const slides = [
     {
