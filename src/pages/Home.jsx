@@ -103,7 +103,7 @@ const Home = () => {
 
   return (
     <PrimaryLayout>
-      <div className="page-container bg-black overflow-hidden mt-[5.6rem] md:min-h-[40rem] relative">
+      <div className="page-container bg-black overflow-hidden md:min-h-[40rem] relative">
         {/* Slider container */}
         <div className="slider-container relative w-full h-[67vh] md:h-[40rem] overflow-hidden">
           {slides.map((slide, index) => (
@@ -228,7 +228,9 @@ const Home = () => {
                   stroke="#4A4A4A"
                   strokeWidth="2"
                 />
+                {/* Add key to force re-render with each slide change */}
                 <circle
+                  key={currentSlide} // This forces React to recreate the element on slide change
                   ref={progressRef}
                   cx="16"
                   cy="16"
@@ -247,13 +249,13 @@ const Home = () => {
               </svg>
               <button
                 onClick={togglePlayPause}
-                className="absolute inset-0 flex items-center justify-center text-white"
+                className="absolute inset-0 flex cursor-pointer items-center justify-center text-white"
                 aria-label={isPlaying ? "Pause slider" : "Play slider"}
               >
                 {isPlaying ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3"
+                    className="h-6 w-6"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -266,7 +268,7 @@ const Home = () => {
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3"
+                    className="h-6 w-6"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >

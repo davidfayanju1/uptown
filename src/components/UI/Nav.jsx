@@ -12,7 +12,7 @@ import { TbCurrencyNaira } from "react-icons/tb";
 import { FaDollarSign, FaPoundSign, FaAngleDown } from "react-icons/fa";
 import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const Nav = () => {
   const [toggle, setToggle] = useState(false);
@@ -20,7 +20,11 @@ const Nav = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const dropdownRef = useRef(null);
+
+  // Check if we're on the home page
+  const isHomePage = location.pathname === "/";
 
   const currency = [
     { name: "Naira", icon: <TbCurrencyNaira /> },
@@ -165,8 +169,20 @@ const Nav = () => {
     setShowCartDropdown(!showCartDropdown);
   };
 
+  // Determine text color based on page
+  const textColor = isHomePage ? "text-gray-300" : "text-gray-800";
+  const iconColor = isHomePage ? "text-gray-300" : "text-gray-800";
+  const inputBg = isHomePage ? "bg-gray-300/30" : "bg-gray-100";
+  const inputText = isHomePage ? "text-gray-500" : "text-gray-800";
+  const inputPlaceholder = isHomePage
+    ? "placeholder:text-gray-400"
+    : "placeholder:text-gray-500";
+  const navBg = isHomePage ? "bg-transparent" : "bg-white shadow-sm";
+
   return (
-    <div className="main-nav backdrop-blur-[7px] bg-white w-full z-50 fixed top-0 left-0">
+    <div
+      className={`main-nav backdrop-blur-[7px] w-full z-50 fixed top-0 left-0 ${navBg}`}
+    >
       {/* Main navbar content */}
       <div className="h-[5rem] flex items-center justify-between md:p-3 relative">
         {/* Desktop logo container */}
@@ -184,7 +200,7 @@ const Nav = () => {
                 <small
                   onClick={() => navigate(item?.url)}
                   key={index}
-                  className="block text-black cursor-pointer font-semibold text-[.65rem] mt-[.7rem]"
+                  className={`block cursor-pointer font-semibold text-[.65rem] mt-[.7rem] ${textColor}`}
                 >
                   {item.name}
                 </small>
@@ -196,7 +212,7 @@ const Nav = () => {
         {/* Mobile logo container */}
         <div className="mobile-container md:hidden flex items-center justify-between w-full md:px-4 px-2">
           <button onClick={() => setOpenSidebar(true)}>
-            <RxHamburgerMenu color="black" size={27} />
+            <RxHamburgerMenu className={iconColor} size={27} />
           </button>
           <img
             src="/images/companylogo.png"
@@ -204,7 +220,7 @@ const Nav = () => {
             className="w-[7rem] h-[7rem]"
           />
           <button onClick={() => setOpenSearch(true)}>
-            <IoSearch color="gray" size={25} />
+            <IoSearch className={iconColor} size={25} />
           </button>
         </div>
 
@@ -216,7 +232,7 @@ const Nav = () => {
           <div className="dropdown-container md:block hidden">
             <button
               onClick={() => setToggle(!toggle)}
-              className="dropdown-component text-black hover:bg-white/40 py-2 flex items-center px-2 gap-2 rounded-[7px]"
+              className={`dropdown-component hover:bg-white/40 py-2 flex items-center px-2 gap-2 rounded-[7px] ${textColor}`}
             >
               {input.icon}
               {input.name}
@@ -240,7 +256,7 @@ const Nav = () => {
                       });
                       setToggle(false);
                     }}
-                    className="small-container cursor-pointer mb-2 hover:bg-gray-100 flex items-center gap-2 p-1"
+                    className="small-container cursor-pointer mb-2 hover:bg-gray-100 flex items-center gap-2 p-1 text-gray-800"
                   >
                     {item.icon}
                     <small>{item.name}</small>
@@ -250,14 +266,16 @@ const Nav = () => {
             )}
           </div>
 
-          <div className="input-container gap-3 py-2 rounded-full bg-gray-300/30 md:flex hidden items-center justify-center px-2 cursor-pointer">
-            <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full hover:bg-gray-300">
-              <IoSearch color="gray" />
+          <div
+            className={`input-container gap-3 py-2 rounded-full ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer`}
+          >
+            <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full ">
+              <IoSearch className={iconColor} />
             </button>
             <input
               type="text"
               placeholder="Search..."
-              className="placeholder:!text-[.7rem] text-gray-500 outline-none border-none placeholder:text-gray-400"
+              className={`placeholder:!text-[.7rem] outline-none border-none ${inputText} ${inputPlaceholder}`}
             />
           </div>
 
@@ -266,7 +284,7 @@ const Nav = () => {
               onClick={handleCartClick}
               className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-gray-100 transition-all ease-in-out delay-75 cursor-pointer"
             >
-              <RiShoppingCartLine color="gray" size={25} />
+              <RiShoppingCartLine className={iconColor} size={25} />
             </button>
           </div>
         </div>
@@ -354,7 +372,7 @@ const Nav = () => {
                 {menuItems.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="text-[1.4rem] font-medium"
+                    className="text-[1.4rem] font-medium text-gray-800"
                     variants={menuItemVariants}
                     custom={index}
                     initial="hidden"
@@ -387,7 +405,7 @@ const Nav = () => {
               exit="exit"
             >
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-xl font-semibold">Search</h2>
+                <h2 className="text-xl font-semibold text-gray-800">Search</h2>
                 <button onClick={() => setOpenSearch(false)}>
                   <IoClose size={30} />
                 </button>
@@ -398,7 +416,7 @@ const Nav = () => {
                 <input
                   type="text"
                   placeholder="Search Uptown"
-                  className="w-full py-4 text-lg outline-none border-b-2 border-gray-300 focus:border-black placeholder-gray-400"
+                  className="w-full py-4 text-lg outline-none border-b-2 border-gray-300 focus:border-black placeholder-gray-400 text-gray-800"
                   autoFocus
                 />
                 <button className="absolute right-0 top-1/2 transform -translate-y-1/2">
@@ -415,7 +433,7 @@ const Nav = () => {
                   {quickLinks.map((link, index) => (
                     <motion.div
                       key={index}
-                      className="text-lg font-medium"
+                      className="text-lg font-medium text-gray-800"
                       variants={menuItemVariants}
                       custom={index}
                       initial="hidden"
