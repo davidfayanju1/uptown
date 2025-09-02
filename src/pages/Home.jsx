@@ -21,7 +21,7 @@ const Home = () => {
       text: "A statement piece, not an everyday cap. Crafted with precision. Released in rarity.",
       buttonText: "Explore",
       buttonClass:
-        "rounded-full text-black cursor-pointer w-[10rem] bg-white border-none outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-gray-100 transition-colors",
+        "rounded-md text-white cursor-pointer w-[10rem] bg-transparent border-2 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
       mediaType: "image",
       mediaSrc: "/images/hero5.jpg",
     },
