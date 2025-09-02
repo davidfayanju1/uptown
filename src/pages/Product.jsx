@@ -4,36 +4,43 @@ import { Link } from "react-router-dom";
 
 const Product = () => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
+  const [wishlist, setWishlist] = useState({}); // Track wishlist status for each product
+
   const productList = [
     {
+      id: 1,
       name: "UPTOWN REINCARNATION TEE",
       img: "/images/shirt1.png",
       price: "$24.99",
       colors: ["Black", "White", "Gray"],
     },
     {
+      id: 2,
       name: "UPTOWN NO DEFEAT TEE",
       img: "/images/shirt2.png",
       price: "$79.99",
       colors: ["Red", "Blue", "Green"],
     },
     {
+      id: 3,
       name: "UPTOWN DAILY PROJECT BASEBALL CAP",
       img: "/images/cap1.webp",
       price: "$15.99",
       colors: ["Navy", "Beige"],
     },
-    // {
-    //   name: "ROLLERS TEE",
-    //   img: "/images/product4.jpg",
-    //   price: "$31.99",
-    //   colors: ["Yellow", "Orange"],
-    // },
   ];
+
+  // Toggle wishlist status for a product
+  const toggleWishlist = (productId) => {
+    setWishlist((prev) => ({
+      ...prev,
+      [productId]: !prev[productId],
+    }));
+  };
 
   return (
     <PrimaryLayout>
-      <div className="container min-h-screen mt-[3rem] mx-auto px-4 py-8">
+      <div className="container min-h-screen md:mt-[3rem] mt-[4rem] mx-auto px-4 py-8">
         {/* Header with view toggle */}
         <div className="flex items-center justify-between mb-8">
           <span className="text-black font-semibold text-lg md:text-xl">
@@ -91,18 +98,46 @@ const Product = () => {
         {/* Products display */}
         {viewMode === "grid" ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
-            {productList.map((product, index) => (
-              <div key={index} className="group relative w-full">
-                <div className="h-[22rem] w-full overflow-hidden rounded-md bg-gray-200">
+            {productList.map((product) => (
+              <div key={product.id} className="group relative w-full">
+                <div className="h-[13.5rem] w-full overflow-hidden rounded-md bg-gray-200 flex items-center justify-center p-4 relative">
                   <img
                     src={product.img}
                     alt={product.name}
-                    className="h-full w-full object-cover object-top group-hover:opacity-75 transition-opacity"
+                    className="max-h-full max-w-full object-contain"
                   />
+
+                  {/* Wishlist Heart Icon */}
+                  <button
+                    onClick={() => toggleWishlist(product.id)}
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110"
+                    aria-label={
+                      wishlist[product.id]
+                        ? "Remove from wishlist"
+                        : "Add to wishlist"
+                    }
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`h-5 w-5 transition-all duration-300 ${
+                        wishlist[product.id]
+                          ? "fill-black scale-110"
+                          : "fill-none stroke-gray-600 hover:stroke-black"
+                      }`}
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                      />
+                    </svg>
+                  </button>
                 </div>
                 <div className="mt-4">
-                  <Link to={`/product/${index}`}>
-                    <h3 className="text-sm font-medium text-gray-900">
+                  <Link to={`/product/${product.id}`}>
+                    <h3 className="text-[13px] truncate font-semibold text-gray-900">
                       {product.name}
                     </h3>
                   </Link>
@@ -122,18 +157,47 @@ const Product = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {productList.map((product, index) => (
+            {productList.map((product) => (
               <div
-                key={index}
-                className="flex flex-col sm:flex-row gap-4 p-4 border-solid border-gray-200 border-[1px] rounded-lg hover:bg-gray-50 transition-colors"
+                key={product.id}
+                className="flex flex-col sm:flex-row gap-4 p-4 border-solid border-gray-200 border-[1px] rounded-lg hover:bg-gray-50 transition-colors relative"
               >
-                <div className="w-full sm:w-48 h-48 bg-gray-200 rounded-md overflow-hidden">
+                <div className="w-full sm:w-48 h-48 bg-gray-200 rounded-md overflow-hidden flex items-center justify-center p-4">
                   <img
                     src={product.img}
                     alt={product.name}
-                    className="h-full w-full object-cover object-center"
+                    className="max-h-full max-w-full object-contain"
                   />
                 </div>
+
+                {/* Wishlist Heart Icon for List View */}
+                <button
+                  onClick={() => toggleWishlist(product.id)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110"
+                  aria-label={
+                    wishlist[product.id]
+                      ? "Remove from wishlist"
+                      : "Add to wishlist"
+                  }
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`h-5 w-5 transition-all duration-300 ${
+                      wishlist[product.id]
+                        ? "fill-black scale-110"
+                        : "fill-none stroke-gray-600 hover:stroke-black"
+                    }`}
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+                    />
+                  </svg>
+                </button>
+
                 <div className="flex-1">
                   <h3 className="text-lg font-medium text-gray-900">
                     {product.name}
