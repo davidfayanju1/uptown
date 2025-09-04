@@ -282,7 +282,7 @@ const Nav = () => {
               onClick={handleCartClick}
               className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer"
             >
-              <ShoppingCartIcon color="gray" />
+              <ShoppingCartIcon className={iconColor} />
             </button>
           </div>
         </div>
