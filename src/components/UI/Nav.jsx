@@ -7,12 +7,12 @@ import {
   IoHeartOutline,
   IoBagHandleOutline,
 } from "react-icons/io5";
-import { RiShoppingCartLine } from "react-icons/ri";
 import { TbCurrencyNaira } from "react-icons/tb";
 import { FaDollarSign, FaPoundSign, FaAngleDown } from "react-icons/fa";
 import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { ShoppingCartIcon } from "lucide-react";
 
 const Nav = () => {
   const [toggle, setToggle] = useState(false);
@@ -280,9 +280,9 @@ const Nav = () => {
           <div className="item-container flex items-center gap-1">
             <button
               onClick={handleCartClick}
-              className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full hover:bg-gray-100 transition-all ease-in-out delay-75 cursor-pointer"
+              className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer"
             >
-              <RiShoppingCartLine className={iconColor} size={25} />
+              <ShoppingCartIcon color="gray" />
             </button>
           </div>
         </div>
@@ -300,10 +300,22 @@ const Nav = () => {
               <div className="p-6">
                 {/* Empty cart message */}
                 <div className="text-center py-6 border-b border-gray-100">
-                  <RiShoppingCartLine
-                    className="mx-auto text-gray-400"
-                    size={40}
-                  />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-shopping-cart-icon lucide-shopping-cart"
+                  >
+                    <circle cx="8" cy="21" r="1" />
+                    <circle cx="19" cy="21" r="1" />
+                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+                  </svg>
                   <p className="mt-4 text-gray-600">Your cart is empty</p>
 
                   {/* Sign In button */}
