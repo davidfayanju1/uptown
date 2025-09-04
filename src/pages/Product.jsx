@@ -110,7 +110,7 @@ const Product = () => {
                   {/* Wishlist Heart Icon */}
                   <button
                     onClick={() => toggleWishlist(product.id)}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110"
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-xl transition-all duration-300 hover:bg-white hover:scale-110"
                     aria-label={
                       wishlist[product.id]
                         ? "Remove from wishlist"
