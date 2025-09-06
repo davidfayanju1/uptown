@@ -32,7 +32,7 @@ const Product = () => {
       available: true, // Only this product is available
     },
     {
-      id: 3,
+      id: 4,
       name: "UPTOWN DAILY PROJECT BACKPACK",
       img: "/images/dailyprojectback.png",
       price: "$25.99",
@@ -40,7 +40,7 @@ const Product = () => {
       available: true, // Only this product is available
     },
     {
-      id: 3,
+      id: 5,
       name: "UPTOWN SOMNIATOR TEES",
       img: "/images/somniator.png",
       price: "$15.99",
@@ -48,7 +48,7 @@ const Product = () => {
       available: false, // Only this product is available
     },
     {
-      id: 3,
+      id: 6,
       name: "UPTOWN TANKS",
       img: "/images/uptowntanks.png",
       price: "$22.99",

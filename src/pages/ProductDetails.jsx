@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -8,6 +8,7 @@ const ProductDetails = () => {
   const [isSticky, setIsSticky] = useState(true);
   const descriptionRef = useRef(null);
   const containerRef = useRef(null);
+  const navigate = useNavigate();
 
   const product = {
     id: id,
@@ -150,7 +151,10 @@ const ProductDetails = () => {
             </div>
 
             {/* Add to Cart */}
-            <button className="mt-10 w-full bg-black border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-black">
+            <button
+              onClick={() => navigate("/cart")}
+              className="mt-10 w-full bg-black border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-black"
+            >
               Add to cart
             </button>
 
