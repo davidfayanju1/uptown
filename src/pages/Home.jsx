@@ -143,7 +143,11 @@ const Home = () => {
                   {slide.text}
                 </p>
                 <button
-                  onClick={() => navigate("/explore")}
+                  onClick={() =>
+                    navigate(
+                      slide.text === "Shop Now" ? "/explore" : "/product"
+                    )
+                  }
                   className={
                     slide.buttonClass + " animate-fade-in-more-delayed"
                   }

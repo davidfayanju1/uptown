@@ -13,6 +13,7 @@ const Product = () => {
       img: "/images/shirt1.png",
       price: "$24.99",
       colors: ["Black", "White", "Gray"],
+      available: false, // Mark as sold out
     },
     {
       id: 2,
@@ -20,6 +21,7 @@ const Product = () => {
       img: "/images/shirt2.png",
       price: "$79.99",
       colors: ["Red", "Blue", "Green"],
+      available: false, // Mark as sold out
     },
     {
       id: 3,
@@ -27,6 +29,7 @@ const Product = () => {
       img: "/images/cap1.webp",
       price: "$15.99",
       colors: ["Navy", "Beige"],
+      available: true, // Only this product is available
     },
   ];
 
@@ -100,17 +103,26 @@ const Product = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
             {productList.map((product) => (
               <div key={product.id} className="group relative w-full">
-                <div className="h-[13.5rem] w-full overflow-hidden rounded-md bg-gray-200 flex items-center justify-center p-4 relative">
+                <div className="h-[13.5rem] w-full overflow-hidden bg-gray-200 flex items-center justify-center p-4 relative">
                   <img
                     src={product.img}
                     alt={product.name}
                     className="max-h-full max-w-full object-contain"
                   />
 
+                  {/* Sold Out Overlay */}
+                  {!product.available && (
+                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm tracking-wider bg-black/80 px-2 py-2">
+                        SOLD OUT
+                      </span>
+                    </div>
+                  )}
+
                   {/* Wishlist Heart Icon */}
                   <button
                     onClick={() => toggleWishlist(product.id)}
-                    className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-xl transition-all duration-300 hover:bg-white hover:scale-110"
+                    className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-xl transition-all duration-300 hover:bg-white hover:scale-110 z-10"
                     aria-label={
                       wishlist[product.id]
                         ? "Remove from wishlist"
@@ -136,7 +148,7 @@ const Product = () => {
                   </button>
                 </div>
                 <div className="mt-4">
-                  <Link to={`/product/${product.id}`}>
+                  <Link to={product.available ? `/product/${product.id}` : "#"}>
                     <h3 className="text-[13px] truncate font-semibold text-gray-900">
                       {product.name}
                     </h3>
@@ -160,20 +172,29 @@ const Product = () => {
             {productList.map((product) => (
               <div
                 key={product.id}
-                className="flex flex-col sm:flex-row gap-4 p-4 border-solid border-gray-200 border-[1px] rounded-lg hover:bg-gray-50 transition-colors relative"
+                className="flex flex-col sm:flex-row gap-4 p-4 border-solid border-gray-200 border-[1px] hover:bg-gray-50 transition-colors relative"
               >
-                <div className="w-full sm:w-48 h-48 bg-gray-200 rounded-md overflow-hidden flex items-center justify-center p-4">
+                <div className="w-full sm:w-48 h-48 bg-gray-200 overflow-hidden flex items-center justify-center p-4 relative">
                   <img
                     src={product.img}
                     alt={product.name}
                     className="max-h-full max-w-full object-contain"
                   />
+
+                  {/* Sold Out Overlay for List View */}
+                  {!product.available && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="text-white font-bold text-sm tracking-wider bg-black/80 px-4 py-2">
+                        SOLD OUT
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Wishlist Heart Icon for List View */}
                 <button
                   onClick={() => toggleWishlist(product.id)}
-                  className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110"
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110 z-10"
                   aria-label={
                     wishlist[product.id]
                       ? "Remove from wishlist"
@@ -220,8 +241,15 @@ const Product = () => {
                       ))}
                     </div>
                   </div>
-                  <button className="mt-4 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 transition-colors">
-                    Add to Cart
+                  <button
+                    className={`mt-4 px-4 py-2 rounded-md transition-colors ${
+                      product.available
+                        ? "bg-black text-white hover:bg-gray-800"
+                        : "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    }`}
+                    disabled={!product.available}
+                  >
+                    {product.available ? "Add to Cart" : "Sold Out"}
                   </button>
                 </div>
               </div>
