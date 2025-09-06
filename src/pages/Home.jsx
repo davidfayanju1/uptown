@@ -14,7 +14,7 @@ const Home = () => {
     React.createRef(),
   ]);
 
-  // Slide data - you can customize this as needed
+  // Slide data
   const slides = [
     {
       title: "Premium Craftsmanship",
@@ -32,7 +32,7 @@ const Home = () => {
       buttonClass:
         "rounded-md text-white cursor-pointer w-[10rem] bg-transparent border-2 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
       mediaType: "video",
-      mediaSrc: "/images/video.mp4", // Replace with your video path
+      mediaSrc: "/images/video.mp4",
     },
     {
       title: "Timeless Style",
@@ -41,14 +41,13 @@ const Home = () => {
       buttonClass:
         "rounded-none text-white cursor-pointer w-[10rem] bg-transparent border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
       mediaType: "video",
-      mediaSrc: "/images/video2.mov", // Replace with your image path
+      mediaSrc: "/images/video2.mov",
     },
   ];
 
   // Handle slide progression
   useEffect(() => {
     if (isPlaying) {
-      // Reset progress animation
       if (progressRef.current) {
         progressRef.current.style.animation = "none";
         progressRef.current.offsetHeight; // Trigger reflow
@@ -57,10 +56,9 @@ const Home = () => {
 
       progressInterval.current = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
-      }, 7000); // 7 seconds for each slide
+      }, 7000);
     } else {
       clearInterval(progressInterval.current);
-      // Pause progress animation
       if (progressRef.current) {
         progressRef.current.style.animationPlayState = "paused";
       }
@@ -69,7 +67,7 @@ const Home = () => {
     return () => clearInterval(progressInterval.current);
   }, [isPlaying, slides.length, currentSlide]);
 
-  // Handle video playback based on slide
+  // Handle video playback
   useEffect(() => {
     slides.forEach((slide, index) => {
       if (slide.mediaType === "video" && videoRefs.current[index].current) {
@@ -103,9 +101,9 @@ const Home = () => {
 
   return (
     <PrimaryLayout>
-      <div className="page-container bg-black overflow-hidden md:min-h-[85vh] relative">
-        {/* Slider container */}
-        <div className="slider-container relative w-full h-[85vh] md:h-[85vh] overflow-hidden">
+      <div className="page-container bg-black overflow-hidden min-h-[calc(100vh-5rem)] relative">
+        {/* Slider container with calc for viewport height minus footer */}
+        <div className="slider-container relative w-full h-[calc(100vh-5rem)] overflow-hidden">
           {slides.map((slide, index) => (
             <div
               key={index}
@@ -113,7 +111,7 @@ const Home = () => {
                 index === currentSlide ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
             >
-              {/* Media content - now full screen */}
+              {/* Media content */}
               <div className="media-container h-full w-full">
                 {slide.mediaType === "image" ? (
                   <img
@@ -156,9 +154,8 @@ const Home = () => {
             </div>
           ))}
 
-          {/* Indicators and controls - moved to bottom right */}
+          {/* Indicators and controls */}
           <div className="absolute bottom-6 right-6 flex items-center space-x-4 z-20 bg-black/30 rounded-full pl-4 pr-2 py-2">
-            {/* Navigation arrows - now beside play/pause */}
             <button
               onClick={prevSlide}
               className="text-white p-2 rounded-full hover:bg-black/50 transition-colors"
@@ -201,7 +198,6 @@ const Home = () => {
               </svg>
             </button>
 
-            {/* Slide indicators */}
             <div className="flex space-x-2">
               {slides.map((_, index) => (
                 <button
@@ -217,7 +213,6 @@ const Home = () => {
               ))}
             </div>
 
-            {/* Play/Pause button with progress indicator */}
             <div className="relative">
               <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 32 32">
                 <circle
@@ -228,9 +223,8 @@ const Home = () => {
                   stroke="#4A4A4A"
                   strokeWidth="2"
                 />
-                {/* Add key to force re-render with each slide change */}
                 <circle
-                  key={currentSlide} // This forces React to recreate the element on slide change
+                  key={currentSlide}
                   ref={progressRef}
                   cx="16"
                   cy="16"
@@ -315,6 +309,15 @@ const Home = () => {
         .animate-fade-in-more-delayed {
           animation: fade-in 1s ease-out 0.6s forwards;
           opacity: 0;
+        }
+        html,
+        body {
+          overflow: hidden;
+          height: 100%;
+          margin: 0;
+        }
+        .page-container {
+          max-height: calc(100vh - 60px);
         }
       `}</style>
     </PrimaryLayout>
