@@ -13,6 +13,7 @@ import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "lucide-react";
+import { useCart } from "../../context/CartContext";
 
 const Nav = () => {
   const [toggle, setToggle] = useState(false);
@@ -22,6 +23,7 @@ const Nav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
+  const { cartCount } = useCart(); // Get cart count from context
 
   // Check if we're on the home page
   const isHomePage = location.pathname === "/";
@@ -280,9 +282,19 @@ const Nav = () => {
           <div className="item-container flex items-center gap-1">
             <button
               onClick={handleCartClick}
-              className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer"
+              className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative"
             >
               <ShoppingCartIcon className={iconColor} />
+              {/* Cart Count Badge */}
+              {cartCount > 0 && (
+                <span
+                  className={`absolute -top-0 right-0 bg-red-500 text-white rounded-full md:w-5 md:h-5 h-4 w-4 flex items-center justify-center text-xs ${
+                    isHomePage ? "bg-red-500" : "bg-red-600"
+                  }`}
+                >
+                  {cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -291,67 +303,81 @@ const Nav = () => {
         <AnimatePresence>
           {showCartDropdown && (
             <motion.div
-              className="absolute top-full left-0 right-0 bg-white shadow-lg border-t border-gray-200 overflow-hidden"
+              className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-80 rounded-md"
               variants={cartDropdownVariants}
               initial="hidden"
               animate="visible"
               exit="hidden"
             >
-              <div className="p-6">
-                {/* Empty cart message */}
-                <div className="text-center py-6 border-b border-gray-100">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-shopping-cart-icon lucide-shopping-cart"
-                  >
-                    <circle cx="8" cy="21" r="1" />
-                    <circle cx="19" cy="21" r="1" />
-                    <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-                  </svg>
-                  <p className="mt-4 text-gray-600">Your cart is empty</p>
-
-                  {/* Sign In button */}
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-semibold text-gray-800">
+                    Your Cart ({cartCount})
+                  </h3>
                   <button
-                    onClick={() => navigate("/signin")}
-                    className="mt-6 bg-black text-white py-3 px-8 rounded-full text-sm font-medium hover:bg-gray-800 transition-colors"
+                    onClick={() => setShowCartDropdown(false)}
+                    className="text-gray-500 hover:text-gray-700"
                   >
-                    Sign In
+                    <IoClose size={20} />
                   </button>
                 </div>
 
+                {cartCount === 0 ? (
+                  // Empty cart message
+                  <div className="text-center py-6">
+                    <ShoppingCartIcon
+                      className="mx-auto text-gray-400 mb-3"
+                      size={40}
+                    />
+                    <p className="text-gray-600 mb-4">Your cart is empty</p>
+                    <button
+                      onClick={() => {
+                        navigate("/product");
+                        setShowCartDropdown(false);
+                      }}
+                      className="bg-black text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
+                    >
+                      Continue Shopping
+                    </button>
+                  </div>
+                ) : (
+                  // Cart has items
+                  <div>
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600">
+                        {cartCount} item{cartCount !== 1 ? "s" : ""} in your
+                        cart
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        navigate("/cart");
+                        setShowCartDropdown(false);
+                      }}
+                      className="w-full bg-black text-white py-3 px-4 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
+                    >
+                      View Cart & Checkout
+                    </button>
+                  </div>
+                )}
+
                 {/* Account links */}
-                <div className="py-4">
+                <div className="mt-4 pt-4 border-t border-gray-100">
                   {accountLinks.map((link, index) => (
                     <motion.div
                       key={index}
-                      className="flex items-center py-3 px-2 hover:bg-gray-50 rounded-md cursor-pointer"
+                      className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer"
                       whileHover={{ x: 5 }}
                       transition={{ type: "spring", stiffness: 300 }}
-                      onClick={() => navigate(link.url)}
+                      onClick={() => {
+                        navigate(link.url);
+                        setShowCartDropdown(false);
+                      }}
                     >
                       <span className="text-gray-600 mr-3">{link.icon}</span>
                       <span className="text-gray-800 text-sm">{link.name}</span>
                     </motion.div>
                   ))}
-                </div>
-
-                {/* Additional sign in button at bottom */}
-                <div className="pt-4 border-t border-gray-100">
-                  <button
-                    onClick={() => navigate("/signin")}
-                    className="w-full flex items-center justify-center py-3 px-4 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                  >
-                    <IoPersonOutline className="mr-2" size={18} />
-                    Sign In
-                  </button>
                 </div>
               </div>
             </motion.div>

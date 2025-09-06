@@ -9,22 +9,26 @@ import Signin from "./pages/Signin";
 import NotFoundPage from "./pages/404";
 import Registry from "./pages/Registry";
 import Cart from "./pages/Cart";
+import { CartProvider } from "./context/CartContext";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/explore" element={<Explore />} />
-        <Route path="/product" element={<Product />} />
-        <Route path="/signin" element={<Signin />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/registry" element={<Registry />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/*" element={<NotFoundPage />} />
-      </Routes>
-    </Router>
+    <CartProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/product" element={<Product />} />
+          <Route path="/signin" element={<Signin />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/cart" element={<Cart />} />
+
+          <Route path="/registry" element={<Registry />} />
+          <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/*" element={<NotFoundPage />} />
+        </Routes>
+      </Router>
+    </CartProvider>
   );
 }
 

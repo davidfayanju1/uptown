@@ -1,14 +1,19 @@
+// src/components/ProductDetails.js
 import React, { useState, useEffect, useRef } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { useNavigate, useParams } from "react-router-dom";
+import { useCart } from "../context/CartContext"; // Import the cart context
 
 const ProductDetails = () => {
   const { id } = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedSize, setSelectedSize] = useState(null);
   const [isSticky, setIsSticky] = useState(true);
   const descriptionRef = useRef(null);
   const containerRef = useRef(null);
   const navigate = useNavigate();
+  const { addToCart, cartCount } = useCart(); // Get addToCart function and cartCount
 
   const product = {
     id: id,
@@ -59,6 +64,24 @@ const ProductDetails = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleAddToCart = () => {
+    // Create a cart item with selected options
+    const cartItem = {
+      ...product,
+      selectedColor: selectedColor || product.colors[0].name,
+      selectedSize: selectedSize || product.sizes[0],
+      quantity: 1,
+    };
+
+    addToCart(cartItem);
+
+    // Optional: Show a confirmation or navigate to cart
+    // navigate("/cart");
+
+    // Optional: Show a temporary confirmation message
+    alert("Item added to cart!");
+  };
 
   return (
     <PrimaryLayout>
@@ -122,8 +145,13 @@ const ProductDetails = () => {
                 {product.colors.map((color, index) => (
                   <div key={index} className="relative">
                     <div
-                      className="w-10 h-10 rounded-full cursor-pointer border-2 border-gray-200 flex items-center justify-center"
+                      className={`w-10 h-10 rounded-full cursor-pointer border-2 flex items-center justify-center ${
+                        selectedColor === color.name
+                          ? "border-black ring-2 ring-offset-2 ring-black"
+                          : "border-gray-200"
+                      }`}
                       style={{ backgroundColor: color.value }}
+                      onClick={() => setSelectedColor(color.name)}
                     >
                       <span className="sr-only">{color.name}</span>
                     </div>
@@ -142,7 +170,12 @@ const ProductDetails = () => {
                 {product.sizes.map((size) => (
                   <button
                     key={size}
-                    className="border rounded-md py-3 px-4 text-sm font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                    className={`border rounded-md py-3 px-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black ${
+                      selectedSize === size
+                        ? "border-black bg-black text-white"
+                        : "border-gray-200 hover:border-gray-400"
+                    }`}
+                    onClick={() => setSelectedSize(size)}
                   >
                     {size}
                   </button>
@@ -152,8 +185,8 @@ const ProductDetails = () => {
 
             {/* Add to Cart */}
             <button
-              onClick={() => navigate("/cart")}
-              className="mt-10 w-full bg-black border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-black"
+              onClick={handleAddToCart}
+              className="mt-10 w-full bg-black border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-black transition-colors"
             >
               Add to cart
             </button>
