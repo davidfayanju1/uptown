@@ -100,9 +100,9 @@ const Cart = () => {
                             </p>
                           </div>
 
-                          <div className="mt-2 text-sm font-bold text-gray-900">
+                          {/* <div className="mt-2 text-sm font-bold text-gray-900">
                             Total: ${(item.price * item.quantity).toFixed(2)}
-                          </div>
+                          </div> */}
                         </div>
 
                         <div className="md:hidden h-full ">
@@ -111,7 +111,7 @@ const Cart = () => {
                               ${item.price.toFixed(2)}
                             </div>
                             <div className="flex items-center gap-4">
-                              <div className="flex items-center border rounded-md">
+                              <div className="flex items-center rounded-md">
                                 <button
                                   onClick={() =>
                                     updateQuantity(item.id, item.quantity - 1)
@@ -120,7 +120,7 @@ const Cart = () => {
                                 >
                                   −
                                 </button>
-                                <span className="px-3 py-1 border-l border-r">
+                                <span className="px-1 py-1">
                                   {item.quantity}
                                 </span>
                                 <button
