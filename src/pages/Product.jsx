@@ -31,6 +31,30 @@ const Product = () => {
       colors: ["Navy", "Beige"],
       available: true, // Only this product is available
     },
+    {
+      id: 3,
+      name: "UPTOWN DAILY PROJECT BACKPACK",
+      img: "/images/dailyprojectback.png",
+      price: "$25.99",
+      colors: ["Navy", "Beige"],
+      available: true, // Only this product is available
+    },
+    {
+      id: 3,
+      name: "UPTOWN SOMNIATOR TEES",
+      img: "/images/somniator.png",
+      price: "$15.99",
+      colors: ["Navy", "Beige"],
+      available: false, // Only this product is available
+    },
+    {
+      id: 3,
+      name: "UPTOWN TANKS",
+      img: "/images/uptowntanks.png",
+      price: "$22.99",
+      colors: ["Navy", "Beige"],
+      available: true, // Only this product is available
+    },
   ];
 
   // Toggle wishlist status for a product
@@ -43,7 +67,7 @@ const Product = () => {
 
   return (
     <PrimaryLayout>
-      <div className="container min-h-screen md:mt-[3rem] mt-[4rem] mx-auto px-4 py-8">
+      <div className="container min-h-screen md:mt-[5rem] mt-[4rem] mx-auto px-4 py-8">
         {/* Header with view toggle */}
         <div className="flex items-center justify-between mb-8">
           <span className="text-black font-semibold text-lg md:text-xl">
@@ -103,7 +127,7 @@ const Product = () => {
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
             {productList.map((product) => (
               <div key={product.id} className="group relative w-full">
-                <div className="h-[13.5rem] w-full overflow-hidden bg-gray-200 flex items-center justify-center p-4 relative">
+                <div className="h-[13.5rem] md:h-[17.5rem] w-full overflow-hidden bg-gray-200 flex items-center justify-center p-4 relative">
                   <img
                     src={product.img}
                     alt={product.name}
