@@ -145,7 +145,7 @@ const Home = () => {
                 <button
                   onClick={() =>
                     navigate(
-                      slide.text === "Shop Now" ? "/explore" : "/product"
+                      slide.buttonText === "Shop Now" ? "/product" : "/explore"
                     )
                   }
                   className={
