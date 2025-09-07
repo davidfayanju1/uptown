@@ -80,7 +80,6 @@ const ProductDetails = () => {
     // navigate("/cart");
 
     // Optional: Show a temporary confirmation message
-    alert("Item added to cart!");
   };
 
   return (

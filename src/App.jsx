@@ -11,11 +11,13 @@ import Registry from "./pages/Registry";
 import Cart from "./pages/Cart";
 import { CartProvider } from "./context/CartContext";
 import Checkout from "./pages/Checkout";
+import ScrollToTop from "./lib/ScrollToTop";
 
 function App() {
   return (
     <CartProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<Explore />} />
