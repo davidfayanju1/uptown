@@ -101,9 +101,9 @@ const Home = () => {
 
   return (
     <PrimaryLayout>
-      <div className="page-container bg-black overflow-hidden min-h-[calc(100vh-5rem)] relative">
+      <div className="page-container bg-black overflow-hidden md:min-h-[calc(100vh-5rem)] min-h-[calc(90vh-5rem)] relative">
         {/* Slider container with calc for viewport height minus footer */}
-        <div className="slider-container relative w-full h-[calc(100vh-5rem)] overflow-hidden">
+        <div className="slider-container relative w-full md:h-[calc(100vh-5rem)] h-[calc(90vh-5rem)] overflow-hidden">
           {slides.map((slide, index) => (
             <div
               key={index}
