@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { BsTrash } from "react-icons/bs";
 
@@ -46,6 +46,8 @@ const Cart = () => {
   const shipping = 4.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
+
+  const navigate = useNavigate();
 
   return (
     <PrimaryLayout>
@@ -223,7 +225,10 @@ const Cart = () => {
                     </span>
                   </div>
 
-                  <button className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-4 rounded-md font-medium hover:from-gray-800 hover:to-black transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                  <button
+                    onClick={() => navigate("/checkout")}
+                    className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-4 rounded-md font-medium hover:from-gray-800 hover:to-black transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                  >
                     Checkout · ${total.toFixed(2)}
                   </button>
 

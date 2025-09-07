@@ -10,6 +10,7 @@ import NotFoundPage from "./pages/404";
 import Registry from "./pages/Registry";
 import Cart from "./pages/Cart";
 import { CartProvider } from "./context/CartContext";
+import Checkout from "./pages/Checkout";
 
 function App() {
   return (
@@ -22,7 +23,7 @@ function App() {
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/cart" element={<Cart />} />
-
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/registry" element={<Registry />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/*" element={<NotFoundPage />} />
