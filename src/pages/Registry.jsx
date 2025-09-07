@@ -174,7 +174,8 @@ const Registry = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-xl md:text-2xl font-light max-w-2xl mx-auto mb-8"
           >
-            Every Uptown Exclusive is Archived, Authenticated and Remembered
+            Each item is archived with its digital twin, proving authenticity,
+            rarity, and rightful ownership forever.
           </motion.p>
 
           {/* Animated Serial Input Container */}
