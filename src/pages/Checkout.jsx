@@ -10,6 +10,7 @@ import {
   FiCheck,
   FiShoppingBag,
 } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 const Checkout = () => {
   const [activePayment, setActivePayment] = useState("google-pay");
@@ -24,6 +25,7 @@ const Checkout = () => {
     zipCode: "",
     country: "United States",
   });
+  const navigate = useNavigate();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -114,7 +116,10 @@ const Checkout = () => {
             and will be shipped soon.
           </p>
           <button
-            onClick={() => setOrderComplete(false)}
+            onClick={() => {
+              setOrderComplete(false);
+              navigate("/product");
+            }}
             className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors"
           >
             Continue Shopping
