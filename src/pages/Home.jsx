@@ -41,7 +41,7 @@ const Home = () => {
       buttonClass:
         "rounded-none text-white cursor-pointer w-[10rem] bg-transparent border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
       mediaType: "video",
-      mediaSrc: "/images/video2.mov",
+      mediaSrc: "/images/video3.mp4",
     },
   ];
 
