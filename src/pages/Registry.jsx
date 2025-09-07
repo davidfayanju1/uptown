@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiPlay,
@@ -11,7 +11,7 @@ import {
   FiX,
   FiSearch,
   FiCheckCircle,
-  FiArrowLeft, // Added for the back button
+  FiArrowLeft,
 } from "react-icons/fi";
 
 const Registry = () => {
@@ -23,6 +23,20 @@ const Registry = () => {
   const [verificationResult, setVerificationResult] = useState(null);
   const videoRef = useRef(null);
   const inputRef = useRef(null);
+
+  // Disable scrolling on mount and re-enable on unmount
+  useEffect(() => {
+    // Store original styles
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+
+    // Disable scrolling
+    document.body.style.overflow = "hidden";
+
+    // Re-enable scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = originalStyle;
+    };
+  }, []);
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -87,41 +101,18 @@ const Registry = () => {
     }
   };
 
-  // Function to handle back button click - you'll likely want to
-  // integrate this with your routing solution (e.g., react-router-dom's useNavigate)
   const handleGoBack = () => {
-    console.log("Go back clicked!");
-    // Example with window.history (for basic browser navigation)
     window.history.back();
   };
 
-  const benefits = [
-    {
-      title: "Exclusive Access",
-      description:
-        "Early access to limited edition collections and collaborations",
-    },
-    {
-      title: "Personalized Service",
-      description:
-        "Dedicated style consultants and personal shopping assistance",
-    },
-    {
-      title: "Members-only Events",
-      description:
-        "Invitations to fashion shows, previews, and exclusive gatherings",
-    },
-    {
-      title: "Priority Alterations",
-      description: "Complimentary tailoring and expedited alteration services",
-    },
-  ];
-
   return (
-    <div className="registry-page">
+    <div className="registry-page" style={{ overflow: "hidden" }}>
       {/* Hero Video Section */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
+      <section
+        className="relative h-screen flex items-center justify-center overflow-hidden"
+        style={{ overflow: "hidden" }}
+      >
+        <div className="absolute inset-0 z-0" style={{ overflow: "hidden" }}>
           <video
             ref={videoRef}
             autoPlay
@@ -129,6 +120,7 @@ const Registry = () => {
             loop
             playsInline
             className="w-full h-full object-cover"
+            style={{ overflow: "hidden" }}
           >
             <source src="/images/video2.mov" type="video/mp4" />
             Your browser does not support the video tag.
@@ -186,10 +178,7 @@ const Registry = () => {
           </motion.p>
 
           {/* Animated Serial Input Container */}
-          <motion.div
-            className="flex justify-center items-center"
-            layout // This enables layout animations
-          >
+          <motion.div className="flex justify-center items-center" layout>
             <AnimatePresence mode="wait">
               {!showSerialInput ? (
                 <motion.button
