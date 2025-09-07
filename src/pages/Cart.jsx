@@ -51,7 +51,7 @@ const Cart = () => {
 
   return (
     <PrimaryLayout>
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen mt-[5rem] bg-gray-50 py-8">
         <div className="container mx-auto md:px-4 px-2 max-w-6xl">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
 
