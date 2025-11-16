@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { UserContext } from "../context/userContext";
 
 const Otp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -8,6 +9,9 @@ const Otp = () => {
   const [error, setError] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [email, setEmail] = useState("");
+  const { user } = useContext(UserContext);
+
+  console.log(user?.email, "USer from context");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -88,7 +92,7 @@ const Otp = () => {
 
     try {
       const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email,
+        email: user?.email || email,
         token: otpString,
         type: "signup",
       });
@@ -99,8 +103,8 @@ const Otp = () => {
 
       if (data.user) {
         // Successful verification
-        alert("Email verified successfully! You can now sign in.");
-        navigate("/signin");
+        alert("Email verified successfully! Welcome to Uptown.!!");
+        navigate("/");
       }
     } catch (error) {
       console.error("OTP verification error:", error);
