@@ -303,11 +303,13 @@ const Nav = () => {
         <AnimatePresence>
           {showCartDropdown && (
             <motion.div
+              ref={dropdownRef}
               className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-80 rounded-md"
               variants={cartDropdownVariants}
               initial="hidden"
               animate="visible"
               exit="hidden"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
@@ -363,21 +365,28 @@ const Nav = () => {
 
                 {/* Account links */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  {accountLinks.map((link, index) => (
-                    <motion.div
-                      key={index}
-                      className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer"
-                      whileHover={{ x: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                      onClick={() => {
-                        navigate(link.url);
-                        setShowCartDropdown(false);
-                      }}
-                    >
-                      <span className="text-gray-600 mr-3">{link.icon}</span>
-                      <span className="text-gray-800 text-sm">{link.name}</span>
-                    </motion.div>
-                  ))}
+                  {/* Account links */}
+                  {/* Account links */}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    {accountLinks.map((link, index) => (
+                      <motion.button
+                        key={index}
+                        className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left"
+                        whileHover={{ x: 5 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          navigate(link.url);
+                          setShowCartDropdown(false);
+                        }}
+                      >
+                        <span className="text-gray-600 mr-3">{link.icon}</span>
+                        <span className="text-gray-800 text-sm">
+                          {link.name}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </motion.div>
