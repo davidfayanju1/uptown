@@ -12,26 +12,31 @@ import Cart from "./pages/Cart";
 import { CartProvider } from "./context/CartContext";
 import Checkout from "./pages/Checkout";
 import ScrollToTop from "./lib/ScrollToTop";
+import { UserProvider } from "./context/userContext";
+import Otp from "./pages/Otp";
 
 function App() {
   return (
-    <CartProvider>
-      <Router>
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/product" element={<Product />} />
-          <Route path="/signin" element={<Signin />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/registry" element={<Registry />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/*" element={<NotFoundPage />} />
-        </Routes>
-      </Router>
-    </CartProvider>
+    <UserProvider>
+      <CartProvider>
+        <Router>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/product" element={<Product />} />
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/registry" element={<Registry />} />
+            <Route path="/otp" element={<Otp />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/*" element={<NotFoundPage />} />
+          </Routes>
+        </Router>
+      </CartProvider>
+    </UserProvider>
   );
 }
 
