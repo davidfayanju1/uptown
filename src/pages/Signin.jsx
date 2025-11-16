@@ -74,7 +74,7 @@ const Signin = () => {
           Or{" "}
           <Link
             to="/signup"
-            className="font-medium text-black hover:text-gray-800 transition-colors duration-200"
+            className="font-medium underline text-black hover:text-gray-800 transition-colors duration-200"
           >
             create a new account
           </Link>
@@ -104,6 +104,7 @@ const Signin = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
+                  placeholder="Enter email..."
                   className={`appearance-none block w-full px-4 py-3 border ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
@@ -129,6 +130,7 @@ const Signin = () => {
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
+                  placeholder="Enter password..."
                   className={`appearance-none block w-full px-4 py-3 border ${
                     errors.password ? "border-red-500" : "border-gray-300"
                   } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
