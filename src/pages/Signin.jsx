@@ -74,7 +74,7 @@ const Signin = () => {
           Or{" "}
           <Link
             to="/signup"
-            className="font-medium underline text-blue-500 hover:text-gray-800 transition-colors duration-200"
+            className="font-medium underline text-blue-500 hover:text-blue-800 transition-colors duration-200"
           >
             create a new account
           </Link>
