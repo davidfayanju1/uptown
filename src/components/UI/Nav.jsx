@@ -27,6 +27,7 @@ const Nav = () => {
 
   // Check if we're on the home page
   const isHomePage = location.pathname === "/";
+  const logo = isHomePage ? "/images/logo4.png" : "/images/logo5.png";
 
   const currency = [
     { name: "Naira", icon: <TbCurrencyNaira /> },
@@ -188,11 +189,11 @@ const Nav = () => {
         {/* Desktop logo container */}
         <div className="title-container cursor-pointer md:block hidden">
           <div className="image-text-container flex items-center gap-2">
-            <Link to={"/"}>
+            <Link to={"/"} className="cursor-pointer mt-2">
               <img
-                src="/images/companylogo.png"
+                src={logo}
                 alt=""
-                className="md:w-[7rem] w-[8rem] h-[8rem] md:h-[7rem]"
+                className="md:w-[10rem] w-[8rem] h-[8rem] md:h-[15rem]"
               />
             </Link>
             <div className="flex-container md:flex hidden items-center gap-3">
