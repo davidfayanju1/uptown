@@ -1,13 +1,12 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { UserContext } from "../context/userContext";
-import { supabase } from "../lib/supabase";
 import { Eye, EyeOff } from "lucide-react"; // Import eye icons
+import api from "../lib/axios";
 
 const Signup = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -21,14 +20,23 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
-  const { setUser } = useContext(UserContext); // Get setUser from context
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+
+    // Map field names to match API schema
+    const apiFieldName =
+      name === "firstName"
+        ? "first_name"
+        : name === "lastName"
+        ? "last_name"
+        : name;
+
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [apiFieldName]: type === "checkbox" ? checked : value,
     }));
+
     // Clear errors when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
@@ -39,9 +47,10 @@ const Signup = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.firstName.trim())
+    if (!formData.first_name.trim())
       newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.last_name.trim())
+      newErrors.lastName = "Last name is required";
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -75,42 +84,83 @@ const Signup = () => {
     setServerError("");
 
     try {
-      // 1. Sign up with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Prepare data for API (only send fields that match schema)
+      const payload = {
         email: formData.email,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            newsletter_subscribed: formData.newsletter,
-          },
-          // Optional: Enable email confirmation
-          // emailRedirectTo: `${window.location.origin}/auth/callback`
-        },
-      });
+        // Add newsletter field if your API accepts it
+        // ...(formData.newsletter !== undefined && {
+        //   newsletter: formData.newsletter,
+        // }),
+      };
 
-      if (authError) {
-        throw new Error(authError.message);
-      }
+      // Make POST request to your API
+      const response = await api.post("/v1/auth/register", payload); // Adjust endpoint as needed
 
-      if (authData.user) {
-        // 2. Update user context
-        setUser(authData.user);
-
-        // 3. Show success message
+      // Check if the request was successful
+      if (response.status >= 200 && response.status < 300) {
+        // Show success message
         alert(
-          "Account created successfully! Please check your email for verification."
+          response.data?.message ||
+            "Account created successfully! Please check your email for verification."
         );
 
-        // 4. Redirect to home or verification page
-        navigate("/otp");
+        // Store user data if needed (adjust based on your API response)
+        if (response.data?.user || response.data?.token) {
+          // Store token in localStorage or context
+          localStorage.setItem("token", response.data.token || "");
+          localStorage.setItem(
+            "user",
+            JSON.stringify(response.data.user || {})
+          );
+        }
+
+        // Redirect to OTP page
+        navigate("/otp", {
+          state: {
+            email: formData.email,
+            userData: response.data.user || {},
+          },
+        });
       }
     } catch (error) {
-      console.log("Signup error:", error);
-      setServerError(
-        error.message || "An error occurred during signup. Please try again."
-      );
+      console.error("Signup error:", error);
+
+      // Handle different error scenarios
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        const { data, status } = error.response;
+
+        if (status === 400) {
+          // Bad request - validation errors
+          if (data.errors) {
+            setErrors(data.errors);
+          } else if (data.message) {
+            setServerError(data.message);
+          }
+        } else if (status === 409) {
+          // Conflict - email already exists
+          setServerError(
+            "Email already registered. Please use a different email or login."
+          );
+        } else if (status === 422) {
+          // Unprocessable entity - validation errors
+          setServerError(data.message || "Please check your input data.");
+        } else {
+          setServerError(
+            data.message || "An error occurred during signup. Please try again."
+          );
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        setServerError("Network error. Please check your internet connection.");
+      } else {
+        // Something happened in setting up the request
+        setServerError("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -147,13 +197,7 @@ const Signup = () => {
           {/* Server Error Message */}
           {serverError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">
-                {serverError.startsWith(
-                  "Password should contain at least one character of each"
-                )
-                  ? "Password must include uppercase, lowercase, number, and special character."
-                  : serverError}
-              </p>
+              <p className="text-sm text-red-600">{serverError}</p>
             </div>
           )}
 
@@ -172,7 +216,7 @@ const Signup = () => {
                     name="firstName"
                     type="text"
                     autoComplete="given-name"
-                    value={formData.firstName}
+                    value={formData.first_name}
                     onChange={handleChange}
                     placeholder="Enter Firstname"
                     className={`appearance-none block w-full px-4 py-3 border ${
@@ -200,7 +244,7 @@ const Signup = () => {
                     name="lastName"
                     type="text"
                     autoComplete="family-name"
-                    value={formData.lastName}
+                    value={formData.last_name}
                     onChange={handleChange}
                     placeholder="Enter Lastname"
                     className={`appearance-none block w-full px-4 py-3 border ${

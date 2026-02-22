@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { Link } from "react-router-dom";
+import api from "../lib/axios";
 
 const Product = () => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
@@ -56,6 +57,23 @@ const Product = () => {
       available: true, // Only this product is available
     },
   ];
+
+  const handleFetchProducts = async () => {
+    console.log("Fetching products...");
+
+    try {
+      console.log("Fetching products...(2)");
+
+      const response = await api.get("/v1/products");
+      console.log(response.data, "All products");
+    } catch (error) {
+      console.log(error, "fetching product error");
+    }
+  };
+
+  useEffect(() => {
+    handleFetchProducts();
+  }, []);
 
   // Toggle wishlist status for a product
   const toggleWishlist = (productId) => {

@@ -18,12 +18,12 @@ const Home = () => {
   const slides = [
     {
       title: "Premium Craftsmanship",
-      text: "A statement piece, not an everyday cap. Crafted with precision. Released in rarity.",
+      text: "A statement piece, experience Daily Project. Crafted with precision. Released in rarity.",
       buttonText: "Explore",
       buttonClass:
         "rounded-md text-white cursor-pointer w-[10rem] bg-transparent border-2 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
       mediaType: "image",
-      mediaSrc: "/images/hero5.jpg",
+      mediaSrc: "/images/hero5.jpeg",
     },
     {
       title: "Exclusive Designs",
@@ -118,6 +118,7 @@ const Home = () => {
                     src={slide.mediaSrc}
                     alt={slide.title}
                     className="w-full h-full object-cover"
+                    style={{ objectPosition: "center 30%" }}
                   />
                 ) : (
                   <video
@@ -145,7 +146,7 @@ const Home = () => {
                 <button
                   onClick={() =>
                     navigate(
-                      slide.buttonText === "Shop Now" ? "/product" : "/explore"
+                      slide.buttonText === "Shop Now" ? "/product" : "/explore",
                     )
                   }
                   className={
