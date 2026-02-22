@@ -18,7 +18,7 @@ const Home = () => {
   const slides = [
     {
       title: "Premium Craftsmanship",
-      text: "A statement piece, experience Daily Project. Crafted with precision. Released in rarity.",
+      text: "Discover the New Daily Project Collection",
       buttonText: "Explore",
       buttonClass:
         "rounded-md text-white cursor-pointer w-[10rem] bg-transparent border-2 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
