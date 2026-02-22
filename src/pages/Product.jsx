@@ -26,9 +26,9 @@ const Product = () => {
     },
     {
       id: 3,
-      name: "UPTOWN DAILY PROJECT BASEBALL CAP",
+      name: "DAILY PROJECT WORLDWIDE HOODIE ",
       img: "/images/Reality-2.png",
-      price: "$15.99",
+      price: "$44.99",
       colors: ["Navy", "Beige"],
       available: true, // Only this product is available
     },
