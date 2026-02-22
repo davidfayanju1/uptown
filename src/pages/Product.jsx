@@ -11,23 +11,23 @@ const Product = () => {
     {
       id: 1,
       name: "UPTOWN REINCARNATION TEE",
-      img: "/images/shirt1.png",
+      img: "/images/product_girl.png",
       price: "$24.99",
       colors: ["Black", "White", "Gray"],
       available: false, // Mark as sold out
     },
     {
       id: 2,
-      name: "UPTOWN NO DEFEAT TEE",
-      img: "/images/shirt2.png",
-      price: "$79.99",
+      name: "DAILY PROJECT FLAMING D-STAR FITTED CAP",
+      img: "/images/cap_2.png",
+      price: "$49.99",
       colors: ["Red", "Blue", "Green"],
       available: false, // Mark as sold out
     },
     {
       id: 3,
       name: "UPTOWN DAILY PROJECT BASEBALL CAP",
-      img: "/images/cap1.webp",
+      img: "/images/Reality-2.png",
       price: "$15.99",
       colors: ["Navy", "Beige"],
       available: true, // Only this product is available
