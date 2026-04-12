@@ -190,11 +190,7 @@ const Nav = () => {
         <div className="title-container cursor-pointer md:block hidden">
           <div className="image-text-container flex items-center gap-2">
             <Link to={"/"} className="cursor-pointer mt-2">
-              <img
-                src={logo}
-                alt=""
-                className="md:w-[10rem] w-[8rem] h-[8rem] md:h-[15rem]"
-              />
+              <img src={logo} alt="" className="w-[10rem] h-[15rem]" />
             </Link>
             <div className="flex-container md:flex hidden items-center gap-3">
               {links.map((item, index) => (
@@ -215,7 +211,7 @@ const Nav = () => {
           <button onClick={() => setOpenSidebar(true)}>
             <RxHamburgerMenu className={iconColor} size={27} />
           </button>
-          <img src={logo} alt="" className="w-[7rem] h-[9rem]" />
+          <img src={logo} alt="" className="w-[10rem] h-[15rem] ml-[3.5rem]" />
           <button onClick={() => setOpenSearch(true)}>
             <IoSearch className={iconColor} size={25} />
           </button>
@@ -362,8 +358,6 @@ const Nav = () => {
 
                 {/* Account links */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  {/* Account links */}
-                  {/* Account links */}
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     {accountLinks.map((link, index) => (
                       <motion.button
