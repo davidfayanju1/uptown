@@ -17,7 +17,7 @@ const Home = () => {
   // Slide data
   const slides = [
     {
-      title: "Premium Craftsmanship",
+      title: "Atelier Made",
       text: "Discover the New Daily Project Collection",
       buttonText: "Explore",
       buttonClass:
