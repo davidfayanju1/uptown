@@ -207,11 +207,11 @@ const Nav = () => {
         </div>
 
         {/* Mobile logo container */}
-        <div className="mobile-container md:hidden flex items-center justify-between w-full md:px-4 px-2">
+        <div className="mobile-container md:hidden flex items-center justify-between w-full px-2">
           <button onClick={() => setOpenSidebar(true)}>
             <RxHamburgerMenu className={iconColor} size={27} />
           </button>
-          <img src={logo} alt="" className="w-[10rem] h-[15rem] ml-[3.2rem]" />
+          <img src={logo} alt="" className="w-[10rem] mr-[-3rem] h-[15rem]" />
           <button onClick={() => setOpenSearch(true)}>
             <IoSearch className={iconColor} size={25} />
           </button>
