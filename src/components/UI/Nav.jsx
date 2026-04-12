@@ -211,7 +211,7 @@ const Nav = () => {
           <button onClick={() => setOpenSidebar(true)}>
             <RxHamburgerMenu className={iconColor} size={27} />
           </button>
-          <img src={logo} alt="" className="w-[10rem] h-[15rem] ml-[3.5rem]" />
+          <img src={logo} alt="" className="w-[10rem] h-[15rem] ml-[3.2rem]" />
           <button onClick={() => setOpenSearch(true)}>
             <IoSearch className={iconColor} size={25} />
           </button>
