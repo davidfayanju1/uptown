@@ -65,7 +65,7 @@ const Home = () => {
     }
 
     return () => clearInterval(progressInterval.current);
-  }, [isPlaying, slides.length, currentSlide]);
+  }, [isPlaying, slides, currentSlide]);
 
   // Handle video playback
   useEffect(() => {

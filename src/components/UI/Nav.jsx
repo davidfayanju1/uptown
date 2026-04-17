@@ -16,7 +16,7 @@ import { ShoppingCartIcon } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
 const Nav = () => {
-  const [toggle, setToggle] = useState(false);
+  // const [toggle, setToggle] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
@@ -29,17 +29,17 @@ const Nav = () => {
   const isHomePage = location.pathname === "/";
   const logo = isHomePage ? "/images/logo4.png" : "/images/logo5.png";
 
-  const currency = [
-    { name: "Naira", icon: <TbCurrencyNaira /> },
-    { name: "Dollar", icon: <FaDollarSign /> },
-    { name: "Pounds", icon: <FaPoundSign /> },
-    { name: "Euros", icon: <MdOutlineEuroSymbol /> },
-  ];
+  // const currency = [
+  //   { name: "Naira", icon: <TbCurrencyNaira /> },
+  //   { name: "Dollar", icon: <FaDollarSign /> },
+  //   { name: "Pounds", icon: <FaPoundSign /> },
+  //   { name: "Euros", icon: <MdOutlineEuroSymbol /> },
+  // ];
 
-  const [input, setInput] = useState({
-    name: "Naira",
-    icon: <TbCurrencyNaira />,
-  });
+  // const [input, setInput] = useState({
+  //   name: "Naira",
+  //   icon: <TbCurrencyNaira />,
+  // });
 
   const links = [
     {
@@ -50,17 +50,17 @@ const Nav = () => {
       name: "REGISTRY",
       url: "/registry",
     },
-    {
-      name: "SUPPORT",
-      url: "/support",
-    },
+    // {
+    //   name: "SUPPORT",
+    //   url: "/support",
+    // },
   ];
 
   const menuItems = [
     { name: "Home", url: "/" },
     { name: "Shop", url: "/product" },
     { name: "Registry", url: "/registry" },
-    { name: "Support", url: "/" },
+    // { name: "Support", url: "/" },
   ];
 
   const quickLinks = [
@@ -115,26 +115,26 @@ const Nav = () => {
     },
   };
 
-  const searchSidebarVariants = {
-    hidden: { y: -20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 15,
-      },
-    },
-    exit: {
-      y: -20,
-      opacity: 0,
-      transition: {
-        ease: "easeInOut",
-        duration: 0.2,
-      },
-    },
-  };
+  // const searchSidebarVariants = {
+  //   hidden: { y: -20, opacity: 0 },
+  //   visible: {
+  //     y: 0,
+  //     opacity: 1,
+  //     transition: {
+  //       type: "spring",
+  //       stiffness: 100,
+  //       damping: 15,
+  //     },
+  //   },
+  //   exit: {
+  //     y: -20,
+  //     opacity: 0,
+  //     transition: {
+  //       ease: "easeInOut",
+  //       duration: 0.2,
+  //     },
+  //   },
+  // };
 
   const menuItemVariants = {
     hidden: { x: -50, opacity: 0 },
@@ -219,10 +219,10 @@ const Nav = () => {
 
         {/* Desktop Navigation */}
         <div
-          className="nav-link flex items-center relative gap-2"
+          className="nav-link md:w-[30%] flex items-center md:justify-between relative gap-2"
           ref={dropdownRef}
         >
-          <div className="dropdown-container md:block hidden">
+          {/* <div className="dropdown-container md:block hidden">
             <button
               onClick={() => setToggle(!toggle)}
               className={`dropdown-component hover:bg-white/40 py-2 flex items-center px-2 gap-2 rounded-[7px] ${textColor}`}
@@ -257,10 +257,10 @@ const Nav = () => {
                 ))}
               </motion.div>
             )}
-          </div>
+          </div> */}
 
           <div
-            className={`input-container gap-3 py-2 rounded-full ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer`}
+            className={`input-container md:w-[90%] gap-3 py-2 rounded-full ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm`}
           >
             <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full ">
               <IoSearch className={iconColor} />
@@ -268,7 +268,7 @@ const Nav = () => {
             <input
               type="text"
               placeholder="Search..."
-              className={`placeholder:!text-[.7rem] outline-none border-none ${inputText} ${inputPlaceholder}`}
+              className={`placeholder:!text-[.7rem] w-full outline-none border-none ${inputText} ${inputPlaceholder}`}
             />
           </div>
 
