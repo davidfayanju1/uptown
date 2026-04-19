@@ -14,27 +14,31 @@ import Checkout from "./pages/Checkout";
 import ScrollToTop from "./lib/ScrollToTop";
 import { UserProvider } from "./context/userContext";
 import Otp from "./pages/Otp";
+import { queryClient } from "./lib/query-client";
+import { QueryClientProvider } from "@tanstack/react-query";
 
 function App() {
   return (
     <UserProvider>
       <CartProvider>
-        <Router>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/explore" element={<Explore />} />
-            <Route path="/product" element={<Product />} />
-            <Route path="/signin" element={<Signin />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/registry" element={<Registry />} />
-            <Route path="/otp" element={<Otp />} />
-            <Route path="/product/:id" element={<ProductDetails />} />
-            <Route path="/*" element={<NotFoundPage />} />
-          </Routes>
-        </Router>
+        <QueryClientProvider client={queryClient}>
+          <Router>
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/explore" element={<Explore />} />
+              <Route path="/product" element={<Product />} />
+              <Route path="/signin" element={<Signin />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/registry" element={<Registry />} />
+              <Route path="/otp" element={<Otp />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/*" element={<NotFoundPage />} />
+            </Routes>
+          </Router>
+        </QueryClientProvider>
       </CartProvider>
     </UserProvider>
   );

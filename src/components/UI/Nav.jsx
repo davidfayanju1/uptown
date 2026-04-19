@@ -192,12 +192,12 @@ const Nav = () => {
             <Link to={"/"} className="cursor-pointer mt-2">
               <img src={logo} alt="" className="w-[10rem] h-[15rem]" />
             </Link>
-            <div className="flex-container md:flex hidden items-center gap-3">
+            <div className="flex-container md:flex hidden items-center gap-4">
               {links.map((item, index) => (
                 <small
                   onClick={() => navigate(item?.url)}
                   key={index}
-                  className={`block cursor-pointer font-semibold text-[.65rem] mt-[.7rem] ${textColor}`}
+                  className={`block cursor-pointer font-[400] text-[.8rem] mt-[.7rem] ${textColor}`}
                 >
                   {item.name}
                 </small>

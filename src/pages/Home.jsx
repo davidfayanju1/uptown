@@ -21,7 +21,7 @@ const Home = () => {
       text: "Discover the New Daily Project Collection",
       buttonText: "Explore",
       buttonClass:
-        "rounded-md text-white cursor-pointer w-[10rem] bg-transparent border-2 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
+        "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
       mediaType: "image",
       mediaSrc: "/images/hero5.jpeg",
     },
@@ -30,7 +30,7 @@ const Home = () => {
       text: "Limited edition headwear for the discerning collector. Each piece tells a story.",
       buttonText: "Discover",
       buttonClass:
-        "rounded-md text-white cursor-pointer w-[10rem] bg-transparent border-2 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
+        "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
       mediaType: "video",
       mediaSrc: "/images/video.mp4",
     },
@@ -137,10 +137,10 @@ const Home = () => {
 
               {/* Text overlay */}
               <div className="text-container absolute inset-0 bg-black/40 h-full w-full flex flex-col items-center justify-center px-4">
-                <h2 className="text-white md:text-5xl text-3xl font-bold mb-4 text-center animate-fade-in">
+                <h1 className="text-white  md:text-6xl text-3xl font-semibold mb-4 text-center animate-fade-in">
                   {slide.title}
-                </h2>
-                <p className="block md:text-xl text-lg mx-auto text-center md:w-[50%] w-full text-white mb-8 animate-fade-in-delayed">
+                </h1>
+                <p className="block max-w-[400px] text-md font-[300] text-lg mx-auto text-center md:w-[50%] w-full text-white mb-8 animate-fade-in-delayed">
                   {slide.text}
                 </p>
                 <button
