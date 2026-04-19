@@ -346,16 +346,8 @@ const ProductDetails = () => {
                     return (
                       <div key={color} className="relative">
                         <button
-                          className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
-                            isSelected
-                              ? "border-black ring-2 ring-offset-2 ring-black"
-                              : "border-gray-200"
-                          } ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all  ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                           style={{ backgroundColor: color.toLowerCase() }}
-                          onClick={() =>
-                            !isOutOfStock && handleColorSelect(color)
-                          }
-                          disabled={isOutOfStock}
                           title={isOutOfStock ? "Out of stock" : color}
                         />
                         <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 whitespace-nowrap">

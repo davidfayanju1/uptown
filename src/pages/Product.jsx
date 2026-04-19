@@ -188,11 +188,11 @@ const Product = () => {
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
                 {products.map((product) => (
                   <div key={product.id} className="group relative w-full">
-                    <div className="h-[13.5rem] md:h-[17.5rem] w-full overflow-hidden bg-[#F7F7F7] flex items-center justify-center p-4 relative">
+                    <div className="h-[13.5rem] md:h-[17.5rem] w-full overflow-hidden bg-[#F7F7F7] flex items-center justify-center relative">
                       <img
                         src={product.img}
                         alt={product.name}
-                        className="max-h-full max-w-full object-contain"
+                        className="h-full w-full object-cover"
                         loading="lazy"
                       />
 
