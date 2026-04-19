@@ -91,9 +91,7 @@ const ProductDetails = () => {
       const response = await api.get(`/v1/products/${id}`);
       return response.data;
     },
-    staleTime: 1000 * 60 * 5,
     enabled: !!id,
-    retry: 1,
   });
 
   const productData = response?.data?.product;
@@ -105,7 +103,6 @@ const ProductDetails = () => {
         name: productData.title,
         description: productData.description,
         details: productData.details || [],
-        images: productData.images || [],
         variants: variants,
       }
     : null;
@@ -147,11 +144,11 @@ const ProductDetails = () => {
     return "USD";
   };
 
+  // FIXED: Build image list - ONLY from variants, NO product images
   const getAllImages = () => {
-    const variantImages = selectedVariant?.images || [];
-    const productImages = product?.images || [];
+    const variantImages = variants.flatMap((v) => v.images || []);
     const seen = new Set();
-    return [...variantImages, ...productImages].filter((img) => {
+    return variantImages.filter((img) => {
       if (!img || seen.has(img)) return false;
       seen.add(img);
       return true;
@@ -159,20 +156,34 @@ const ProductDetails = () => {
   };
 
   const allImages = getAllImages();
-  const currentImage = activeImage || allImages[0] || "/images/placeholder.png";
+
+  // FIXED: Current image logic - strictly from variants
+  const getCurrentImage = () => {
+    if (activeImage) return activeImage;
+    if (selectedVariant?.images?.[0]) return selectedVariant.images[0];
+    return allImages[0] || "/images/placeholder.png";
+  };
+
+  const currentImage = getCurrentImage();
 
   const handleColorSelect = (color) => {
     setSelectedColor(color);
+    // Find the variant for this color
     const variant = variants.find((v) => v.color === color);
-    const firstImage = variant?.images?.[0] || product?.images?.[0] || null;
-    setActiveImage(firstImage);
+    // Set the active image to this variant's first image
+    if (variant?.images?.[0]) {
+      setActiveImage(variant.images[0]);
+    }
   };
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
+    // Find the variant for this size
     const variant = variants.find((v) => v.size === size);
-    const firstImage = variant?.images?.[0] || product?.images?.[0] || null;
-    setActiveImage(firstImage);
+    // Set the active image to this variant's first image
+    if (variant?.images?.[0]) {
+      setActiveImage(variant.images[0]);
+    }
   };
 
   // Auto-select first color and size when data loads
@@ -191,13 +202,9 @@ const ProductDetails = () => {
       setSelectedSize(size);
     }
 
-    if (!activeImage) {
-      const initialVariant =
-        variants.find((v) => v.color === color && v.size === size) ||
-        variants[0];
-      const firstImage =
-        initialVariant?.images?.[0] || product?.images?.[0] || null;
-      setActiveImage(firstImage);
+    // Set initial active image from the first variant's first image
+    if (!activeImage && variants[0]?.images?.[0]) {
+      setActiveImage(variants[0].images[0]);
     }
   }, [variants]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -280,24 +287,10 @@ const ProductDetails = () => {
   return (
     <PrimaryLayout>
       <div className="max-w-7xl mt-[5rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/*
-          KEY FIX: The outer wrapper must use `items-start` so both columns
-          size to their own content rather than stretching to match each other.
-          Without `items-start`, the left column becomes as tall as the right
-          column, giving `sticky` nothing to scroll against — it just sits at
-          the top of an equally-tall sibling and never sticks.
-        */}
         <div className="flex flex-col lg:flex-row lg:items-start gap-8">
-          {/*
-            LEFT COLUMN — image gallery.
-            `sticky` + `top-[5.5rem]` makes it lock below the navbar as the
-            right column scrolls past it. No JS needed.
-            `self-start` is a belt-and-suspenders reinforcement of items-start
-            on this specific child in case the parent ever changes.
-          */}
+          {/* LEFT COLUMN - Image Gallery */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
-            {/* Main image */}
-            <div className="mb-4 h-96 sm:h-[500px] overflow-hidden rounded-lg bg-gray-900">
+            <div className="mb-4 h-96 sm:h-[500px] overflow-hidden rounded-lg bg-gray-100">
               <img
                 key={currentImage}
                 src={currentImage}
@@ -306,7 +299,6 @@ const ProductDetails = () => {
               />
             </div>
 
-            {/* Thumbnails */}
             {allImages.length > 1 && (
               <div className="flex gap-4 mt-4 overflow-x-auto pb-2">
                 {allImages.map((img, index) => (
@@ -328,7 +320,7 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* RIGHT COLUMN — product details, scrolls normally */}
+          {/* RIGHT COLUMN — product details */}
           <div className="lg:w-1/2">
             <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
             <p className="text-2xl font-semibold text-gray-900 mt-2">
@@ -337,8 +329,8 @@ const ProductDetails = () => {
             </p>
 
             <div className="mt-6">
-              <h2 className="text-lg font-[400] text-gray-900">Description</h2>
-              <p className="text-sm text-gray-400">{product.description}</p>
+              <h2 className="text-sm font-[500] text-gray-900">Description</h2>
+              <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
             {/* Color Selection */}
@@ -354,8 +346,10 @@ const ProductDetails = () => {
                     return (
                       <div key={color} className="relative">
                         <button
-                          className={`w-10 h-10 rounded-full border-1 border-gray-200 flex items-center justify-center transition-all ${
-                            isSelected ? "border-gray-200" : "border-gray-200"
+                          className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${
+                            isSelected
+                              ? "border-black ring-2 ring-offset-2 ring-black"
+                              : "border-gray-200"
                           } ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                           style={{ backgroundColor: color.toLowerCase() }}
                           onClick={() =>
