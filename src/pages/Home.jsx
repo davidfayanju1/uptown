@@ -23,7 +23,7 @@ const Home = () => {
       buttonClass:
         "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
       mediaType: "image",
-      mediaSrc: "/images/hero5.jpeg",
+      mediaSrc: "/images/hero_2.PNG",
     },
     {
       title: "Exclusive Designs",
@@ -118,7 +118,7 @@ const Home = () => {
                     src={slide.mediaSrc}
                     alt={slide.title}
                     className="w-full h-full object-cover"
-                    style={{ objectPosition: "center 30%" }}
+                    style={{ objectPosition: "center 50%" }}
                   />
                 ) : (
                   <video
