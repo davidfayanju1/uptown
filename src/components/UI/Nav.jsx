@@ -33,6 +33,12 @@ const Nav = () => {
   const isHomePage = location.pathname === "/";
   const logo = isHomePage ? "/images/logo4.png" : "/images/logo5.png";
 
+  // Determine icon color based on page and scroll state
+  const getIconColor = () => {
+    if (isHomePage) return "#F1F1F1F1"; // gray-300
+    return "#1f2937"; // gray-800
+  };
+
   const links = [
     { name: "SHOP", url: "/product" },
     { name: "REGISTRY", url: "/registry" },
@@ -167,6 +173,7 @@ const Nav = () => {
   // Determine text color based on page
   const textColor = isHomePage ? "text-gray-300" : "text-gray-800";
   const iconColor = isHomePage ? "text-gray-300" : "text-gray-800";
+  const iconColorValue = getIconColor();
   const inputBg = isHomePage ? "bg-gray-300/30" : "bg-gray-100";
   const inputText = isHomePage ? "text-gray-500" : "text-gray-800";
   const inputPlaceholder = isHomePage
@@ -205,7 +212,15 @@ const Nav = () => {
           </button>
           <img src={logo} alt="" className="w-[10rem] mr-[-1.5rem] h-[15rem]" />
           <button onClick={() => setOpenSearch(true)}>
-            <IoSearch className={iconColor} size={25} />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="25"
+              height="25"
+              fill={iconColorValue}
+              viewBox="0 0 256 256"
+            >
+              <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+            </svg>
           </button>
         </div>
 
@@ -218,7 +233,15 @@ const Nav = () => {
             className={`input-container md:w-[90%] gap-3 py-2 ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm`}
           >
             <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full ">
-              <IoSearch className={iconColor} />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                fill={iconColorValue}
+                viewBox="0 0 256 256"
+              >
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+              </svg>
             </button>
             <input
               type="text"
@@ -232,7 +255,15 @@ const Nav = () => {
               onClick={handleCartClick}
               className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative"
             >
-              <ShoppingCartIcon className={iconColor} />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="25"
+                height="25"
+                fill={iconColorValue}
+                viewBox="0 0 256 256"
+              >
+                <path d="M104,216a16,16,0,1,1-16-16A16,16,0,0,1,104,216Zm88-16a16,16,0,1,0,16,16A16,16,0,0,0,192,200ZM239.71,74.14l-25.64,92.28A24.06,24.06,0,0,1,191,184H92.16A24.06,24.06,0,0,1,69,166.42L33.92,40H16a8,8,0,0,1,0-16H40a8,8,0,0,1,7.71,5.86L57.19,64H232a8,8,0,0,1,7.71,10.14ZM221.47,80H61.64l22.81,82.14A8,8,0,0,0,92.16,168H191a8,8,0,0,0,7.71-5.86Z" />
+              </svg>
               {/* Cart Count Badge */}
               {cartCount > 0 && (
                 <span
@@ -278,7 +309,6 @@ const Nav = () => {
                     <p className="text-gray-600 mt-3">Loading cart...</p>
                   </div>
                 ) : cartCount === 0 ? (
-                  // Empty cart message
                   <div className="text-center py-6">
                     <ShoppingCartIcon
                       className="mx-auto text-gray-400 mb-3"
@@ -296,7 +326,6 @@ const Nav = () => {
                     </button>
                   </div>
                 ) : (
-                  // Cart has items
                   <div>
                     <div className="mb-4">
                       <p className="text-sm text-gray-600">
@@ -305,13 +334,15 @@ const Nav = () => {
                       </p>
                     </div>
 
-                    {/* Cart Items Preview */}
                     <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                       {cartItems.slice(0, 3).map((item) => (
                         <div
                           key={item.id}
-                          className="flex gap-3 pb-3 border-b border-gray-100"
-                          onClick={() => navigate(`/product/${item?.id}`)}
+                          className="flex gap-3 pb-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                          onClick={() => {
+                            navigate(`/product/${item?.product_id}`);
+                            setShowCartDropdown(false);
+                          }}
                         >
                           <img
                             src={getProductImage(item)}
@@ -355,7 +386,6 @@ const Nav = () => {
                   </div>
                 )}
 
-                {/* Account links */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   {accountLinks.map((link, index) => (
                     <motion.button
@@ -442,7 +472,6 @@ const Nav = () => {
                 </button>
               </div>
 
-              {/* Search input with bottom border only */}
               <div className="relative mb-10">
                 <input
                   type="text"
@@ -455,7 +484,6 @@ const Nav = () => {
                 </button>
               </div>
 
-              {/* Quick Links Section */}
               <div className="mt-8">
                 <h3 className="text-sm font-semibold text-gray-500 mb-4">
                   QUICK LINKS

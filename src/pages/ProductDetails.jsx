@@ -291,8 +291,8 @@ const ProductDetails = () => {
 
   return (
     <PrimaryLayout>
-      <div className="max-w-7xl mt-[5rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-4">
+      <div className="max-w-7xl md:mt-[5rem] mt-[4rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-0">
           {/* LEFT COLUMN - Image Gallery */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
             <div className="mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100">
@@ -327,21 +327,23 @@ const ProductDetails = () => {
 
           {/* RIGHT COLUMN — product details */}
           <div className="lg:w-1/2">
-            <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
-            <p className="text-2xl font-semibold text-gray-900 mt-2">
+            <h1 className="md:text-3xl leading-[22px] text-xl font-bold text-gray-900">
+              {product.name}
+            </h1>
+            <p className="md:text-2xl text-lg font-semibold text-gray-900 mt-2">
               {currency === "GBP" ? "£" : "$"}
               {currentPrice}
             </p>
 
-            <div className="mt-6">
+            <div className="md:mt-6 mt-3">
               <h2 className="text-sm font-[500] text-gray-900">Description</h2>
               <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
             {/* Color Selection */}
             {uniqueColors.length > 0 && (
-              <div className="mt-8">
-                <h2 className="text-sm font-medium text-gray-900">Color</h2>
+              <div className="md:mt-8 mt-5">
+                <h2 className="text-sm font-medium text-gray-900">Colors</h2>
                 <div className="flex mt-2 flex-wrap gap-3">
                   {uniqueColors.map((color) => {
                     const variant = variants.find((v) => v.color === color);
@@ -352,7 +354,7 @@ const ProductDetails = () => {
                       <div key={color} className="relative">
                         <button
                           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all  ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${
-                            isSelected ? "ring-2 ring-offset-2 ring-black" : ""
+                            isSelected ? "" : ""
                           }`}
                           style={{ backgroundColor: color.toLowerCase() }}
                           title={isOutOfStock ? "Out of stock" : color}

@@ -17,6 +17,7 @@
     "axios": "^1.13.2",
     "framer-motion": "^12.12.1",
     "lucide-react": "^0.542.0",
+    "phosphor-react": "^1.4.1",
     "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
