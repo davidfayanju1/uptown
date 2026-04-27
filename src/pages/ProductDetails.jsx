@@ -309,7 +309,7 @@ const ProductDetails = () => {
                 {allImages.map((img, index) => (
                   <div
                     key={index}
-                    className={`h-20 w-20 flex-shrink-0 cursor-pointer border-2 rounded-lg overflow-hidden transition-all duration-200 ${
+                    className={`h-20 w-20 flex-shrink-0 cursor-pointer border-2 overflow-hidden transition-all duration-200 ${
                       currentImage === img ? "border-black" : "border-gray-200"
                     }`}
                     onClick={() => setActiveImage(img)}
