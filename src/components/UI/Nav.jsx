@@ -215,7 +215,7 @@ const Nav = () => {
           ref={dropdownRef}
         >
           <div
-            className={`input-container md:w-[90%] gap-3 py-2 rounded-full ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm`}
+            className={`input-container md:w-[90%] gap-3 py-2 ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm`}
           >
             <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full ">
               <IoSearch className={iconColor} />
@@ -311,11 +311,12 @@ const Nav = () => {
                         <div
                           key={item.id}
                           className="flex gap-3 pb-3 border-b border-gray-100"
+                          onClick={() => navigate(`/product/${item?.id}`)}
                         >
                           <img
                             src={getProductImage(item)}
                             alt={item.product_title || "Product"}
-                            className="w-12 h-12 object-cover rounded"
+                            className="w-12 h-12 object-cover"
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-800 truncate">
@@ -347,7 +348,7 @@ const Nav = () => {
                         navigate("/cart");
                         setShowCartDropdown(false);
                       }}
-                      className="w-full bg-black text-white py-3 px-4 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
+                      className="w-full bg-black text-white py-3 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
                     >
                       View Cart & Checkout
                     </button>

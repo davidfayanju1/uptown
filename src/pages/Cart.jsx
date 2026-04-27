@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { BsTrash } from "react-icons/bs";
@@ -6,6 +6,7 @@ import { useCart } from "../hooks/useCart";
 
 const Cart = () => {
   const navigate = useNavigate();
+  const [deletingItemId, setDeletingItemId] = useState(null);
   const {
     cartItems,
     isLoading,
@@ -43,10 +44,10 @@ const Cart = () => {
     updateCartItem({ itemId, quantity: newQuantity });
   };
 
-  const handleRemoveItem = (itemId) => {
-    if (window.confirm("Are you sure you want to remove this item?")) {
-      removeCartItem({ itemId });
-    }
+  const handleRemoveItem = async (itemId) => {
+    setDeletingItemId(itemId);
+    await removeCartItem({ itemId });
+    setDeletingItemId(null);
   };
 
   // Loading state
@@ -90,6 +91,14 @@ const Cart = () => {
 
   return (
     <PrimaryLayout>
+      <style>
+        {`
+          .delete-btn:hover {
+            background-color: #fee2e2;
+            transform: scale(1.1);
+          }
+        `}
+      </style>
       <div className="min-h-screen mt-[5rem] bg-gray-50 py-8">
         <div className="container mx-auto md:px-4 px-2 max-w-6xl">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
@@ -122,6 +131,7 @@ const Cart = () => {
                     const itemTotal = itemPrice * item.quantity;
                     const productImage = getProductImage(item);
                     const isMutating = isUpdatingCart || isRemovingFromCart;
+                    const isCurrentItemDeleting = deletingItemId === item.id;
 
                     return (
                       <div
@@ -191,9 +201,13 @@ const Cart = () => {
                                 <button
                                   onClick={() => handleRemoveItem(item.id)}
                                   disabled={isMutating}
-                                  className="transition-colors disabled:opacity-50"
+                                  className="delete-btn transition-all duration-200 rounded-full p-1 flex items-center justify-center w-8 h-8 disabled:opacity-50"
                                 >
-                                  <BsTrash color="red" size={16} />
+                                  {isCurrentItemDeleting ? (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
+                                  ) : (
+                                    <BsTrash color="red" size={16} />
+                                  )}
                                 </button>
                               </div>
                             </div>
@@ -233,9 +247,13 @@ const Cart = () => {
                           <button
                             onClick={() => handleRemoveItem(item.id)}
                             disabled={isMutating}
-                            className="ml-4 cursor-pointer transition-colors disabled:opacity-50"
+                            className="delete-btn ml-4 transition-all duration-200 rounded-full p-2 flex items-center justify-center disabled:opacity-50"
                           >
-                            <BsTrash color="red" />
+                            {isCurrentItemDeleting ? (
+                              <div className="animate-spin rounded-full h-5 w-5 border-2 border-red-500 border-t-transparent"></div>
+                            ) : (
+                              <BsTrash color="red" size={18} />
+                            )}
                           </button>
                         </div>
 

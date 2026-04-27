@@ -295,7 +295,7 @@ const ProductDetails = () => {
         <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-4">
           {/* LEFT COLUMN - Image Gallery */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
-            <div className="mb-4 h-96 sm:h-[500px] overflow-hidden rounded-lg bg-gray-100">
+            <div className="mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100">
               <img
                 key={currentImage}
                 src={currentImage}
@@ -381,9 +381,9 @@ const ProductDetails = () => {
                     return (
                       <button
                         key={size}
-                        className={`border rounded-md py-3 px-4 text-sm font-medium transition-all ${
+                        className={`border py-3 px-4 text-sm font-normal transition-all ${
                           isSelected
-                            ? "border-black bg-black text-white"
+                            ? "border-black bg-transparent text-black"
                             : isOutOfStock
                               ? "border-gray-200 text-gray-400 cursor-not-allowed"
                               : "border-gray-200 hover:border-gray-400"
@@ -403,7 +403,7 @@ const ProductDetails = () => {
             <button
               onClick={handleAddToCart}
               // disabled={!isVariantInStock || isAddingToCart}
-              className={`mt-10 w-full rounded-md py-3 px-8 flex items-center justify-center text-base font-medium transition-all ${
+              className={`mt-10 w-full py-3 px-8 flex items-center justify-center text-[15px] font-normal transition-all ${
                 isVariantInStock && !isAddingToCart
                   ? "bg-black text-white hover:bg-gray-800"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -443,7 +443,7 @@ const ProductDetails = () => {
             {/* Cart Message */}
             {cartMessage && (
               <div
-                className={`mt-4 p-3 rounded-md text-sm text-center ${
+                className={`mt-4 p-3 text-sm text-center ${
                   cartMessage.type === "success"
                     ? "bg-green-50 text-green-700 border border-green-200"
                     : "bg-red-50 text-red-700 border border-red-200"
