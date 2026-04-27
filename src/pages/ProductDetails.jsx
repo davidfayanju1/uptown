@@ -168,15 +168,15 @@ const ProductDetails = () => {
 
   const currentImage = getCurrentImage();
 
-  const handleColorSelect = (color) => {
-    setSelectedColor(color);
-    // Find the variant for this color
-    const variant = variants.find((v) => v.color === color);
-    // Set the active image to this variant's first image
-    if (variant?.images?.[0]) {
-      setActiveImage(variant.images[0]);
-    }
-  };
+  // const handleColorSelect = (color) => {
+  //   setSelectedColor(color);
+  //   // Find the variant for this color
+  //   const variant = variants.find((v) => v.color === color);
+  //   // Set the active image to this variant's first image
+  //   if (variant?.images?.[0]) {
+  //     setActiveImage(variant.images[0]);
+  //   }
+  // };
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);

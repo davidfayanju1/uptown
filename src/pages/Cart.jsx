@@ -1,51 +1,21 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { BsTrash } from "react-icons/bs";
-import api from "../lib/axios";
+import { useCart } from "../hooks/useCart";
 
 const Cart = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
-  // Fetch cart data
   const {
-    data: cartData,
+    cartItems,
     isLoading,
     error,
-    refetch,
-  } = useQuery({
-    queryKey: ["cart"],
-    queryFn: async () => {
-      const response = await api.get("/v1/cart");
-      return response.data.data;
-    },
-  });
-
-  // Update quantity mutation
-  const updateQuantityMutation = useMutation({
-    mutationFn: async ({ itemId, quantity }) => {
-      const response = await api.put(`/v1/cart/items/${itemId}`, { quantity });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-    },
-  });
-
-  // Remove item mutation
-  const removeItemMutation = useMutation({
-    mutationFn: async ({ itemId }) => {
-      const response = await api.delete(`/v1/cart/items/${itemId}`);
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-    },
-  });
-
-  const cartItems = cartData?.items || [];
+    refetchCart,
+    updateCartItem,
+    isUpdatingCart,
+    removeCartItem,
+    isRemovingFromCart,
+  } = useCart();
 
   // Calculate totals - all in GBP
   const subtotal = cartItems.reduce(
@@ -66,6 +36,17 @@ const Cart = () => {
       return item.product_images[0];
     }
     return "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
+  };
+
+  const handleUpdateQuantity = (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
+    updateCartItem({ itemId, quantity: newQuantity });
+  };
+
+  const handleRemoveItem = (itemId) => {
+    if (window.confirm("Are you sure you want to remove this item?")) {
+      removeCartItem({ itemId });
+    }
   };
 
   // Loading state
@@ -95,7 +76,7 @@ const Cart = () => {
               <div className="text-6xl mb-4">⚠️</div>
               <p className="text-gray-600 mb-4">Failed to load your cart</p>
               <button
-                onClick={() => refetch()}
+                onClick={() => refetchCart()}
                 className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
               >
                 Try Again
@@ -140,6 +121,7 @@ const Cart = () => {
                     const itemPrice = item.unit_price_snapshot_cents / 100;
                     const itemTotal = itemPrice * item.quantity;
                     const productImage = getProductImage(item);
+                    const isMutating = isUpdatingCart || isRemovingFromCart;
 
                     return (
                       <div
@@ -179,11 +161,14 @@ const Cart = () => {
                               <div className="flex items-center gap-4">
                                 <div className="flex items-center rounded-md">
                                   <button
-                                    // onClick={() =>
-                                    //   updateQuantity(item.id, item.quantity - 1)
-                                    // }
-                                    disabled={updateQuantityMutation.isPending}
-                                    className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        item.id,
+                                        item.quantity - 1,
+                                      )
+                                    }
+                                    disabled={isMutating}
+                                    className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
                                   >
                                     −
                                   </button>
@@ -191,19 +176,22 @@ const Cart = () => {
                                     {item.quantity}
                                   </span>
                                   <button
-                                    // onClick={() =>
-                                    //   updateQuantity(item.id, item.quantity + 1)
-                                    // }
-                                    disabled={updateQuantityMutation.isPending}
-                                    className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                                    onClick={() =>
+                                      handleUpdateQuantity(
+                                        item.id,
+                                        item.quantity + 1,
+                                      )
+                                    }
+                                    disabled={isMutating}
+                                    className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
                                   >
                                     +
                                   </button>
                                 </div>
                                 <button
-                                  // onClick={() => removeItem(item.id)}
-                                  disabled={removeItemMutation.isPending}
-                                  className="transition-colors"
+                                  onClick={() => handleRemoveItem(item.id)}
+                                  disabled={isMutating}
+                                  className="transition-colors disabled:opacity-50"
                                 >
                                   <BsTrash color="red" size={16} />
                                 </button>
@@ -221,11 +209,11 @@ const Cart = () => {
                         <div className="hidden md:flex md:col-span-3 items-center">
                           <div className="flex items-center border rounded-md">
                             <button
-                              // onClick={() =>
-                              //   updateQuantity(item.id, item.quantity - 1)
-                              // }
-                              disabled={updateQuantityMutation.isPending}
-                              className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity - 1)
+                              }
+                              disabled={isMutating}
+                              className="px-3 py-1 cursor-pointer text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
                             >
                               −
                             </button>
@@ -233,19 +221,19 @@ const Cart = () => {
                               {item.quantity}
                             </span>
                             <button
-                              // onClick={() =>
-                              //   updateQuantity(item.id, item.quantity + 1)
-                              // }
-                              disabled={updateQuantityMutation.isPending}
-                              className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                              onClick={() =>
+                                handleUpdateQuantity(item.id, item.quantity + 1)
+                              }
+                              disabled={isMutating}
+                              className="px-3 cursor-pointer py-1 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
                             >
                               +
                             </button>
                           </div>
                           <button
-                            // onClick={() => removeItem(item.id)}
-                            disabled={removeItemMutation.isPending}
-                            className="ml-4 transition-colors"
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={isMutating}
+                            className="ml-4 cursor-pointer transition-colors disabled:opacity-50"
                           >
                             <BsTrash color="red" />
                           </button>

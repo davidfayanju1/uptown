@@ -1,6 +1,11 @@
 // hooks/useCart.ts
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { addToCartAPI, fetchCart } from "../services/cartServices";
+import {
+  addToCartAPI,
+  fetchCart,
+  updateCartItemAPI,
+  removeCartItemAPI,
+} from "../services/cartServices";
 
 export const useCart = () => {
   const queryClient = useQueryClient();
@@ -25,10 +30,28 @@ export const useCart = () => {
       quantity: number;
     }) => addToCartAPI(variantId, quantity),
     onSuccess: () => {
-      // Refetch cart after successful add
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
     },
   });
+
+  // Update cart item quantity mutation (PATCH)
+  const { mutate: updateCartItem, isPending: isUpdatingCart } = useMutation({
+    mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
+      updateCartItemAPI(itemId, quantity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+
+  // Remove cart item mutation
+  const { mutate: removeCartItem, isPending: isRemovingFromCart } = useMutation(
+    {
+      mutationFn: ({ itemId }: { itemId: string }) => removeCartItemAPI(itemId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+      },
+    },
+  );
 
   const cartItems = cartData?.items || [];
   const cartCount = cartItems.reduce(
@@ -42,6 +65,10 @@ export const useCart = () => {
     isLoading,
     addToCart,
     isAddingToCart,
+    updateCartItem,
+    isUpdatingCart,
+    removeCartItem,
+    isRemovingFromCart,
     refetchCart: refetch,
   };
 };
