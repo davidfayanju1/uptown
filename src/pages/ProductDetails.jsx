@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useCart } from "../context/CartContext";
 import api from "../lib/axios";
+import { useCart } from "../hooks/useCart";
 
 // Skeleton Loader Component
 const ProductDetailsSkeleton = () => {
@@ -77,8 +77,10 @@ const ProductDetails = () => {
   const [activeImage, setActiveImage] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
+  // const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState(null);
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, isAddingToCart } = useCart(); // Keep for local cart state if needed
 
   const {
     data: response,
@@ -144,7 +146,7 @@ const ProductDetails = () => {
     return "USD";
   };
 
-  // FIXED: Build image list - ONLY from variants, NO product images
+  // Build image list - ONLY from variants, NO product images
   const getAllImages = () => {
     const variantImages = variants.flatMap((v) => v.images || []);
     const seen = new Set();
@@ -157,7 +159,7 @@ const ProductDetails = () => {
 
   const allImages = getAllImages();
 
-  // FIXED: Current image logic - strictly from variants
+  // Current image logic - strictly from variants
   const getCurrentImage = () => {
     if (activeImage) return activeImage;
     if (selectedVariant?.images?.[0]) return selectedVariant.images[0];
@@ -206,26 +208,29 @@ const ProductDetails = () => {
     if (!activeImage && variants[0]?.images?.[0]) {
       setActiveImage(variants[0].images[0]);
     }
-  }, [variants]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [variants]);
 
+  // Clear cart message after 3 seconds
+  useEffect(() => {
+    if (cartMessage) {
+      const timer = setTimeout(() => {
+        setCartMessage(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [cartMessage]);
+
+  // Add to cart using API endpoint
   const handleAddToCart = () => {
     if (!selectedVariant) {
       alert("Please select a variant");
       return;
     }
-    const cartItem = {
-      id: product?.id,
-      name: product?.name,
-      price: getCurrentPrice(),
-      currency: getCurrency(),
-      selectedColor: selectedVariant.color,
-      selectedSize: selectedVariant.size,
-      sku: selectedVariant.sku,
-      image: currentImage,
-      quantity: 1,
+
+    addToCart({
       variantId: selectedVariant.id,
-    };
-    addToCart(cartItem);
+      quantity: 1,
+    });
   };
 
   if (isLoading) {
@@ -287,7 +292,7 @@ const ProductDetails = () => {
   return (
     <PrimaryLayout>
       <div className="max-w-7xl mt-[5rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-8">
+        <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-4">
           {/* LEFT COLUMN - Image Gallery */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
             <div className="mb-4 h-96 sm:h-[500px] overflow-hidden rounded-lg bg-gray-100">
@@ -346,7 +351,9 @@ const ProductDetails = () => {
                     return (
                       <div key={color} className="relative">
                         <button
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all  ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all  ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${
+                            isSelected ? "ring-2 ring-offset-2 ring-black" : ""
+                          }`}
                           style={{ backgroundColor: color.toLowerCase() }}
                           title={isOutOfStock ? "Out of stock" : color}
                         />
@@ -392,18 +399,59 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Add to Cart Button */}
+            {/* Add to Cart Button with loading state */}
             <button
               onClick={handleAddToCart}
-              disabled={!isVariantInStock}
+              // disabled={!isVariantInStock || isAddingToCart}
               className={`mt-10 w-full rounded-md py-3 px-8 flex items-center justify-center text-base font-medium transition-all ${
-                isVariantInStock
+                isVariantInStock && !isAddingToCart
                   ? "bg-black text-white hover:bg-gray-800"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {isVariantInStock ? "Add to Cart" : "Out of Stock"}
+              {isAddingToCart ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Adding...
+                </>
+              ) : isVariantInStock ? (
+                "Add to Cart"
+              ) : (
+                "Out of Stock"
+              )}
             </button>
+
+            {/* Cart Message */}
+            {cartMessage && (
+              <div
+                className={`mt-4 p-3 rounded-md text-sm text-center ${
+                  cartMessage.type === "success"
+                    ? "bg-green-50 text-green-700 border border-green-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}
+              >
+                {cartMessage.text}
+              </div>
+            )}
 
             {/* Product Details */}
             {product.details && product.details.length > 0 && (

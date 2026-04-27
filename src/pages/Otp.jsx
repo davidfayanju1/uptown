@@ -1,17 +1,17 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { UserContext } from "../context/userContext";
+// import { UserContext } from "../context/userContext";
 
 const Otp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [email, setEmail] = useState("");
-  const { user } = useContext(UserContext);
+  // const { user } = useContext(UserContext);
 
-  console.log(user?.email, "USer from context");
+  // console.log(user?.email, "USer from context");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -80,38 +80,38 @@ const Otp = () => {
   // Verify OTP
   const handleVerify = async (e) => {
     e.preventDefault();
-    const otpString = otp.join("");
+    // const otpString = otp.join("");
 
-    if (otpString.length !== 6) {
-      setError("Please enter the complete 6-digit code");
-      return;
-    }
+    // if (otpString.length !== 6) {
+    //   setError("Please enter the complete 6-digit code");
+    //   return;
+    // }
 
-    setIsSubmitting(true);
-    setError("");
+    // setIsSubmitting(true);
+    // setError("");
 
-    try {
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email: user?.email || email,
-        token: otpString,
-        type: "signup",
-      });
+    // try {
+    //   const { data, error: verifyError } = await supabase.auth.verifyOtp({
+    //     email: user?.email || email,
+    //     token: otpString,
+    //     type: "signup",
+    //   });
 
-      if (verifyError) {
-        throw new Error(verifyError.message);
-      }
+    //   if (verifyError) {
+    //     throw new Error(verifyError.message);
+    //   }
 
-      if (data.user) {
-        // Successful verification
-        alert("Email verified successfully! Welcome to Uptown.!!");
-        navigate("/");
-      }
-    } catch (error) {
-      console.error("OTP verification error:", error);
-      setError(error.message || "Invalid verification code. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    //   if (data.user) {
+    //     // Successful verification
+    //     alert("Email verified successfully! Welcome to Uptown.!!");
+    //     navigate("/");
+    //   }
+    // } catch (error) {
+    //   console.error("OTP verification error:", error);
+    //   setError(error.message || "Invalid verification code. Please try again.");
+    // } finally {
+    //   setIsSubmitting(false);
+    // }
   };
 
   // Resend OTP

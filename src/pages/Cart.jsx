@@ -1,53 +1,111 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { BsTrash } from "react-icons/bs";
+import api from "../lib/axios";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "UPTOWN REINCARNATION TEE",
-      price: 24.99,
-      quantity: 1,
-      image: "/images/shirt1.png",
-      color: "Black",
-      size: "M",
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Fetch cart data
+  const {
+    data: cartData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["cart"],
+    queryFn: async () => {
+      const response = await api.get("/v1/cart");
+      return response.data.data;
     },
-    {
-      id: 2,
-      name: "UPTOWN DAILY PROJECT BASEBALL CAP",
-      price: 15.99,
-      quantity: 2,
-      image: "/images/cap1.webp",
-      color: "Navy",
-      size: "One Size",
+  });
+
+  // Update quantity mutation
+  const updateQuantityMutation = useMutation({
+    mutationFn: async ({ itemId, quantity }) => {
+      const response = await api.put(`/v1/cart/items/${itemId}`, { quantity });
+      return response.data;
     },
-  ]);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
 
-  const updateQuantity = (id, newQuantity) => {
-    if (newQuantity < 1) return;
+  // Remove item mutation
+  const removeItemMutation = useMutation({
+    mutationFn: async ({ itemId }) => {
+      const response = await api.delete(`/v1/cart/items/${itemId}`);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
 
-    setCartItems(
-      cartItems.map((item) =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
+  const cartItems = cartData?.items || [];
 
-  const removeItem = (id) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
-  };
-
+  // Calculate totals - all in GBP
   const subtotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
+    (total, item) =>
+      total + (item.unit_price_snapshot_cents / 100) * item.quantity,
+    0,
   );
   const shipping = 4.99;
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
-  const navigate = useNavigate();
+  // Get product image (prefer variant_images, then product_images, then fallback)
+  const getProductImage = (item) => {
+    if (item.variant_images && item.variant_images.length > 0) {
+      return item.variant_images[0];
+    }
+    if (item.product_images && item.product_images.length > 0) {
+      return item.product_images[0];
+    }
+    return "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
+  };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <PrimaryLayout>
+        <div className="min-h-screen mt-[5rem] bg-gray-50 py-8">
+          <div className="container mx-auto md:px-4 px-2 max-w-6xl">
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+            </div>
+          </div>
+        </div>
+      </PrimaryLayout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <PrimaryLayout>
+        <div className="min-h-screen mt-[5rem] bg-gray-50 py-8">
+          <div className="container mx-auto md:px-4 px-2 max-w-6xl">
+            <h1 className="text-3xl font-bold text-gray-900 mb-8">Your Cart</h1>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">⚠️</div>
+              <p className="text-gray-600 mb-4">Failed to load your cart</p>
+              <button
+                onClick={() => refetch()}
+                className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </div>
+      </PrimaryLayout>
+    );
+  }
 
   return (
     <PrimaryLayout>
@@ -78,115 +136,128 @@ const Cart = () => {
                     <div className="col-span-2">TOTAL</div>
                   </div>
 
-                  {cartItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="grid grid-cols-1 md:grid-cols-12 gap-4 py-6  border-b-[1px] border-gray-200 items-center"
-                    >
-                      {/* Product Info - Larger image and mobile layout changes */}
-                      <div className="md:col-span-5 flex items-start">
-                        <div className="h-28 w-28 md:h-20 md:w-20 flex-shrink-0 overflow-hidden rounded-md bg-gray-200 mr-4 flex items-center justify-center">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="h-20 w-20 md:h-16 md:w-16 object-contain"
-                          />
-                        </div>
-                        <div className="flex flex-col md:h-full h-[6rem] md:justify-center justify-between">
-                          <div className="item-container">
-                            <h3 className="md:text-sm text-[10px] line-clamp-2 md:font-bold text-gray-900">
-                              {item.name}
-                            </h3>
-                            <p className="mt-1 text-xs text-gray-500">
-                              {item.color} | {item.size}
-                            </p>
+                  {cartItems.map((item) => {
+                    const itemPrice = item.unit_price_snapshot_cents / 100;
+                    const itemTotal = itemPrice * item.quantity;
+                    const productImage = getProductImage(item);
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="grid grid-cols-1 md:grid-cols-12 gap-4 py-6 border-b-[1px] border-gray-200 items-center"
+                      >
+                        {/* Product Info */}
+                        <div className="md:col-span-5 flex items-start">
+                          <div className="h-28 w-28 md:h-20 md:w-20 flex-shrink-0 overflow-hidden rounded-md bg-gray-200 mr-4 flex items-center justify-center">
+                            <img
+                              src={productImage}
+                              alt={item.product_title || "Product"}
+                              className="h-20 w-20 md:h-16 md:w-16 object-cover"
+                            />
+                          </div>
+                          <div className="flex flex-col md:h-full h-[6rem] md:justify-center justify-between">
+                            <div className="item-container">
+                              <h3 className="md:text-sm text-[10px] line-clamp-2 md:font-bold text-gray-900">
+                                {item.product_title || "Product Item"}
+                              </h3>
+                              <p className="mt-1 text-xs text-gray-500">
+                                {item.color || "Default"} |{" "}
+                                {item.size || "One Size"}
+                              </p>
+                              <p className="mt-1 text-xs text-gray-400">
+                                SKU: {item.sku}
+                              </p>
+                            </div>
                           </div>
 
-                          {/* <div className="mt-2 text-sm font-bold text-gray-900">
-                            Total: ${(item.price * item.quantity).toFixed(2)}
-                          </div> */}
-                        </div>
-
-                        <div className="md:hidden h-full ">
-                          <div className="flex h-[6rem] justify-between flex-col">
-                            <div className="text-sm text-right font-medium text-gray-900">
-                              ${item.price.toFixed(2)}
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div className="flex items-center rounded-md">
+                          {/* Mobile view controls */}
+                          <div className="md:hidden h-full">
+                            <div className="flex h-[6rem] justify-between flex-col">
+                              <div className="text-sm text-right font-medium text-gray-900">
+                                £{itemPrice.toFixed(2)}
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="flex items-center rounded-md">
+                                  <button
+                                    // onClick={() =>
+                                    //   updateQuantity(item.id, item.quantity - 1)
+                                    // }
+                                    disabled={updateQuantityMutation.isPending}
+                                    className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                                  >
+                                    −
+                                  </button>
+                                  <span className="px-1 py-1">
+                                    {item.quantity}
+                                  </span>
+                                  <button
+                                    // onClick={() =>
+                                    //   updateQuantity(item.id, item.quantity + 1)
+                                    // }
+                                    disabled={updateQuantityMutation.isPending}
+                                    className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                                  >
+                                    +
+                                  </button>
+                                </div>
                                 <button
-                                  onClick={() =>
-                                    updateQuantity(item.id, item.quantity - 1)
-                                  }
-                                  className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                                  // onClick={() => removeItem(item.id)}
+                                  disabled={removeItemMutation.isPending}
+                                  className="transition-colors"
                                 >
-                                  −
-                                </button>
-                                <span className="px-1 py-1">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    updateQuantity(item.id, item.quantity + 1)
-                                  }
-                                  className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
-                                >
-                                  +
+                                  <BsTrash color="red" size={16} />
                                 </button>
                               </div>
-                              <button
-                                onClick={() => removeItem(item.id)}
-                                className="transition-colors"
-                              >
-                                <BsTrash color="red" size={16} />
-                              </button>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Desktop: Price */}
-                      <div className="hidden md:block md:col-span-2 text-sm text-gray-900 font-medium">
-                        ${item.price.toFixed(2)}
-                      </div>
+                        {/* Desktop: Price */}
+                        <div className="hidden md:block md:col-span-2 text-sm text-gray-900 font-medium">
+                          £{itemPrice.toFixed(2)}
+                        </div>
 
-                      {/* Desktop: Quantity Controls */}
-                      <div className="hidden md:flex md:col-span-3 items-center">
-                        <div className="flex items-center border rounded-md">
+                        {/* Desktop: Quantity Controls */}
+                        <div className="hidden md:flex md:col-span-3 items-center">
+                          <div className="flex items-center border rounded-md">
+                            <button
+                              // onClick={() =>
+                              //   updateQuantity(item.id, item.quantity - 1)
+                              // }
+                              disabled={updateQuantityMutation.isPending}
+                              className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                            >
+                              −
+                            </button>
+                            <span className="px-3 py-1 border-l border-r">
+                              {item.quantity}
+                            </span>
+                            <button
+                              // onClick={() =>
+                              //   updateQuantity(item.id, item.quantity + 1)
+                              // }
+                              disabled={updateQuantityMutation.isPending}
+                              className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                            >
+                              +
+                            </button>
+                          </div>
                           <button
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
-                            }
-                            className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
+                            // onClick={() => removeItem(item.id)}
+                            disabled={removeItemMutation.isPending}
+                            className="ml-4 transition-colors"
                           >
-                            −
-                          </button>
-                          <span className="px-3 py-1 border-l border-r">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
-                            }
-                            className="px-3 py-1 text-gray-600 hover:text-gray-900 transition-colors"
-                          >
-                            +
+                            <BsTrash color="red" />
                           </button>
                         </div>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="ml-4 transition-colors"
-                        >
-                          <BsTrash color="red" />
-                        </button>
-                      </div>
 
-                      {/* Desktop: Total */}
-                      <div className="hidden md:block md:col-span-2 text-sm font-bold text-gray-900">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        {/* Desktop: Total */}
+                        <div className="hidden md:block md:col-span-2 text-sm font-bold text-gray-900">
+                          £{itemTotal.toFixed(2)}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -201,18 +272,18 @@ const Cart = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Subtotal</span>
                       <span className="font-medium">
-                        ${subtotal.toFixed(2)}
+                        £{subtotal.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Shipping</span>
                       <span className="font-medium">
-                        ${shipping.toFixed(2)}
+                        £{shipping.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tax</span>
-                      <span className="font-medium">${tax.toFixed(2)}</span>
+                      <span className="font-medium">£{tax.toFixed(2)}</span>
                     </div>
                   </div>
 
@@ -221,7 +292,7 @@ const Cart = () => {
                       Total
                     </span>
                     <span className="text-lg font-bold text-gray-900">
-                      ${total.toFixed(2)}
+                      £{total.toFixed(2)}
                     </span>
                   </div>
 
@@ -229,13 +300,13 @@ const Cart = () => {
                     onClick={() => navigate("/checkout")}
                     className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-4 rounded-md font-medium hover:from-gray-800 hover:to-black transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                   >
-                    Checkout · ${total.toFixed(2)}
+                    Checkout · £{total.toFixed(2)}
                   </button>
 
                   <div className="mt-4 text-center text-sm text-gray-500">
                     or{" "}
                     <Link
-                      to="/products"
+                      to="/product"
                       className="text-gray-900 hover:underline"
                     >
                       Continue Shopping

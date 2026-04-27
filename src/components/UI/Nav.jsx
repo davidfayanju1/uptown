@@ -7,60 +7,41 @@ import {
   IoHeartOutline,
   IoBagHandleOutline,
 } from "react-icons/io5";
-import { TbCurrencyNaira } from "react-icons/tb";
-import { FaDollarSign, FaPoundSign, FaAngleDown } from "react-icons/fa";
-import { MdOutlineEuroSymbol } from "react-icons/md";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "lucide-react";
-import { useCart } from "../../context/CartContext";
+import api from "../../lib/axios";
+import { useCart } from "../../hooks/useCart";
 
 const Nav = () => {
-  // const [toggle, setToggle] = useState(false);
   const [openSidebar, setOpenSidebar] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
+  const [cartItems, setCartItems] = useState([]);
+  const [cartLoading, setCartLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
-  const { cartCount } = useCart(); // Get cart count from context
+  const { cartCount, refetchCart } = useCart();
+
+  // Refetch cart when component mounts
+  useEffect(() => {
+    refetchCart();
+  }, []);
 
   // Check if we're on the home page
   const isHomePage = location.pathname === "/";
   const logo = isHomePage ? "/images/logo4.png" : "/images/logo5.png";
 
-  // const currency = [
-  //   { name: "Naira", icon: <TbCurrencyNaira /> },
-  //   { name: "Dollar", icon: <FaDollarSign /> },
-  //   { name: "Pounds", icon: <FaPoundSign /> },
-  //   { name: "Euros", icon: <MdOutlineEuroSymbol /> },
-  // ];
-
-  // const [input, setInput] = useState({
-  //   name: "Naira",
-  //   icon: <TbCurrencyNaira />,
-  // });
-
   const links = [
-    {
-      name: "SHOP",
-      url: "/product",
-    },
-    {
-      name: "REGISTRY",
-      url: "/registry",
-    },
-    // {
-    //   name: "SUPPORT",
-    //   url: "/support",
-    // },
+    { name: "SHOP", url: "/product" },
+    { name: "REGISTRY", url: "/registry" },
   ];
 
   const menuItems = [
     { name: "Home", url: "/" },
     { name: "Shop", url: "/product" },
     { name: "Registry", url: "/registry" },
-    // { name: "Support", url: "/" },
   ];
 
   const quickLinks = [
@@ -80,6 +61,38 @@ const Nav = () => {
     { name: "Wishlist", url: "/wishlist", icon: <IoHeartOutline size={20} /> },
     { name: "Account", url: "/account", icon: <IoPersonOutline size={20} /> },
   ];
+
+  // Get product image function
+  const getProductImage = (item) => {
+    if (item.variant_images && item.variant_images.length > 0) {
+      return item.variant_images[0];
+    }
+    if (item.product_images && item.product_images.length > 0) {
+      return item.product_images[0];
+    }
+    return "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
+  };
+
+  // Fetch cart from API
+  const fetchCart = async () => {
+    setCartLoading(true);
+    try {
+      const response = await api.get("/v1/cart");
+      const cartData = response.data?.data || response.data || [];
+      const items = Array.isArray(cartData) ? cartData : cartData.items || [];
+      setCartItems(items);
+    } catch (error) {
+      console.log("Error fetching cart:", error);
+      setCartItems([]);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  // Fetch cart on component mount and when location changes
+  useEffect(() => {
+    fetchCart();
+  }, [location]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -114,27 +127,6 @@ const Nav = () => {
       },
     },
   };
-
-  // const searchSidebarVariants = {
-  //   hidden: { y: -20, opacity: 0 },
-  //   visible: {
-  //     y: 0,
-  //     opacity: 1,
-  //     transition: {
-  //       type: "spring",
-  //       stiffness: 100,
-  //       damping: 15,
-  //     },
-  //   },
-  //   exit: {
-  //     y: -20,
-  //     opacity: 0,
-  //     transition: {
-  //       ease: "easeInOut",
-  //       duration: 0.2,
-  //     },
-  //   },
-  // };
 
   const menuItemVariants = {
     hidden: { x: -50, opacity: 0 },
@@ -222,43 +214,6 @@ const Nav = () => {
           className="nav-link md:w-[30%] flex items-center md:justify-between relative gap-2"
           ref={dropdownRef}
         >
-          {/* <div className="dropdown-container md:block hidden">
-            <button
-              onClick={() => setToggle(!toggle)}
-              className={`dropdown-component hover:bg-white/40 py-2 flex items-center px-2 gap-2 rounded-[7px] ${textColor}`}
-            >
-              {input.icon}
-              {input.name}
-              <FaAngleDown />
-            </button>
-
-            {toggle && (
-              <motion.div
-                className="items-container w-[6rem] absolute bg-white p-2 rounded-[8px] cursor-pointer shadow-lg z-10"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {currency.map((item, index) => (
-                  <div
-                    key={index}
-                    onClick={() => {
-                      setInput({
-                        name: item.name,
-                        icon: item.icon,
-                      });
-                      setToggle(false);
-                    }}
-                    className="small-container cursor-pointer mb-2 hover:bg-gray-100 flex items-center gap-2 p-1 text-gray-800"
-                  >
-                    {item.icon}
-                    <small>{item.name}</small>
-                  </div>
-                ))}
-              </motion.div>
-            )}
-          </div> */}
-
           <div
             className={`input-container md:w-[90%] gap-3 py-2 rounded-full ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm`}
           >
@@ -297,15 +252,15 @@ const Nav = () => {
           {showCartDropdown && (
             <motion.div
               ref={dropdownRef}
-              className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-80 rounded-md"
+              className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-96 rounded-md z-[60]"
               variants={cartDropdownVariants}
               initial="hidden"
               animate="visible"
               exit="hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-4">
+              <div className="p-4 max-h-[80vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-2">
                   <h3 className="font-semibold text-gray-800">
                     Your Cart ({cartCount})
                   </h3>
@@ -317,7 +272,12 @@ const Nav = () => {
                   </button>
                 </div>
 
-                {cartCount === 0 ? (
+                {cartLoading ? (
+                  <div className="text-center py-6">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                    <p className="text-gray-600 mt-3">Loading cart...</p>
+                  </div>
+                ) : cartCount === 0 ? (
                   // Empty cart message
                   <div className="text-center py-6">
                     <ShoppingCartIcon
@@ -344,6 +304,44 @@ const Nav = () => {
                         cart
                       </p>
                     </div>
+
+                    {/* Cart Items Preview */}
+                    <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                      {cartItems.slice(0, 3).map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex gap-3 pb-3 border-b border-gray-100"
+                        >
+                          <img
+                            src={getProductImage(item)}
+                            alt={item.product_title || "Product"}
+                            className="w-12 h-12 object-cover rounded"
+                          />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800 truncate">
+                              {item.product_title || "Product Item"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Qty: {item.quantity} |{" "}
+                              {item.color ? `${item.color} | ` : ""}
+                              {item.size || "One Size"}
+                            </p>
+                            <p className="text-xs font-semibold text-gray-900">
+                              £
+                              {(
+                                item.unit_price_snapshot_cents / 100
+                              ).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                      {cartItems.length > 3 && (
+                        <p className="text-xs text-gray-500 text-center">
+                          +{cartItems.length - 3} more item(s)
+                        </p>
+                      )}
+                    </div>
+
                     <button
                       onClick={() => {
                         navigate("/cart");
@@ -358,26 +356,22 @@ const Nav = () => {
 
                 {/* Account links */}
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <div className="mt-4 pt-4 border-t border-gray-100">
-                    {accountLinks.map((link, index) => (
-                      <motion.button
-                        key={index}
-                        className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left"
-                        whileHover={{ x: 5 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent event bubbling
-                          navigate(link.url);
-                          setShowCartDropdown(false);
-                        }}
-                      >
-                        <span className="text-gray-600 mr-3">{link.icon}</span>
-                        <span className="text-gray-800 text-sm">
-                          {link.name}
-                        </span>
-                      </motion.button>
-                    ))}
-                  </div>
+                  {accountLinks.map((link, index) => (
+                    <motion.button
+                      key={index}
+                      className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left"
+                      whileHover={{ x: 5 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(link.url);
+                        setShowCartDropdown(false);
+                      }}
+                    >
+                      <span className="text-gray-600 mr-3">{link.icon}</span>
+                      <span className="text-gray-800 text-sm">{link.name}</span>
+                    </motion.button>
+                  ))}
                 </div>
               </div>
             </motion.div>

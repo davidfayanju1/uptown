@@ -11,13 +11,27 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Store session ID
+let sessionId = null;
+
+// Get session ID from localStorage on initialization
+if (typeof window !== "undefined") {
+  sessionId = localStorage.getItem("x-session-id");
+}
+
+// Request interceptor to add auth token and session ID
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Attach session ID to request headers if available
+    if (sessionId) {
+      config.headers["x-session-id"] = sessionId;
+    }
+
     return config;
   },
   (error) => {
@@ -25,9 +39,21 @@ api.interceptors.request.use(
   },
 );
 
-// Response interceptor to handle auth errors
+// Response interceptor to capture session ID and handle auth errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Capture session ID from response headers
+    const responseSessionId = response.headers["x-session-id"];
+    if (responseSessionId) {
+      sessionId = responseSessionId;
+      // Store in localStorage for persistence across page reloads
+      if (typeof window !== "undefined") {
+        localStorage.setItem("x-session-id", responseSessionId);
+      }
+    }
+
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 
@@ -43,10 +69,20 @@ api.interceptors.response.use(
           const newToken = response.data.token;
 
           // Update store with new token
+          localStorage.setItem("token", newToken);
 
-          localStorage.setItem(newToken, "token");
+          // Capture session ID from refresh response as well
+          const refreshSessionId = response.headers["x-session-id"];
+          if (refreshSessionId) {
+            sessionId = refreshSessionId;
+            localStorage.setItem("x-session-id", refreshSessionId);
+          }
+
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          if (sessionId) {
+            originalRequest.headers["x-session-id"] = sessionId;
+          }
           return api(originalRequest);
         }
       } catch (refreshError) {
@@ -59,10 +95,30 @@ api.interceptors.response.use(
     if (error.response?.status === 403 || error.response?.status === 401) {
       console.log("Auth error detected, logging out user");
       localStorage.removeItem("token");
+      // Don't remove session ID as it might still be valid
     }
 
     return Promise.reject(error);
   },
 );
+
+// Helper function to get current session ID
+export const getSessionId = () => sessionId;
+
+// Helper function to clear session ID (e.g., on logout)
+export const clearSessionId = () => {
+  sessionId = null;
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("x-session-id");
+  }
+};
+
+// Helper function to set session ID manually if needed
+export const setSessionId = (id) => {
+  sessionId = id;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("x-session-id", id);
+  }
+};
 
 export default api;
