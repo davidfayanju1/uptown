@@ -105,11 +105,22 @@ const Cart = () => {
 
           {cartItems.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-6xl mb-4">🛒</div>
+              <div className="text-6xl mb-4">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="32"
+                  height="32"
+                  fill="#000000"
+                  viewBox="0 0 256 256"
+                  className="mx-auto"
+                >
+                  <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM80,108a12,12,0,1,1,12,12A12,12,0,0,1,80,108Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,176,108Zm-1.08,64a8,8,0,1,1-13.84,8c-7.47-12.91-19.21-20-33.08-20s-25.61,7.1-33.08,20a8,8,0,1,1-13.84-8c10.29-17.79,27.39-28,46.92-28S164.63,154.2,174.92,172Z" />
+                </svg>
+              </div>
               <p className="text-gray-600 mb-6">Your cart is empty</p>
               <Link
                 to="/product"
-                className="inline-block bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+                className="inline-block bg-black text-white px-6 py-3 hover:bg-gray-800 transition-colors"
               >
                 Continue Shopping
               </Link>
@@ -149,7 +160,10 @@ const Cart = () => {
                           </div>
                           <div className="flex flex-col md:h-full h-[6rem] md:justify-center justify-between">
                             <div className="item-container">
-                              <h3 className="md:text-sm text-[10px] line-clamp-2 md:font-bold text-gray-900">
+                              <h3
+                                // onClick={() => navigate(`/product/${item?.id}`)}
+                                className="md:text-sm cursor-pointer text-[10px] line-clamp-2 md:font-bold text-gray-900"
+                              >
                                 {item.product_title || "Product Item"}
                               </h3>
                               <p className="mt-1 text-xs text-gray-500">
@@ -280,16 +294,6 @@ const Cart = () => {
                       <span className="font-medium">
                         £{subtotal.toFixed(2)}
                       </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Shipping</span>
-                      <span className="font-medium">
-                        £{shipping.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Tax</span>
-                      <span className="font-medium">£{tax.toFixed(2)}</span>
                     </div>
                   </div>
 

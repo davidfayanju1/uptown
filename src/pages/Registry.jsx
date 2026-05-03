@@ -188,7 +188,7 @@ const Registry = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   onClick={handleSerialButtonClick}
-                  className="bg-white text-black px-8 py-3 rounded-full font-medium hover:bg-gray-100 transition-all flex items-center mx-auto"
+                  className="bg-white text-black px-8 py-3 font-medium hover:bg-gray-100 transition-all flex items-center mx-auto"
                 >
                   Enter Serial Number
                   <FiArrowRight className="ml-2" />

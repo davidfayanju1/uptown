@@ -84,7 +84,7 @@ const Product = () => {
         id: product.id,
         name: product.title,
         img: productImage,
-        price: `$${priceInDollars}`,
+        price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${priceInDollars}`,
         colors: colors.length > 0 ? colors : ["White", "Black", "Gray"],
         available: hasStock,
         originalData: product, // Keep original data for detailed view

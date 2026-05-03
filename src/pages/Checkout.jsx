@@ -68,7 +68,7 @@ const Checkout = () => {
 
   const subtotal = products.reduce(
     (sum, product) => sum + product.price * product.quantity,
-    0
+    0,
   );
   const shipping = 9.99;
   const tax = subtotal * 0.08;
@@ -350,14 +350,6 @@ const Checkout = () => {
                   </button>
                 ))}
               </div>
-
-              <button
-                onClick={handleSubmit}
-                className="w-full bg-gray-900 text-white py-4 rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
-              >
-                <FiLock className="mr-2" />
-                Complete Purchase
-              </button>
             </motion.div>
           </div>
 
@@ -422,6 +414,14 @@ const Checkout = () => {
                   <span className="text-gray-900">${total.toFixed(2)}</span>
                 </div>
               </div>
+
+              <button
+                onClick={handleSubmit}
+                className="w-full cursor-pointer mt-5 bg-gray-900 text-white py-4 rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center"
+              >
+                <FiLock className="mr-2" />
+                Complete Purchase
+              </button>
             </div>
           </motion.div>
         </div>

@@ -256,7 +256,7 @@ const Nav = () => {
             />
           </div>
 
-          <div className="item-container flex items-center gap-1">
+          <div className="item-container cursor-pointer flex items-center gap-1">
             <button
               onClick={handleCartClick}
               className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative"
@@ -270,14 +270,13 @@ const Nav = () => {
               >
                 <path d="M104,216a16,16,0,1,1-16-16A16,16,0,0,1,104,216Zm88-16a16,16,0,1,0,16,16A16,16,0,0,0,192,200ZM239.71,74.14l-25.64,92.28A24.06,24.06,0,0,1,191,184H92.16A24.06,24.06,0,0,1,69,166.42L33.92,40H16a8,8,0,0,1,0-16H40a8,8,0,0,1,7.71,5.86L57.19,64H232a8,8,0,0,1,7.71,10.14ZM221.47,80H61.64l22.81,82.14A8,8,0,0,0,92.16,168H191a8,8,0,0,0,7.71-5.86Z" />
               </svg>
-              {/* Cart Count Badge */}
               {cartCount > 0 && (
                 <span
-                  className={`absolute -top-0 right-0 bg-red-500 text-white rounded-full md:w-5 md:h-5 h-4 w-4 flex items-center justify-center text-xs ${
+                  className={`absolute top-[7.9px] right-[3.4px] bg-red-500 text-white rounded-full h-[8.5px] w-[8.5px] flex items-center justify-center text-xs ${
                     isHomePage ? "bg-red-500" : "bg-red-600"
                   }`}
                 >
-                  {cartCount}
+                  {/* {cartCount} */}
                 </span>
               )}
             </button>
