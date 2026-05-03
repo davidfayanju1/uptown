@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import api from "../lib/axios";
 
 const Explore = () => {
   const navigate = useNavigate();
@@ -80,6 +81,19 @@ const Explore = () => {
       },
     },
   };
+
+  const handleFetchProducts = async () => {
+    try {
+      const response = await api.get("/v1/products");
+      console.log("Fetched products:", response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
+
+  useEffect(() => {
+    handleFetchProducts();
+  }, []);
 
   return (
     <PrimaryLayout>

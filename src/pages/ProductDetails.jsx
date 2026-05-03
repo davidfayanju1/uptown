@@ -1,76 +1,14 @@
 // src/components/ProductDetails.js
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { useCart } from "../hooks/useCart";
-
-// Skeleton Loader Component
-const ProductDetailsSkeleton = () => {
-  return (
-    <div className="max-w-7xl mt-[5rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="lg:w-1/2">
-          <div className="sticky top-4">
-            <div className="mb-4 h-96 sm:h-[500px] bg-gray-200 rounded-lg animate-pulse" />
-            <div className="flex gap-4 mt-4">
-              {[1, 2, 3, 4].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-20 w-20 bg-gray-200 rounded-lg animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="lg:w-1/2 space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-3/4 animate-pulse" />
-          <div className="h-6 bg-gray-200 rounded w-1/4 animate-pulse" />
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse" />
-            <div className="h-4 bg-gray-200 rounded w-full animate-pulse" />
-            <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse" />
-          </div>
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/6 animate-pulse" />
-            <div className="flex gap-3">
-              {[1, 2, 3, 4].map((_, index) => (
-                <div
-                  key={index}
-                  className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/6 animate-pulse" />
-            <div className="grid grid-cols-5 gap-3">
-              {[1, 2, 3, 4, 5].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-12 bg-gray-200 rounded-md animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-          <div className="h-12 bg-gray-200 rounded-md animate-pulse" />
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-1/6 animate-pulse" />
-            <div className="space-y-2">
-              {[1, 2, 3, 4].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-4 bg-gray-200 rounded w-full animate-pulse"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import {
+  ProductDetailsSkeleton,
+  ProductNotFound,
+} from "../components/load-states/product-details-skeleton";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -131,6 +69,8 @@ const ProductDetails = () => {
     }
     return variants[0];
   };
+
+  console.log(uniqueSizes, "Unique Sizes");
 
   const selectedVariant = getSelectedVariant();
 
@@ -265,22 +205,7 @@ const ProductDetails = () => {
   if (!product) {
     return (
       <PrimaryLayout>
-        <div className="max-w-7xl mt-[5rem] mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8">
-            <h2 className="text-2xl font-semibold text-yellow-700 mb-4">
-              Product Not Found
-            </h2>
-            <p className="text-yellow-600 mb-4">
-              The product you're looking for doesn't exist or has been removed.
-            </p>
-            <button
-              onClick={() => navigate("/products")}
-              className="bg-yellow-600 text-white px-6 py-2 rounded-md hover:bg-yellow-700 transition-colors"
-            >
-              Browse Products
-            </button>
-          </div>
-        </div>
+        <ProductNotFound />
       </PrimaryLayout>
     );
   }
@@ -371,7 +296,7 @@ const ProductDetails = () => {
             )}
 
             {/* Size Selection */}
-            {uniqueSizes.length > 0 && (
+            {uniqueSizes[0] !== "" && uniqueSizes.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Size</h2>
                 <div className="grid grid-cols-5 gap-3 mt-2">
@@ -460,7 +385,7 @@ const ProductDetails = () => {
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Details</h2>
                 <div
-                  className="mt-4 text-gray-600 prose prose-sm"
+                  className="md:mt-4 mt-1 text-[13px] text-gray-500"
                   dangerouslySetInnerHTML={{ __html: product.details }}
                 />
               </div>
@@ -472,9 +397,9 @@ const ProductDetails = () => {
                 <p className="text-sm text-gray-500">
                   SKU: {selectedVariant.sku}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
+                {/* <p className="text-sm text-gray-500 mt-1">
                   Stock: {selectedVariant.stock} units available
-                </p>
+                </p> */}
               </div>
             )}
           </div>
