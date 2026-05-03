@@ -140,11 +140,11 @@ const Cart = () => {
                       >
                         {/* Product Info */}
                         <div className="md:col-span-5 flex items-start">
-                          <div className="h-28 w-28 md:h-20 md:w-20 flex-shrink-0 overflow-hidden rounded-md bg-gray-200 mr-4 flex items-center justify-center">
+                          <div className="h-28 w-28 md:h-20 md:w-20 flex-shrink-0 overflow-hidden bg-gray-200 mr-4 flex items-center justify-center">
                             <img
                               src={productImage}
                               alt={item.product_title || "Product"}
-                              className="h-20 w-20 md:h-16 md:w-16 object-cover"
+                              className="h-full w-full object-cover"
                             />
                           </div>
                           <div className="flex flex-col md:h-full h-[6rem] md:justify-center justify-between">
@@ -221,7 +221,7 @@ const Cart = () => {
 
                         {/* Desktop: Quantity Controls */}
                         <div className="hidden md:flex md:col-span-3 items-center">
-                          <div className="flex items-center border rounded-md">
+                          <div className="flex items-center border">
                             <button
                               onClick={() =>
                                 handleUpdateQuantity(item.id, item.quantity - 1)
@@ -304,7 +304,7 @@ const Cart = () => {
 
                   <button
                     onClick={() => navigate("/checkout")}
-                    className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-4 rounded-md font-medium hover:from-gray-800 hover:to-black transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-4 font-medium hover:from-gray-800 hover:to-black transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                   >
                     Checkout · £{total.toFixed(2)}
                   </button>
