@@ -206,11 +206,17 @@ const Nav = () => {
         </div>
 
         {/* Mobile logo container */}
-        <div className="mobile-container md:hidden flex items-center justify-between w-full px-2">
+        <div className="mobile-container md:hidden flex items-center justify-between w-full pl-2">
           <button onClick={() => setOpenSidebar(true)}>
             <RxHamburgerMenu className={iconColor} size={27} />
           </button>
-          <img src={logo} alt="" className="w-[10rem] mr-[-1.5rem] h-[15rem]" />
+          <Link to={"/"} className="cursor-pointer">
+            <img
+              src={logo}
+              alt=""
+              className="w-[10rem] ml-[2.5rem] h-[15rem]"
+            />
+          </Link>
           <button onClick={() => setOpenSearch(true)}>
             <svg
               xmlns="http://www.w3.org/2000/svg"

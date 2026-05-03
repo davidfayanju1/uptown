@@ -1,38 +1,83 @@
-import React, { useEffect } from "react";
+import React from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import api from "../lib/axios";
+
+// Type definitions for the API response
+interface ProductVariant {
+  id: string;
+  product_id: string;
+  sku: string;
+  color: string;
+  size: string;
+  images: string[];
+  price_cents: number;
+  currency: string;
+  stock: number;
+}
+
+interface Product {
+  id: string;
+  title: string;
+  description: string;
+  details: string;
+  images: string[];
+  status: string;
+  is_active: boolean;
+  rating: number;
+  rating_count: number;
+  stock: number;
+  variants: ProductVariant[];
+}
+
+interface ProductsResponse {
+  status: boolean;
+  message: string;
+  data: Product[];
+}
+
+// Fetch function
+const fetchProducts = async (): Promise<Product[]> => {
+  const response = await api.get<ProductsResponse>("/v1/products");
+  // console.log(response.data.data, "API Response Data"); // Debug log
+  return response.data.data;
+};
+
+// Skeleton component for products
+const ProductSkeleton = () => (
+  <div className="group relative w-full animate-pulse">
+    <div className="h-[22rem] w-full overflow-hidden bg-gray-200 rounded"></div>
+    <div className="mt-4">
+      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+      <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+      <div className="flex space-x-1 mt-2">
+        <div className="h-4 w-4 rounded-full bg-gray-200"></div>
+        <div className="h-4 w-4 rounded-full bg-gray-200"></div>
+        <div className="h-4 w-4 rounded-full bg-gray-200"></div>
+      </div>
+    </div>
+  </div>
+);
 
 const Explore = () => {
   const navigate = useNavigate();
 
-  const productList = [
-    {
-      name: "UPTOWN REINCARNATION TEE",
-      img: "/images/shirt1.png",
-      price: "$24.99",
-      colors: ["Black", "White", "Gray"],
-    },
-    {
-      name: "UPTOWN NO DEFEAT TEE",
-      img: "/images/shirt2.png",
-      price: "$79.99",
-      colors: ["Red", "Blue", "Green"],
-    },
-    {
-      name: "UPTOWN DAILY PROJECT BASEBALL CAP",
-      img: "/images/cap1.webp",
-      price: "$15.99",
-      colors: ["Navy", "Beige"],
-    },
-    // {
-    //   name: "ROLLERS TEE",
-    //   img: "/images/product4.jpg",
-    //   price: "$31.99",
-    //   colors: ["Yellow", "Orange"],
-    // },
-  ];
+  // TanStack Query
+  const {
+    data: products,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+
+  // console.log(products, "Fetched Products"); // Debug log
+
+  // Get first 3 products only
+  const firstThreeProducts = products?.slice(0, 3) || [];
 
   // Animation variants
   const containerVariants = {
@@ -82,18 +127,78 @@ const Explore = () => {
     },
   };
 
-  const handleFetchProducts = async () => {
-    try {
-      const response = await api.get("/v1/products");
-      console.log("Fetched products:", response.data);
-    } catch (error) {
-      console.error("Error fetching products:", error);
+  // Function to render products or skeletons/error
+  const renderProducts = () => {
+    if (isLoading) {
+      return (
+        <>
+          <ProductSkeleton />
+          <ProductSkeleton />
+          <ProductSkeleton />
+        </>
+      );
     }
-  };
 
-  useEffect(() => {
-    handleFetchProducts();
-  }, []);
+    if (error) {
+      return (
+        <div className="col-span-3 text-center py-12">
+          <p className="text-red-500">
+            Failed to load products. Please refresh the page.
+          </p>
+        </div>
+      );
+    }
+
+    return firstThreeProducts.map((product, index) => {
+      const firstVariant = product.variants[0];
+      const price = firstVariant
+        ? `${firstVariant.currency} ${(firstVariant.price_cents / 100).toFixed(2)}`
+        : "Price unavailable";
+      const productImage =
+        product.images[0] ||
+        firstVariant?.images[0] ||
+        "/images/placeholder.jpg";
+      const colors = [...new Set(product.variants.map((v) => v.color))];
+
+      return (
+        <motion.div
+          key={product.id}
+          className="group relative w-full"
+          variants={productVariants}
+          custom={index}
+          whileHover={{ y: -10, transition: { duration: 0.3 } }}
+        >
+          <div className="h-[22rem] w-full overflow-hidden bg-gray-200">
+            <img
+              src={productImage}
+              alt={product.title}
+              className="h-full w-full object-cover object-top group-hover:opacity-75 transition-opacity duration-300"
+            />
+          </div>
+          <div className="mt-4">
+            <Link to={`/product/${product.id}`}>
+              <h3 className="text-sm font-medium text-gray-900">
+                {product.title}
+              </h3>
+            </Link>
+            <p className="mt-1 text-sm text-gray-700">{price}</p>
+            {colors.length > 0 && (
+              <div className="mt-2 flex space-x-1">
+                {colors.slice(0, 3).map((color, i) => (
+                  <span
+                    key={i}
+                    className="h-4 w-4 rounded-full border border-gray-300"
+                    style={{ backgroundColor: color.toLowerCase() }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      );
+    });
+  };
 
   return (
     <PrimaryLayout>
@@ -203,6 +308,7 @@ const Explore = () => {
           </motion.div>
         </motion.div>
 
+        {/* Products Grid - Only first 3 products with skeleton */}
         <motion.div
           className="container md:mt-[6rem] mx-auto px-4"
           initial="hidden"
@@ -220,40 +326,7 @@ const Explore = () => {
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3"
             variants={containerVariants}
           >
-            {productList.map((product, index) => (
-              <motion.div
-                key={index}
-                className="group relative w-full"
-                variants={productVariants}
-                custom={index}
-                whileHover={{ y: -10, transition: { duration: 0.3 } }}
-              >
-                <div className="h-[22rem] w-full overflow-hidden bg-gray-200">
-                  <img
-                    src={product.img}
-                    alt={product.name}
-                    className="h-full w-full object-cover object-top group-hover:opacity-75 transition-opacity duration-300"
-                  />
-                </div>
-                <div className="mt-4">
-                  <Link to={`/product/${index}`}>
-                    <h3 className="text-sm font-medium text-gray-900">
-                      {product.name}
-                    </h3>
-                  </Link>
-                  <p className="mt-1 text-sm text-gray-700">{product.price}</p>
-                  <div className="mt-2 flex space-x-1">
-                    {product.colors.map((color, i) => (
-                      <span
-                        key={i}
-                        className="h-4 w-4 rounded-full border border-gray-300"
-                        style={{ backgroundColor: color.toLowerCase() }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
+            {renderProducts()}
           </motion.div>
         </motion.div>
       </section>

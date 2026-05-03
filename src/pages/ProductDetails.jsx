@@ -1,7 +1,7 @@
 // src/components/ProductDetails.js
 import React, { useState, useEffect } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { useCart } from "../hooks/useCart";
@@ -17,7 +17,6 @@ const ProductDetails = () => {
   const [selectedSize, setSelectedSize] = useState(null);
   // const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState(null);
-  const navigate = useNavigate();
   const { addToCart, isAddingToCart } = useCart(); // Keep for local cart state if needed
 
   const {
@@ -69,8 +68,6 @@ const ProductDetails = () => {
     }
     return variants[0];
   };
-
-  console.log(uniqueSizes, "Unique Sizes");
 
   const selectedVariant = getSelectedVariant();
 
