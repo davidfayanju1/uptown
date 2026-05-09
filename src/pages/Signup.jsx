@@ -29,8 +29,8 @@ const Signup = () => {
       name === "firstName"
         ? "first_name"
         : name === "lastName"
-        ? "last_name"
-        : name;
+          ? "last_name"
+          : name;
 
     setFormData((prev) => ({
       ...prev,
@@ -104,7 +104,7 @@ const Signup = () => {
         // Show success message
         alert(
           response.data?.message ||
-            "Account created successfully! Please check your email for verification."
+            "Account created successfully! Please check your email for verification.",
         );
 
         // Store user data if needed (adjust based on your API response)
@@ -113,7 +113,7 @@ const Signup = () => {
           localStorage.setItem("token", response.data.token || "");
           localStorage.setItem(
             "user",
-            JSON.stringify(response.data.user || {})
+            JSON.stringify(response.data.user || {}),
           );
         }
 
@@ -144,14 +144,15 @@ const Signup = () => {
         } else if (status === 409) {
           // Conflict - email already exists
           setServerError(
-            "Email already registered. Please use a different email or login."
+            "Email already registered. Please use a different email or login.",
           );
         } else if (status === 422) {
           // Unprocessable entity - validation errors
           setServerError(data.message || "Please check your input data.");
         } else {
           setServerError(
-            data.message || "An error occurred during signup. Please try again."
+            data.message ||
+              "An error occurred during signup. Please try again.",
           );
         }
       } else if (error.request) {
@@ -175,7 +176,7 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
+    <div className="min-h-screen flex px-4 flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <img
@@ -184,7 +185,7 @@ const Signup = () => {
             className="md:w-[7rem] w-[8rem] h-[8rem] md:h-[7rem]"
           />
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="md:mt-6 text-center text-3xl font-normal text-gray-900">
           Create Your Account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
@@ -192,7 +193,7 @@ const Signup = () => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div className="md:mt-8 mt-4 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 transition-all duration-300 hover:shadow-2xl">
           {/* Server Error Message */}
           {serverError && (
@@ -206,7 +207,7 @@ const Signup = () => {
               <div>
                 <label
                   htmlFor="firstName"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-[11px] font-[300] text-gray-700"
                 >
                   First name
                 </label>
@@ -219,9 +220,9 @@ const Signup = () => {
                     value={formData.first_name}
                     onChange={handleChange}
                     placeholder="Enter Firstname"
-                    className={`appearance-none block w-full px-4 py-3 border ${
+                    className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 border ${
                       errors.firstName ? "border-red-500" : "border-gray-300"
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                    } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
                   />
                   {errors.firstName && (
                     <p className="mt-1 text-sm text-red-600">
@@ -234,7 +235,7 @@ const Signup = () => {
               <div>
                 <label
                   htmlFor="lastName"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-[11px] font-[300] text-gray-700"
                 >
                   Last name
                 </label>
@@ -247,9 +248,9 @@ const Signup = () => {
                     value={formData.last_name}
                     onChange={handleChange}
                     placeholder="Enter Lastname"
-                    className={`appearance-none block w-full px-4 py-3 border ${
+                    className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 border ${
                       errors.lastName ? "border-red-500" : "border-gray-300"
-                    } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                    } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
                   />
                   {errors.lastName && (
                     <p className="mt-1 text-sm text-red-600">
@@ -263,7 +264,7 @@ const Signup = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-[11px] font-[300] text-gray-700"
               >
                 Email address
               </label>
@@ -276,9 +277,9 @@ const Signup = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Enter email..."
-                  className={`appearance-none block w-full px-4 py-3 border ${
+                  className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 border ${
                     errors.email ? "border-red-500" : "border-gray-300"
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -289,7 +290,7 @@ const Signup = () => {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-[11px] font-[300] text-gray-700"
               >
                 Password
               </label>
@@ -302,9 +303,9 @@ const Signup = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter password..."
-                  className={`appearance-none block w-full px-4 py-3 pr-10 border ${
+                  className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 pr-10 border ${
                     errors.password ? "border-red-500" : "border-gray-300"
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
                 />
                 <button
                   type="button"
@@ -312,9 +313,17 @@ const Signup = () => {
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <>
+                      <small className="underline text-[11px] text-gray-500">
+                        Hide
+                      </small>
+                    </>
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <>
+                      <small className="underline text-[11px] text-gray-500">
+                        Show
+                      </small>
+                    </>
                   )}
                 </button>
                 {errors.password && (
@@ -326,7 +335,7 @@ const Signup = () => {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-[11px] font-[300] text-gray-700"
               >
                 Confirm Password
               </label>
@@ -339,11 +348,11 @@ const Signup = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm password..."
-                  className={`appearance-none block w-full px-4 py-3 pr-10 border ${
+                  className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 pr-10 border ${
                     errors.confirmPassword
                       ? "border-red-500"
                       : "border-gray-300"
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
                 />
                 <button
                   type="button"
@@ -351,9 +360,17 @@ const Signup = () => {
                   onClick={toggleConfirmPasswordVisibility}
                 >
                   {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <>
+                      <small className="underline text-[11px] text-gray-500">
+                        Hide
+                      </small>
+                    </>
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <>
+                      <small className="underline text-[11px] text-gray-500">
+                        Show
+                      </small>
+                    </>
                   )}
                 </button>
                 {errors.confirmPassword && (
@@ -371,11 +388,11 @@ const Signup = () => {
                 type="checkbox"
                 checked={formData.newsletter}
                 onChange={handleChange}
-                className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                className="h-4 w-4 text-black placeholder:text-[12px] focus:ring-black border-gray-300"
               />
               <label
                 htmlFor="newsletter"
-                className="ml-2 block text-sm text-gray-900"
+                className="ml-2 block text-[11px] text-gray-400"
               >
                 Sign up for exclusive offers, new product launches and more
               </label>
@@ -385,7 +402,7 @@ const Signup = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isSubmitting ? (
                   <div className="flex items-center">
@@ -433,7 +450,7 @@ const Signup = () => {
             <div className="mt-6">
               <Link
                 to="/signin"
-                className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-900 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300"
+                className="w-full flex justify-center underline py-3 px-4 text-sm font-medium text-gray-900"
               >
                 Sign in
               </Link>
