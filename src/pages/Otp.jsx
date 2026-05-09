@@ -1,41 +1,106 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { supabase } from "../lib/supabase";
-// import { UserContext } from "../context/userContext";
+import { useMutation } from "@tanstack/react-query";
+import api from "../lib/axios";
+import { toast } from "sonner";
+
+// Extracted API functions
+const verifyOtp = async (otpData) => {
+  const response = await api.post("/v1/auth/verify", otpData);
+  return response.data;
+};
+
+const resendOtp = async (emailData) => {
+  const response = await api.post("/v1/auth/resend-verification", emailData);
+  return response.data;
+};
 
 const Otp = () => {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [isSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
   const [email, setEmail] = useState("");
-  // const { user } = useContext(UserContext);
-
-  // console.log(user?.email, "USer from context");
 
   const navigate = useNavigate();
   const location = useLocation();
   const inputRefs = useRef([]);
 
-  // Get email from location state or from auth session
+  // Get email from location state
   useEffect(() => {
-    const getEmail = async () => {
-      if (location.state?.email) {
-        setEmail(location.state.email);
-      } else {
-        // Try to get email from auth session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session?.user?.email) {
-          setEmail(session.user.email);
-        }
-      }
-    };
-    getEmail();
-  }, [location]);
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    } else {
+      // Fallback - you might want to redirect to signup if no email
+      toast.error("Email not found. Please sign up again.");
+      navigate("/signup");
+    }
+  }, [location, navigate]);
 
-  console.log("Email from session:", email);
+  // Verify OTP mutation
+  const verifyMutation = useMutation({
+    mutationFn: verifyOtp,
+    onSuccess: (data) => {
+      toast.success(data?.message || "Email verified successfully! Welcome!");
+      console.log("OTP verification successful:", data);
+
+      // Store token if provided
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+      // Redirect to home page after successful verification
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    },
+    onError: (error) => {
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Invalid verification code. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
+      console.error("OTP verification error:", error);
+    },
+  });
+
+  // Resend OTP mutation
+  const resendMutation = useMutation({
+    mutationFn: resendOtp,
+    onSuccess: (data) => {
+      toast.success(
+        data?.message || "Verification code sent! Please check your email.",
+      );
+
+      // Start cooldown timer
+      setResendCooldown(30);
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Clear previous OTP and error
+      setOtp(["", "", "", "", "", ""]);
+      setError("");
+
+      // Focus first input
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    },
+    onError: (error) => {
+      const errorMessage =
+        error?.response?.data?.message ||
+        "Failed to resend code. Please try again.";
+      toast.error(errorMessage);
+      setError(errorMessage);
+      console.error("Resend OTP error:", error);
+    },
+  });
 
   // Handle OTP input change
   const handleChange = (index, value) => {
@@ -48,14 +113,14 @@ const Otp = () => {
 
     // Auto-focus next input
     if (value && index < 5) {
-      inputRefs.current[index + 1].focus();
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
   // Handle backspace
   const handleKeyDown = (index, e) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1].focus();
+      inputRefs.current[index - 1]?.focus();
     }
   };
 
@@ -80,78 +145,48 @@ const Otp = () => {
   // Verify OTP
   const handleVerify = async (e) => {
     e.preventDefault();
-    // const otpString = otp.join("");
+    const otpString = otp.join("");
 
-    // if (otpString.length !== 6) {
-    //   setError("Please enter the complete 6-digit code");
-    //   return;
-    // }
+    if (otpString.length !== 6) {
+      toast.error("Please enter the complete 6-digit code");
+      setError("Please enter the complete 6-digit code");
+      return;
+    }
 
-    // setIsSubmitting(true);
-    // setError("");
+    // Prepare payload with token
+    const payload = {
+      token: otpString,
+    };
 
-    // try {
-    //   const { data, error: verifyError } = await supabase.auth.verifyOtp({
-    //     email: user?.email || email,
-    //     token: otpString,
-    //     type: "signup",
-    //   });
-
-    //   if (verifyError) {
-    //     throw new Error(verifyError.message);
-    //   }
-
-    //   if (data.user) {
-    //     // Successful verification
-    //     alert("Email verified successfully! Welcome to Uptown.!!");
-    //     navigate("/");
-    //   }
-    // } catch (error) {
-    //   console.error("OTP verification error:", error);
-    //   setError(error.message || "Invalid verification code. Please try again.");
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+    verifyMutation.mutate(payload);
   };
 
   // Resend OTP
-  const handleResend = async () => {
-    if (resendCooldown > 0) return;
+  const handleResend = () => {
+    if (resendCooldown > 0 || resendMutation.isPending) return;
 
-    try {
-      const { error: resendError } = await supabase.auth.resend({
-        type: "signup",
-        email: email,
-      });
-
-      if (resendError) {
-        throw new Error(resendError.message);
-      }
-
-      // Start cooldown timer
-      setResendCooldown(30);
-      const timer = setInterval(() => {
-        setResendCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      alert("Verification code sent! Please check your email.");
-    } catch (error) {
-      setError(error.message || "Failed to resend code. Please try again.");
+    if (!email) {
+      toast.error("Email not found. Please sign up again.");
+      navigate("/signup");
+      return;
     }
+
+    // Prepare payload with email
+    const payload = {
+      email: email,
+    };
+
+    resendMutation.mutate(payload);
   };
 
   // Auto-submit when all fields are filled
   useEffect(() => {
-    if (otp.every((digit) => digit !== "") && !isSubmitting) {
+    if (otp.every((digit) => digit !== "") && !verifyMutation.isPending) {
       handleVerify(new Event("submit"));
     }
   }, [otp]);
+
+  const isLoading = verifyMutation.isPending || resendMutation.isPending;
 
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
@@ -197,7 +232,8 @@ const Otp = () => {
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-black focus:ring-2 focus:ring-black focus:ring-opacity-20 transition-all duration-200"
+                  disabled={isLoading}
+                  className="w-12 h-12 text-center text-xl font-semibold border-2 border-gray-300 rounded-lg focus:border-black focus:ring-2 focus:ring-black focus:ring-opacity-20 transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   autoFocus={index === 0}
                 />
               ))}
@@ -207,10 +243,10 @@ const Otp = () => {
             <div>
               <button
                 type="submit"
-                disabled={isSubmitting || otp.join("").length !== 6}
+                disabled={isLoading || otp.join("").length !== 6}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {isSubmitting ? (
+                {verifyMutation.isPending ? (
                   <div className="flex items-center">
                     <svg
                       className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
@@ -252,9 +288,10 @@ const Otp = () => {
               ) : (
                 <button
                   onClick={handleResend}
-                  className="text-black font-medium hover:text-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-20 rounded"
+                  disabled={resendMutation.isPending}
+                  className="text-black font-medium hover:text-gray-800 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-20 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Resend Code
+                  {resendMutation.isPending ? "Sending..." : "Resend Code"}
                 </button>
               )}
             </p>

@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react"; // Import eye icons
+import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
+import { toast } from "sonner";
+
+// Extracted API function
+const registerUser = async (userData) => {
+  const response = await api.post("/v1/auth/register", userData);
+  return response.data;
+};
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -14,8 +21,6 @@ const Signup = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -41,7 +46,6 @@ const Signup = () => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-    if (serverError) setServerError("");
   };
 
   const validateForm = () => {
@@ -60,8 +64,8 @@ const Signup = () => {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -71,100 +75,66 @@ const Signup = () => {
     return newErrors;
   };
 
+  const signupMutation = useMutation({
+    mutationFn: registerUser,
+    onSuccess: (data) => {
+      toast.success(data?.message || "Account created successfully!");
+      console.log("Signup successful:", data);
+
+      // Redirect to OTP page after successful signup
+      setTimeout(() => {
+        navigate("/otp", {
+          state: {
+            email: formData.email,
+            userData: data?.user || {},
+          },
+        });
+      }, 1500);
+    },
+    onError: (error) => {
+      const errorMessage =
+        error?.response?.data?.errors?.fields?.password[0] ||
+        error?.response?.data?.message ||
+        "An error occurred during signup. Please try again.";
+      toast.error(errorMessage);
+      console.error("Signup error:", error);
+
+      console.log(error?.response?.data?.errors?.fields, "Error response");
+
+      // Handle specific error cases
+      if (error?.response?.status === 409) {
+        setErrors({
+          email:
+            "Email already registered. Please use a different email or login.",
+        });
+      } else if (error?.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      }
+    },
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formErrors = validateForm();
 
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
+      // Show validation errors via toast
+      Object.values(formErrors).forEach((error) => {
+        toast.error(error);
+      });
       return;
     }
 
-    setIsSubmitting(true);
-    setServerError("");
+    // Prepare payload matching the required schema
+    const payload = {
+      email: formData.email,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      password: formData.password,
+    };
 
-    try {
-      // Prepare data for API (only send fields that match schema)
-      const payload = {
-        email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        password: formData.password,
-        // Add newsletter field if your API accepts it
-        // ...(formData.newsletter !== undefined && {
-        //   newsletter: formData.newsletter,
-        // }),
-      };
-
-      // Make POST request to your API
-      const response = await api.post("/v1/auth/register", payload); // Adjust endpoint as needed
-
-      // Check if the request was successful
-      if (response.status >= 200 && response.status < 300) {
-        // Show success message
-        alert(
-          response.data?.message ||
-            "Account created successfully! Please check your email for verification.",
-        );
-
-        // Store user data if needed (adjust based on your API response)
-        if (response.data?.user || response.data?.token) {
-          // Store token in localStorage or context
-          localStorage.setItem("token", response.data.token || "");
-          localStorage.setItem(
-            "user",
-            JSON.stringify(response.data.user || {}),
-          );
-        }
-
-        // Redirect to OTP page
-        navigate("/otp", {
-          state: {
-            email: formData.email,
-            userData: response.data.user || {},
-          },
-        });
-      }
-    } catch (error) {
-      console.error("Signup error:", error);
-
-      // Handle different error scenarios
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        const { data, status } = error.response;
-
-        if (status === 400) {
-          // Bad request - validation errors
-          if (data.errors) {
-            setErrors(data.errors);
-          } else if (data.message) {
-            setServerError(data.message);
-          }
-        } else if (status === 409) {
-          // Conflict - email already exists
-          setServerError(
-            "Email already registered. Please use a different email or login.",
-          );
-        } else if (status === 422) {
-          // Unprocessable entity - validation errors
-          setServerError(data.message || "Please check your input data.");
-        } else {
-          setServerError(
-            data.message ||
-              "An error occurred during signup. Please try again.",
-          );
-        }
-      } else if (error.request) {
-        // The request was made but no response was received
-        setServerError("Network error. Please check your internet connection.");
-      } else {
-        // Something happened in setting up the request
-        setServerError("An unexpected error occurred. Please try again.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
+    signupMutation.mutate(payload);
   };
 
   const togglePasswordVisibility = () => {
@@ -188,20 +158,13 @@ const Signup = () => {
         <h2 className="md:mt-6 text-center text-3xl font-normal text-gray-900">
           Create Your Account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-[12px] text-gray-600">
           Join us for exclusive products, offers and events
         </p>
       </div>
 
       <div className="md:mt-8 mt-4 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10 transition-all duration-300 hover:shadow-2xl">
-          {/* Server Error Message */}
-          {serverError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{serverError}</p>
-            </div>
-          )}
-
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -219,13 +182,14 @@ const Signup = () => {
                     autoComplete="given-name"
                     value={formData.first_name}
                     onChange={handleChange}
+                    disabled={signupMutation.isPending}
                     placeholder="Enter Firstname"
                     className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 border ${
                       errors.firstName ? "border-red-500" : "border-gray-300"
-                    } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                    } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                   />
                   {errors.firstName && (
-                    <p className="mt-1 text-sm text-red-600">
+                    <p className="text-[11px] text-red-600">
                       {errors.firstName}
                     </p>
                   )}
@@ -247,13 +211,14 @@ const Signup = () => {
                     autoComplete="family-name"
                     value={formData.last_name}
                     onChange={handleChange}
+                    disabled={signupMutation.isPending}
                     placeholder="Enter Lastname"
                     className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 border ${
                       errors.lastName ? "border-red-500" : "border-gray-300"
-                    } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                    } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                   />
                   {errors.lastName && (
-                    <p className="mt-1 text-sm text-red-600">
+                    <p className="text-[11px] text-red-600">
                       {errors.lastName}
                     </p>
                   )}
@@ -276,13 +241,14 @@ const Signup = () => {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={signupMutation.isPending}
                   placeholder="Enter email..."
                   className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 border ${
                     errors.email ? "border-red-500" : "border-gray-300"
-                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="text-[11px] text-red-600">{errors.email}</p>
                 )}
               </div>
             </div>
@@ -302,32 +268,30 @@ const Signup = () => {
                   autoComplete="new-password"
                   value={formData.password}
                   onChange={handleChange}
+                  disabled={signupMutation.isPending}
                   placeholder="Enter password..."
                   className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 pr-10 border ${
                     errors.password ? "border-red-500" : "border-gray-300"
-                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={togglePasswordVisibility}
+                  disabled={signupMutation.isPending}
                 >
                   {showPassword ? (
-                    <>
-                      <small className="underline text-[11px] text-gray-500">
-                        Hide
-                      </small>
-                    </>
+                    <small className="underline text-[11px] text-gray-500">
+                      Hide
+                    </small>
                   ) : (
-                    <>
-                      <small className="underline text-[11px] text-gray-500">
-                        Show
-                      </small>
-                    </>
+                    <small className="underline text-[11px] text-gray-500">
+                      Show
+                    </small>
                   )}
                 </button>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="text-[11px] text-red-600">{errors.password}</p>
                 )}
               </div>
             </div>
@@ -347,30 +311,28 @@ const Signup = () => {
                   autoComplete="new-password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
+                  disabled={signupMutation.isPending}
                   placeholder="Confirm password..."
                   className={`appearance-none placeholder:text-[12px] block w-full px-4 py-3 pr-10 border ${
                     errors.confirmPassword
                       ? "border-red-500"
                       : "border-gray-300"
-                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out`}
+                  } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={toggleConfirmPasswordVisibility}
+                  disabled={signupMutation.isPending}
                 >
                   {showConfirmPassword ? (
-                    <>
-                      <small className="underline text-[11px] text-gray-500">
-                        Hide
-                      </small>
-                    </>
+                    <small className="underline text-[11px] text-gray-500">
+                      Hide
+                    </small>
                   ) : (
-                    <>
-                      <small className="underline text-[11px] text-gray-500">
-                        Show
-                      </small>
-                    </>
+                    <small className="underline text-[11px] text-gray-500">
+                      Show
+                    </small>
                   )}
                 </button>
                 {errors.confirmPassword && (
@@ -388,11 +350,12 @@ const Signup = () => {
                 type="checkbox"
                 checked={formData.newsletter}
                 onChange={handleChange}
-                className="h-4 w-4 text-black placeholder:text-[12px] focus:ring-black border-gray-300"
+                disabled={signupMutation.isPending}
+                className="h-4 w-4 text-black placeholder:text-[12px] focus:ring-black border-gray-300 disabled:opacity-50"
               />
               <label
                 htmlFor="newsletter"
-                className="ml-2 block text-[11px] text-gray-400"
+                className="ml-1 block text-[11px] text-gray-400"
               >
                 Sign up for exclusive offers, new product launches and more
               </label>
@@ -401,10 +364,10 @@ const Signup = () => {
             <div>
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                disabled={signupMutation.isPending}
+                className="w-full flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-normal text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300 ease-in-out transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                {isSubmitting ? (
+                {signupMutation.isPending ? (
                   <div className="flex items-center">
                     <svg
                       className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
@@ -440,8 +403,8 @@ const Signup = () => {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
+              <div className="relative flex justify-center">
+                <span className="px-2 text-[12px] bg-white text-gray-500">
                   Already have an account?
                 </span>
               </div>
@@ -450,7 +413,7 @@ const Signup = () => {
             <div className="mt-6">
               <Link
                 to="/signin"
-                className="w-full flex justify-center underline py-3 px-4 text-sm font-medium text-gray-900"
+                className="w-full flex border-solid border-gray-300 border-[1px] justify-center py-3 px-4 text-sm font-normal text-gray-900"
               >
                 Sign in
               </Link>

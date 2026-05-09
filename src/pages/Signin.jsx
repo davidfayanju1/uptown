@@ -85,10 +85,6 @@ const Signin = () => {
       });
     } else {
       setErrors(formErrors);
-      // Show validation errors via toast
-      Object.values(formErrors).forEach((error) => {
-        toast.error(error);
-      });
     }
   };
 
@@ -146,7 +142,7 @@ const Signin = () => {
                   } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="text-[11px] text-red-600">{errors.email}</p>
                 )}
               </div>
             </div>
@@ -173,7 +169,7 @@ const Signin = () => {
                   } shadow-sm placeholder-gray-400 placeholder:text-[12px] focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="text-[11px] text-red-600">{errors.password}</p>
                 )}
               </div>
             </div>
