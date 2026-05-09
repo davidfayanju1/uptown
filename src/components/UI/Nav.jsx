@@ -288,7 +288,7 @@ const Nav = () => {
           {showCartDropdown && (
             <motion.div
               ref={dropdownRef}
-              className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-96 rounded-md z-[60]"
+              className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-96 z-[60]"
               variants={cartDropdownVariants}
               initial="hidden"
               animate="visible"
@@ -315,17 +315,24 @@ const Nav = () => {
                   </div>
                 ) : cartCount === 0 ? (
                   <div className="text-center py-6">
-                    <ShoppingCartIcon
+                    {/* <ShoppingCartIcon
                       className="mx-auto text-gray-400 mb-3"
                       size={40}
+                    /> */}
+                    <img
+                      src="/images/cart-empty.png"
+                      alt=""
+                      className="h-30 mx-auto"
                     />
-                    <p className="text-gray-600 mb-4">Your cart is empty</p>
+                    <p className="text-gray-600 text-[12px] mb-4">
+                      Your cart is empty
+                    </p>
                     <button
                       onClick={() => {
                         navigate("/product");
                         setShowCartDropdown(false);
                       }}
-                      className="bg-black text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-gray-800 transition-colors"
+                      className="bg-black text-white text-[12px] py-2 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
                     >
                       Continue Shopping
                     </button>
