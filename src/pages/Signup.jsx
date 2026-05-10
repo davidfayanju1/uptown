@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
+import useUserStore from "../stores/auth-store";
 
 // Extracted API function
 const registerUser = async (userData) => {
@@ -23,6 +24,7 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { setUserData } = useUserStore();
 
   const navigate = useNavigate();
 
@@ -78,8 +80,24 @@ const Signup = () => {
   const signupMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      toast.success(data?.message || "Account created successfully!");
-      console.log("Signup successful:", data);
+      // Extract user and tokens from the response
+      const { user, tokens } = data.data;
+
+      // Save to Zustand store
+      if (formData.rememberMe) {
+        // Save everything (will persist to localStorage due to persist middleware)
+        setUserData(user, tokens.access_token, tokens.refresh_token);
+      } else {
+        // Save only for session (still persists but will be cleared on browser close)
+        setUserData(user, tokens.access_token, tokens.refresh_token);
+      }
+
+      // Also set authorization header for future API calls
+      api.defaults.headers.common["Authorization"] =
+        `Bearer ${tokens.access_token}`;
+
+      toast.success("Login successful! Redirecting...");
+      console.log("Login successful:", data);
 
       // Redirect to OTP page after successful signup
       setTimeout(() => {

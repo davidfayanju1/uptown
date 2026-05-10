@@ -6,6 +6,7 @@ import {
   IoPersonOutline,
   IoHeartOutline,
   IoBagHandleOutline,
+  IoLogOutOutline,
 } from "react-icons/io5";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -13,6 +14,7 @@ import { ShoppingCartIcon } from "lucide-react";
 import { BsTrash } from "react-icons/bs";
 import api from "../../lib/axios";
 import { useCart } from "../../hooks/useCart";
+import useUserStore from "../../stores/auth-store";
 
 const Nav = () => {
   const [openSidebar, setOpenSidebar] = useState(false);
@@ -22,6 +24,7 @@ const Nav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
+  const { user, clearUserData } = useUserStore();
 
   // Use the centralized cart hook instead of separate state
   const {
@@ -59,16 +62,76 @@ const Nav = () => {
     { name: "Store Locator", url: "" },
   ];
 
-  const accountLinks = [
-    { name: "Sign In", url: "/signin", icon: <IoPersonOutline size={20} /> },
-    {
-      name: "My Orders",
-      url: "/orders",
-      icon: <IoBagHandleOutline size={20} />,
-    },
-    { name: "Wishlist", url: "/wishlist", icon: <IoHeartOutline size={20} /> },
-    { name: "Account", url: "/account", icon: <IoPersonOutline size={20} /> },
-  ];
+  // Conditionally build account links based on authentication status
+  const getAccountLinks = () => {
+    if (user) {
+      // Logged in user links
+      return [
+        {
+          name: "My Orders",
+          url: "/orders",
+          icon: <IoBagHandleOutline size={20} />,
+        },
+        {
+          name: "Wishlist",
+          url: "/wishlist",
+          icon: <IoHeartOutline size={20} />,
+        },
+        {
+          name: "Account ",
+          url: "/account",
+          icon: <IoPersonOutline size={20} />,
+        },
+        // {
+        //   name: "Sign Out",
+        //   url: "#",
+        //   icon: <IoLogOutOutline size={20} />,
+        //   isLogout: true,
+        // },
+      ];
+    } else {
+      // Non-authenticated user links
+      return [
+        {
+          name: "Sign In",
+          url: "/signin",
+          icon: <IoPersonOutline size={20} />,
+        },
+        {
+          name: "My Orders",
+          url: "/orders",
+          icon: <IoBagHandleOutline size={20} />,
+        },
+        {
+          name: "Wishlist",
+          url: "/wishlist",
+          icon: <IoHeartOutline size={20} />,
+        },
+      ];
+    }
+  };
+
+  const accountLinks = getAccountLinks();
+
+  // Handle logout
+  const handleLogout = async (e) => {
+    e.stopPropagation();
+    try {
+      // Call logout API if needed
+      await api.post("/v1/auth/logout");
+    } catch (error) {
+      console.error("Logout API error:", error);
+    } finally {
+      // Clear user data from store
+      clearUserData();
+      // Remove auth header
+      delete api.defaults.headers.common["Authorization"];
+      // Navigate to home page
+      navigate("/");
+      // Close dropdown
+      setShowCartDropdown(false);
+    }
+  };
 
   // Get product image function
   const getProductImage = (item) => {
@@ -420,17 +483,33 @@ const Nav = () => {
                   {accountLinks.map((link, index) => (
                     <motion.button
                       key={index}
-                      className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left"
+                      className={`flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left ${
+                        link.isHeader
+                          ? "border-b border-gray-100 mb-2 pb-3"
+                          : ""
+                      } ${link.isLogout ? "text-red-600 hover:bg-red-50" : ""}`}
                       whileHover={{ x: 5 }}
                       transition={{ type: "spring", stiffness: 300 }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(link.url);
-                        setShowCartDropdown(false);
+                        if (link.isLogout) {
+                          handleLogout(e);
+                        } else {
+                          navigate(link.url);
+                          setShowCartDropdown(false);
+                        }
                       }}
                     >
-                      <span className="text-gray-600 mr-3">{link.icon}</span>
-                      <span className="text-gray-800 text-sm">{link.name}</span>
+                      <span
+                        className={`mr-3 ${link.isLogout ? "text-red-600" : "text-gray-600"}`}
+                      >
+                        {link.icon}
+                      </span>
+                      <span
+                        className={`text-sm ${link.isLogout ? "text-red-600" : "text-gray-800"}`}
+                      >
+                        {link.name}
+                      </span>
                     </motion.button>
                   ))}
                 </div>
@@ -463,16 +542,64 @@ const Nav = () => {
                 {menuItems.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="text-[1.4rem] font-medium text-gray-800"
+                    className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
                     variants={menuItemVariants}
                     custom={index}
                     initial="hidden"
                     animate="visible"
-                    onClick={() => navigate(item?.url)}
+                    onClick={() => {
+                      navigate(item?.url);
+                      setOpenSidebar(false);
+                    }}
                   >
                     {item.name}
                   </motion.div>
                 ))}
+                {/* Add authentication links to mobile sidebar */}
+                {!user ? (
+                  <motion.div
+                    className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
+                    variants={menuItemVariants}
+                    custom={menuItems.length}
+                    initial="hidden"
+                    animate="visible"
+                    onClick={() => {
+                      navigate("/signin");
+                      setOpenSidebar(false);
+                    }}
+                  >
+                    Sign In
+                  </motion.div>
+                ) : (
+                  <>
+                    <motion.div
+                      className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
+                      variants={menuItemVariants}
+                      custom={menuItems.length}
+                      initial="hidden"
+                      animate="visible"
+                      onClick={() => {
+                        navigate("/account");
+                        setOpenSidebar(false);
+                      }}
+                    >
+                      My Account
+                    </motion.div>
+                    <motion.div
+                      className="text-[1.4rem] font-medium text-red-600 cursor-pointer"
+                      variants={menuItemVariants}
+                      custom={menuItems.length + 1}
+                      initial="hidden"
+                      animate="visible"
+                      onClick={() => {
+                        handleLogout();
+                        setOpenSidebar(false);
+                      }}
+                    >
+                      Sign Out
+                    </motion.div>
+                  </>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -522,7 +649,7 @@ const Nav = () => {
                   {quickLinks.map((link, index) => (
                     <motion.div
                       key={index}
-                      className="text-lg font-medium text-gray-800"
+                      className="text-lg font-medium text-gray-800 cursor-pointer"
                       variants={menuItemVariants}
                       custom={index}
                       initial="hidden"

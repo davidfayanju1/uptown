@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
+import useUserStore from "../stores/auth-store";
 
 // Extracted API function
 const loginUser = async (userData) => {
@@ -20,6 +21,7 @@ const Signin = () => {
 
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+  const { setUserData } = useUserStore();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -50,10 +52,25 @@ const Signin = () => {
   const loginMutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
+      // Extract user and tokens from the response
+      const { user, tokens } = data.data;
+
+      // Save to Zustand store
+      if (formData.rememberMe) {
+        // Save everything (will persist to localStorage due to persist middleware)
+        setUserData(user, tokens.access_token, tokens.refresh_token);
+      } else {
+        // Save only for session (still persists but will be cleared on browser close)
+        setUserData(user, tokens.access_token, tokens.refresh_token);
+      }
+
+      // Also set authorization header for future API calls
+      api.defaults.headers.common["Authorization"] =
+        `Bearer ${tokens.access_token}`;
+
       toast.success("Login successful! Redirecting...");
       console.log("Login successful:", data);
-      // Store token or user data here if needed
-      // localStorage.setItem("token", data.token);
+
       setTimeout(() => {
         navigate("/");
       }, 1500);
