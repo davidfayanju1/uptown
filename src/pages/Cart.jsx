@@ -24,9 +24,9 @@ const Cart = () => {
       total + (item.unit_price_snapshot_cents / 100) * item.quantity,
     0,
   );
-  const shipping = 4.99;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // const shipping = 4.99;
+  // const tax = subtotal * 0.08;
+  const total = subtotal; // + shipping + tax;
 
   // Get product image (prefer variant_images, then product_images, then fallback)
   const getProductImage = (item) => {
@@ -106,16 +106,11 @@ const Cart = () => {
           {cartItems.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="32"
-                  height="32"
-                  fill="#000000"
-                  viewBox="0 0 256 256"
-                  className="mx-auto"
-                >
-                  <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216ZM80,108a12,12,0,1,1,12,12A12,12,0,0,1,80,108Zm96,0a12,12,0,1,1-12-12A12,12,0,0,1,176,108Zm-1.08,64a8,8,0,1,1-13.84,8c-7.47-12.91-19.21-20-33.08-20s-25.61,7.1-33.08,20a8,8,0,1,1-13.84-8c10.29-17.79,27.39-28,46.92-28S164.63,154.2,174.92,172Z" />
-                </svg>
+                <img
+                  src="/images/cart-empty-removebg.png"
+                  alt=""
+                  className="h-40 mx-auto"
+                />
               </div>
               <p className="text-gray-600 mb-6">Your cart is empty</p>
               <Link

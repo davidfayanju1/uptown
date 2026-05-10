@@ -10,6 +10,7 @@ import {
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCartIcon } from "lucide-react";
+import { BsTrash } from "react-icons/bs";
 import api from "../../lib/axios";
 import { useCart } from "../../hooks/useCart";
 
@@ -17,17 +18,18 @@ const Nav = () => {
   const [openSidebar, setOpenSidebar] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
-  const [cartItems, setCartItems] = useState([]);
-  const [cartLoading, setCartLoading] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
-  const { cartCount, refetchCart } = useCart();
 
-  // Refetch cart when component mounts
-  useEffect(() => {
-    refetchCart();
-  }, []);
+  // Use the centralized cart hook instead of separate state
+  const {
+    cartCount,
+    cartItems,
+    isLoading: cartLoading,
+    removeCartItem,
+  } = useCart();
 
   // Check if we're on the home page
   const isHomePage = location.pathname === "/";
@@ -79,26 +81,18 @@ const Nav = () => {
     return "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
   };
 
-  // Fetch cart from API
-  const fetchCart = async () => {
-    setCartLoading(true);
+  // Handle remove item from cart using the hook
+  const handleRemoveFromCart = async (itemId, e) => {
+    e.stopPropagation();
+    setDeletingItemId(itemId);
     try {
-      const response = await api.get("/v1/cart");
-      const cartData = response.data?.data || response.data || [];
-      const items = Array.isArray(cartData) ? cartData : cartData.items || [];
-      setCartItems(items);
+      await removeCartItem({ itemId });
     } catch (error) {
-      console.log("Error fetching cart:", error);
-      setCartItems([]);
+      console.error("Error removing item from cart:", error);
     } finally {
-      setCartLoading(false);
+      setDeletingItemId(null);
     }
   };
-
-  // Fetch cart on component mount and when location changes
-  useEffect(() => {
-    fetchCart();
-  }, [location]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -315,10 +309,6 @@ const Nav = () => {
                   </div>
                 ) : cartCount === 0 ? (
                   <div className="text-center py-6">
-                    {/* <ShoppingCartIcon
-                      className="mx-auto text-gray-400 mb-3"
-                      size={40}
-                    /> */}
                     <img
                       src="/images/cart-empty.png"
                       alt=""
@@ -350,18 +340,31 @@ const Nav = () => {
                       {cartItems.slice(0, 3).map((item) => (
                         <div
                           key={item.id}
-                          className="flex gap-3 pb-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
-                          onClick={() => {
-                            navigate(`/product/${item?.product_id}`);
-                            setShowCartDropdown(false);
-                          }}
+                          className="flex gap-3 pb-3 border-b border-gray-100 hover:bg-gray-50 transition-colors"
                         >
-                          <img
-                            src={getProductImage(item)}
-                            alt={item.product_title || "Product"}
-                            className="w-12 h-12 object-cover"
-                          />
-                          <div className="flex-1">
+                          {/* Product image - clickable */}
+                          <div
+                            className="cursor-pointer flex-shrink-0"
+                            onClick={() => {
+                              navigate(`/product/${item?.product_id}`);
+                              setShowCartDropdown(false);
+                            }}
+                          >
+                            <img
+                              src={getProductImage(item)}
+                              alt={item.product_title || "Product"}
+                              className="w-12 h-12 object-cover"
+                            />
+                          </div>
+
+                          {/* Product details - clickable */}
+                          <div
+                            className="flex-1 cursor-pointer"
+                            onClick={() => {
+                              navigate(`/product/${item?.product_id}`);
+                              setShowCartDropdown(false);
+                            }}
+                          >
                             <p className="text-sm font-medium text-gray-800 truncate">
                               {item.product_title || "Product Item"}
                             </p>
@@ -377,10 +380,24 @@ const Nav = () => {
                               ).toLocaleString()}
                             </p>
                           </div>
+
+                          {/* Delete button */}
+                          <button
+                            onClick={(e) => handleRemoveFromCart(item.id, e)}
+                            disabled={deletingItemId === item.id}
+                            className="self-start mt-1 p-1 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 flex-shrink-0"
+                            title="Remove item"
+                          >
+                            {deletingItemId === item.id ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
+                            ) : (
+                              <BsTrash color="#ef4444" size={14} />
+                            )}
+                          </button>
                         </div>
                       ))}
                       {cartItems.length > 3 && (
-                        <p className="text-xs text-gray-500 text-center">
+                        <p className="text-xs text-gray-500 text-center pt-2">
                           +{cartItems.length - 3} more item(s)
                         </p>
                       )}

@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { useCart } from "../hooks/useCart";
+import { motion, AnimatePresence } from "framer-motion";
+import { IoCheckmarkCircle, IoClose } from "react-icons/io5";
 import {
   ProductDetailsSkeleton,
   ProductNotFound,
@@ -15,9 +17,8 @@ const ProductDetails = () => {
   const [activeImage, setActiveImage] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-  // const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [cartMessage, setCartMessage] = useState(null);
-  const { addToCart, isAddingToCart } = useCart(); // Keep for local cart state if needed
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const { addToCart, isAddingToCart } = useCart();
 
   const {
     data: response,
@@ -105,16 +106,6 @@ const ProductDetails = () => {
 
   const currentImage = getCurrentImage();
 
-  // const handleColorSelect = (color) => {
-  //   setSelectedColor(color);
-  //   // Find the variant for this color
-  //   const variant = variants.find((v) => v.color === color);
-  //   // Set the active image to this variant's first image
-  //   if (variant?.images?.[0]) {
-  //     setActiveImage(variant.images[0]);
-  //   }
-  // };
-
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
     // Find the variant for this size
@@ -147,27 +138,33 @@ const ProductDetails = () => {
     }
   }, [variants]);
 
-  // Clear cart message after 3 seconds
+  // Auto-hide success notification after 4 seconds
   useEffect(() => {
-    if (cartMessage) {
+    if (showSuccessNotification) {
       const timer = setTimeout(() => {
-        setCartMessage(null);
-      }, 3000);
+        setShowSuccessNotification(false);
+      }, 4000);
       return () => clearTimeout(timer);
     }
-  }, [cartMessage]);
+  }, [showSuccessNotification]);
 
-  // Add to cart using API endpoint
-  const handleAddToCart = () => {
+  // Add to cart with success notification
+  const handleAddToCart = async () => {
     if (!selectedVariant) {
       alert("Please select a variant");
       return;
     }
 
-    addToCart({
-      variantId: selectedVariant.id,
-      quantity: 1,
-    });
+    try {
+      await addToCart({
+        variantId: selectedVariant.id,
+        quantity: 1,
+      });
+      // Show success notification
+      setShowSuccessNotification(true);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+    }
   };
 
   if (isLoading) {
@@ -213,6 +210,123 @@ const ProductDetails = () => {
 
   return (
     <PrimaryLayout>
+      {/* Success Notification - Elegant slide-in from top */}
+      <AnimatePresence>
+        {showSuccessNotification && (
+          <motion.div
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 100, damping: 20 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md"
+          >
+            <div className="bg-white shadow-2xl border border-gray-100 overflow-hidden">
+              {/* Success Banner */}
+              <div className="bg-black px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        delay: 0.2,
+                        type: "spring",
+                        stiffness: 200,
+                      }}
+                    >
+                      <IoCheckmarkCircle className="text-white" size={28} />
+                    </motion.div>
+                    <div>
+                      <h3 className="text-white font-semibold text-base">
+                        Added to Cart
+                      </h3>
+                      <p className="text-emerald-50 text-xs">
+                        Item successfully added
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowSuccessNotification(false)}
+                    className="text-white hover:text-emerald-100 transition-colors"
+                  >
+                    <IoClose size={22} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Product Summary */}
+              <div className="p-5 bg-white">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={currentImage}
+                      alt={product.name}
+                      className="w-20 h-20 object-cover rounded-md border border-gray-200"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 text-sm truncate mb-1">
+                      {product.name}
+                    </h4>
+                    <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-2">
+                      {selectedColor && (
+                        <span className="inline-flex items-center gap-1">
+                          <span
+                            className="w-3 h-3 rounded-full border border-gray-300"
+                            style={{
+                              backgroundColor: selectedColor.toLowerCase(),
+                            }}
+                          />
+                          {selectedColor}
+                        </span>
+                      )}
+                      {selectedSize && (
+                        <span className="px-2 py-0.5 bg-gray-100 rounded">
+                          Size: {selectedSize}
+                        </span>
+                      )}
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm">
+                      {currency === "GBP" ? "£" : "$"}
+                      {currentPrice}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 mt-5">
+                  <button
+                    onClick={() => {
+                      setShowSuccessNotification(false);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Continue Shopping
+                  </button>
+                  <button
+                    onClick={() => {
+                      window.location.href = "/cart";
+                    }}
+                    className="flex-1 px-4 py-2.5 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+                  >
+                    View Cart
+                  </button>
+                </div>
+              </div>
+
+              {/* Progress bar animation */}
+              <motion.div
+                initial={{ scaleX: 1 }}
+                animate={{ scaleX: 0 }}
+                transition={{ duration: 4, ease: "linear" }}
+                className="h-1 bg-black origin-left"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-7xl md:mt-[5rem] mt-[4rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-0">
           {/* LEFT COLUMN - Image Gallery */}
@@ -275,7 +389,7 @@ const ProductDetails = () => {
                     return (
                       <div key={color} className="relative">
                         <button
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all  ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${
                             isSelected ? "" : ""
                           }`}
                           style={{ backgroundColor: color.toLowerCase() }}
@@ -326,7 +440,7 @@ const ProductDetails = () => {
             {/* Add to Cart Button with loading state */}
             <button
               onClick={handleAddToCart}
-              // disabled={!isVariantInStock || isAddingToCart}
+              disabled={!isVariantInStock || isAddingToCart}
               className={`mt-10 w-full py-3 px-8 flex items-center justify-center text-[15px] font-normal transition-all ${
                 isVariantInStock && !isAddingToCart
                   ? "bg-black text-white hover:bg-gray-800"
@@ -364,19 +478,6 @@ const ProductDetails = () => {
               )}
             </button>
 
-            {/* Cart Message */}
-            {cartMessage && (
-              <div
-                className={`mt-4 p-3 text-sm text-center ${
-                  cartMessage.type === "success"
-                    ? "bg-green-50 text-green-700 border border-green-200"
-                    : "bg-red-50 text-red-700 border border-red-200"
-                }`}
-              >
-                {cartMessage.text}
-              </div>
-            )}
-
             {/* Product Details */}
             {product.details && product.details.length > 0 && (
               <div className="mt-10">
@@ -394,9 +495,6 @@ const ProductDetails = () => {
                 <p className="text-sm text-gray-500">
                   SKU: {selectedVariant.sku}
                 </p>
-                {/* <p className="text-sm text-gray-500 mt-1">
-                  Stock: {selectedVariant.stock} units available
-                </p> */}
               </div>
             )}
           </div>
