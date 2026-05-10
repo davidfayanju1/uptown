@@ -82,12 +82,12 @@ const Nav = () => {
           url: "/account",
           icon: <IoPersonOutline size={20} />,
         },
-        // {
-        //   name: "Sign Out",
-        //   url: "#",
-        //   icon: <IoLogOutOutline size={20} />,
-        //   isLogout: true,
-        // },
+        {
+          name: "Sign Out",
+          url: "#",
+          icon: <IoLogOutOutline size={20} color="black" />,
+          isLogout: true,
+        },
       ];
     } else {
       // Non-authenticated user links
@@ -116,21 +116,15 @@ const Nav = () => {
   // Handle logout
   const handleLogout = async (e) => {
     e.stopPropagation();
-    try {
-      // Call logout API if needed
-      await api.post("/v1/auth/logout");
-    } catch (error) {
-      console.error("Logout API error:", error);
-    } finally {
-      // Clear user data from store
-      clearUserData();
-      // Remove auth header
-      delete api.defaults.headers.common["Authorization"];
-      // Navigate to home page
-      navigate("/");
-      // Close dropdown
-      setShowCartDropdown(false);
-    }
+
+    // Clear user data from store
+    clearUserData();
+    // Remove auth header
+    delete api.defaults.headers.common["Authorization"];
+    // Navigate to home page
+    navigate("/");
+    // Close dropdown
+    setShowCartDropdown(false);
   };
 
   // Get product image function
@@ -487,7 +481,7 @@ const Nav = () => {
                         link.isHeader
                           ? "border-b border-gray-100 mb-2 pb-3"
                           : ""
-                      } ${link.isLogout ? "text-red-600 hover:bg-red-50" : ""}`}
+                      }`}
                       whileHover={{ x: 5 }}
                       transition={{ type: "spring", stiffness: 300 }}
                       onClick={(e) => {
@@ -500,14 +494,8 @@ const Nav = () => {
                         }
                       }}
                     >
-                      <span
-                        className={`mr-3 ${link.isLogout ? "text-red-600" : "text-gray-600"}`}
-                      >
-                        {link.icon}
-                      </span>
-                      <span
-                        className={`text-sm ${link.isLogout ? "text-red-600" : "text-gray-800"}`}
-                      >
+                      <span className={`mr-3 "text-gray-600`}>{link.icon}</span>
+                      <span className={`text-sm text-gray-800`}>
                         {link.name}
                       </span>
                     </motion.button>
