@@ -298,6 +298,7 @@ const ProductDetails = () => {
                   <button
                     onClick={() => {
                       setShowSuccessNotification(false);
+                      window.location.href = "/product";
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
                     className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-colors"

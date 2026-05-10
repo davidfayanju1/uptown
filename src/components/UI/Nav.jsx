@@ -391,7 +391,7 @@ const Nav = () => {
                             {deletingItemId === item.id ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
                             ) : (
-                              <BsTrash color="#ef4444" size={14} />
+                              <BsTrash color="#000000" size={14} />
                             )}
                           </button>
                         </div>
