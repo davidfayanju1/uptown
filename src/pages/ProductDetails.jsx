@@ -218,7 +218,7 @@ const ProductDetails = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
             transition={{ type: "spring", stiffness: 100, damping: 20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-[90%] max-w-md"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] md:w-[90%] w-[97%] max-w-md"
           >
             <div className="bg-white shadow-2xl border border-gray-100 overflow-hidden">
               {/* Success Banner */}
