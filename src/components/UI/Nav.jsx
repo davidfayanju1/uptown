@@ -517,20 +517,20 @@ const Nav = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-full top-0 left-0 bg-white backdrop-blur-3xl"
+              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-full top-0 left-0 bg-transparent backdrop-blur-xl"
               variants={sidebarVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
             >
               <button onClick={() => setOpenSidebar(false)} className="mb-8">
-                <IoClose size={30} />
+                <IoClose size={30} color="white" />
               </button>
               <div className="nav-item-container mt-[4rem] items-end flex flex-col gap-6">
                 {menuItems.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
+                    className="text-[1.4rem] font-medium text-white cursor-pointer"
                     variants={menuItemVariants}
                     custom={index}
                     initial="hidden"
@@ -546,7 +546,7 @@ const Nav = () => {
                 {/* Add authentication links to mobile sidebar */}
                 {!user ? (
                   <motion.div
-                    className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
+                    className="text-[1.4rem] font-medium text-white cursor-pointer"
                     variants={menuItemVariants}
                     custom={menuItems.length}
                     initial="hidden"

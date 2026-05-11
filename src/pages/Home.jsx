@@ -34,15 +34,15 @@ const Home = () => {
       mediaType: "video",
       mediaSrc: "/images/video.mp4",
     },
-    {
-      title: "Timeless Style",
-      text: "Where heritage meets contemporary design. For those who appreciate the finer details.",
-      buttonText: "Shop Now",
-      buttonClass:
-        "rounded-none text-white cursor-pointer w-[10rem] bg-transparent border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
-      mediaType: "video",
-      mediaSrc: "/images/video3.mp4",
-    },
+    // {
+    //   title: "Timeless Style",
+    //   text: "Where heritage meets contemporary design. For those who appreciate the finer details.",
+    //   buttonText: "Shop Now",
+    //   buttonClass:
+    //     "rounded-none text-white cursor-pointer w-[10rem] bg-transparent border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
+    //   mediaType: "video",
+    //   mediaSrc: "/images/video3.mp4",
+    // },
   ];
 
   // Handle slide progression
