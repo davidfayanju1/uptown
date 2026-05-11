@@ -302,7 +302,9 @@ const Cart = () => {
                   </div>
 
                   <button
-                    onClick={() => navigate("/checkout")}
+                    onClick={() =>
+                      navigate("/checkout", { state: { products: cartItems } })
+                    }
                     className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-4 font-medium hover:from-gray-800 hover:to-black transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                   >
                     Checkout · £{total.toFixed(2)}
