@@ -419,7 +419,7 @@ const Nav = () => {
                           <div
                             className="flex-1 cursor-pointer"
                             onClick={() => {
-                              navigate(`/product/${item?.id}`);
+                              navigate(`/product/${item?.product_id}`);
                               setShowCartDropdown(false);
                             }}
                           >
