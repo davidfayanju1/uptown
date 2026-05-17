@@ -838,6 +838,7 @@ const Nav = () => {
       </AnimatePresence>
 
       {/* Mobile Search Sidebar - UPDATED with product suggestions (no quick links) */}
+      {/* Mobile Search Sidebar - WITH GLASSY EFFECT (same as sidebar) */}
       <AnimatePresence>
         {openSearch && (
           <motion.div
@@ -847,16 +848,16 @@ const Nav = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="absolute md:hidden block h-screen pt-[2rem] px-6 w-full top-0 left-0 bg-white backdrop-blur-3xl overflow-y-auto"
+              className="absolute md:hidden block h-screen pt-[2rem] px-6 w-full top-0 left-0 bg-transparent backdrop-blur-xl overflow-y-auto"
               variants={sidebarVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
             >
               <div className="flex justify-between items-center mb-8">
-                <h2 className="text-xl font-semibold text-gray-800">Search</h2>
+                <h2 className="text-xl font-semibold text-white">Search</h2>
                 <button onClick={() => setOpenSearch(false)}>
-                  <IoClose size={30} />
+                  <IoClose size={30} color="white" />
                 </button>
               </div>
 
@@ -866,27 +867,27 @@ const Nav = () => {
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full py-4 text-lg outline-none border-b-2 border-gray-300 focus:border-black placeholder-gray-400 text-gray-800 pr-12"
+                  className="w-full py-4 text-lg outline-none border-b-2 border-white/30 focus:border-white placeholder-white/50 text-white bg-transparent pr-12"
                   autoFocus
                 />
                 <button
                   type="submit"
                   className="absolute right-0 top-1/2 transform -translate-y-1/2"
                 >
-                  <IoSearch size={24} color="gray" />
+                  <IoSearch size={24} color="white" />
                 </button>
               </form>
 
               {searchLoading && (
                 <div className="flex justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
                 </div>
               )}
 
               {/* Search Results */}
               {!searchLoading && searchResults.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                  <h3 className="text-sm font-semibold text-white/70 mb-4 tracking-wider">
                     PRODUCTS ({searchResults.length})
                   </h3>
                   <div className="space-y-4">
@@ -894,18 +895,18 @@ const Nav = () => {
                       <div
                         key={product.id}
                         onClick={() => handleProductClick(product.id)}
-                        className="flex gap-4 cursor-pointer hover:bg-gray-50 p-2 transition-colors"
+                        className="flex gap-4 cursor-pointer hover:bg-white/10 p-2 transition-colors rounded-md"
                       >
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-16 h-16 object-cover bg-gray-100"
+                          className="w-16 h-16 object-cover bg-white/10 rounded-md"
                         />
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-800 text-sm">
+                          <h4 className="font-medium text-white text-sm">
                             {product.name}
                           </h4>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-white/60 mt-1">
                             {product.price}
                           </p>
                         </div>
@@ -918,7 +919,7 @@ const Nav = () => {
               {/* Suggested Products - NO QUICK LINKS */}
               {!searchQuery && suggestedProducts.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                  <h3 className="text-sm font-semibold text-white/70 mb-4 tracking-wider">
                     YOU MAY ALSO LIKE
                   </h3>
                   <div className="space-y-4">
@@ -926,18 +927,18 @@ const Nav = () => {
                       <div
                         key={product.id}
                         onClick={() => handleProductClick(product.id)}
-                        className="flex gap-4 cursor-pointer hover:bg-gray-50 p-2 transition-colors"
+                        className="flex gap-4 cursor-pointer hover:bg-white/10 p-2 transition-colors rounded-md"
                       >
                         <img
                           src={product.image}
                           alt={product.name}
-                          className="w-16 h-16 object-cover bg-gray-100"
+                          className="w-16 h-16 object-cover bg-white/10"
                         />
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-800 text-sm">
+                          <h4 className="font-medium text-white text-sm">
                             {product.name}
                           </h4>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-white/60 mt-1">
                             {product.price}
                           </p>
                         </div>
@@ -951,12 +952,12 @@ const Nav = () => {
               {!searchQuery && searchHistory.length > 0 && (
                 <div className="mt-8">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-semibold text-gray-500">
+                    <h3 className="text-sm font-semibold text-white/70 tracking-wider">
                       RECENT SEARCHES
                     </h3>
                     <button
                       onClick={clearSearchHistory}
-                      className="text-xs text-gray-400 hover:text-gray-600"
+                      className="text-xs text-white/50 hover:text-white transition-colors"
                     >
                       Clear All
                     </button>
@@ -966,7 +967,7 @@ const Nav = () => {
                       <button
                         key={index}
                         onClick={() => handleHistoryClick(item)}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-white/10 text-white/80 text-sm hover:bg-white/20 transition-colors rounded-md"
                       >
                         {item}
                       </button>
