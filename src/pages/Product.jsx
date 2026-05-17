@@ -133,7 +133,7 @@ const Product = () => {
           <div className="flex space-x-2">
             <button
               onClick={() => setViewMode("grid")}
-              className={`p-2 rounded ${
+              className={`p-2 ${
                 viewMode === "grid" ? "bg-gray-200" : "hover:bg-gray-100"
               }`}
               aria-label="Grid view"
@@ -155,7 +155,7 @@ const Product = () => {
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${
+              className={`p-2 ${
                 viewMode === "list" ? "bg-gray-200" : "hover:bg-gray-100"
               }`}
               aria-label="List view"
@@ -206,7 +206,7 @@ const Product = () => {
                       )}
 
                       {/* Wishlist Heart Icon */}
-                      <button
+                      {/* <button
                         onClick={() => toggleWishlist(product.id)}
                         className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-xl transition-all duration-300 hover:bg-white hover:scale-110 z-10"
                         aria-label={
@@ -231,7 +231,7 @@ const Product = () => {
                             d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                           />
                         </svg>
-                      </button>
+                      </button> */}
                     </div>
                     <div className="mt-4">
                       <Link
@@ -289,7 +289,7 @@ const Product = () => {
                     </div>
 
                     {/* Wishlist Heart Icon for List View */}
-                    <button
+                    {/* <button
                       onClick={() => toggleWishlist(product.id)}
                       className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110 z-10"
                       aria-label={
@@ -314,7 +314,7 @@ const Product = () => {
                           d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
                         />
                       </svg>
-                    </button>
+                    </button> */}
 
                     <div className="flex-1">
                       <Link
