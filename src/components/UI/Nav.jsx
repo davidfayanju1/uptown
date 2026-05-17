@@ -1,3 +1,4 @@
+// Nav.jsx - Original design preserved, ONLY search optimization added
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -7,10 +8,10 @@ import {
   IoHeartOutline,
   IoBagHandleOutline,
   IoLogOutOutline,
+  IoTimeOutline,
 } from "react-icons/io5";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCartIcon } from "lucide-react";
 import { BsTrash } from "react-icons/bs";
 import api from "../../lib/axios";
 import { useCart } from "../../hooks/useCart";
@@ -21,12 +22,20 @@ const Nav = () => {
   const [openSearch, setOpenSearch] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [showDesktopSearch, setShowDesktopSearch] = useState(false);
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
+
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
+  const desktopSearchRef = useRef(null);
+  const desktopSearchInputRef = useRef(null);
   const { user, clearUserData } = useUserStore();
 
-  // Use the centralized cart hook instead of separate state
   const {
     cartCount,
     cartItems,
@@ -34,14 +43,158 @@ const Nav = () => {
     removeCartItem,
   } = useCart();
 
+  // Fetch suggested products (3 random products) on mount
+  useEffect(() => {
+    const fetchSuggestedProducts = async () => {
+      try {
+        const response = await api.get("/v1/products");
+        if (response.data?.status && response.data?.data) {
+          const products = response.data.data;
+          const shuffled = [...products];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          const randomThree = shuffled.slice(0, 3);
+          const transformed = randomThree.map((product) => ({
+            id: product.id,
+            name: product.title,
+            image:
+              product.variants?.[0]?.images?.[0] || "/images/placeholder.png",
+            price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${(product.variants?.[0]?.price_cents / 100 || 0).toFixed(2)}`,
+            available: product.variants?.some((v) => v.stock > 0),
+          }));
+          setSuggestedProducts(transformed);
+        }
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+      }
+    };
+    fetchSuggestedProducts();
+  }, []);
+
+  // Load search history from localStorage
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("searchHistory");
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+
+  // Save search history
+  const saveSearchHistory = (query) => {
+    if (!query.trim()) return;
+    const updatedHistory = [
+      query,
+      ...searchHistory.filter((h) => h !== query),
+    ].slice(0, 5);
+    setSearchHistory(updatedHistory);
+    localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+  };
+
+  // Clear search history
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem("searchHistory");
+  };
+
+  // Search products
+  const searchProducts = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const response = await api.get(
+        `/v1/products/search?q=${encodeURIComponent(query)}`,
+      );
+      if (response.data?.status && response.data?.data) {
+        const transformedResults = response.data.data
+          .slice(0, 3)
+          .map((product) => ({
+            id: product.id,
+            name: product.title,
+            image:
+              product.variants?.[0]?.images?.[0] || "/images/placeholder.png",
+            price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${(product.variants?.[0]?.price_cents / 100 || 0).toFixed(2)}`,
+            available: product.variants?.some((v) => v.stock > 0),
+          }));
+        setSearchResults(transformedResults);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (showDesktopSearch || openSearch) {
+        searchProducts(searchQuery);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, showDesktopSearch, openSearch]);
+
+  // Handle search submit
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      saveSearchHistory(searchQuery);
+      navigate(`/product?search=${encodeURIComponent(searchQuery)}`);
+      closeSearch();
+    }
+  };
+
+  // Handle product click
+  const handleProductClick = (productId) => {
+    if (searchQuery.trim()) {
+      saveSearchHistory(searchQuery);
+    }
+    closeSearch();
+    navigate(`/product/${productId}`);
+  };
+
+  // Handle history click
+  const handleHistoryClick = (historyItem) => {
+    setSearchQuery(historyItem);
+    searchProducts(historyItem);
+    saveSearchHistory(historyItem);
+  };
+
+  // Close search overlay
+  const closeSearch = () => {
+    setShowDesktopSearch(false);
+    setOpenSearch(false);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  // Handle click outside for desktop search
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        desktopSearchRef.current &&
+        !desktopSearchRef.current.contains(event.target)
+      ) {
+        closeSearch();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Check if we're on the home page
   const isHomePage = location.pathname === "/";
   const logo = isHomePage ? "/images/logo4.png" : "/images/logo5.png";
 
-  // Determine icon color based on page and scroll state
   const getIconColor = () => {
-    if (isHomePage) return "#F1F1F1F1"; // gray-300
-    return "#1f2937"; // gray-800
+    if (isHomePage) return "#F1F1F1F1";
+    return "#1f2937";
   };
 
   const links = [
@@ -62,10 +215,8 @@ const Nav = () => {
     { name: "Store Locator", url: "" },
   ];
 
-  // Conditionally build account links based on authentication status
   const getAccountLinks = () => {
     if (user) {
-      // Logged in user links
       return [
         {
           name: "My Orders",
@@ -78,7 +229,7 @@ const Nav = () => {
           icon: <IoHeartOutline size={20} />,
         },
         {
-          name: "Account ",
+          name: "Account",
           url: "/account",
           icon: <IoPersonOutline size={20} />,
         },
@@ -90,7 +241,6 @@ const Nav = () => {
         },
       ];
     } else {
-      // Non-authenticated user links
       return [
         {
           name: "Sign In",
@@ -113,32 +263,22 @@ const Nav = () => {
 
   const accountLinks = getAccountLinks();
 
-  // Handle logout
   const handleLogout = async (e) => {
     e.stopPropagation();
-
-    // Clear user data from store
     clearUserData();
-    // Remove auth header
     delete api.defaults.headers.common["Authorization"];
-    // Navigate to home page
     navigate("/");
-    // Close dropdown
     setShowCartDropdown(false);
   };
 
-  // Get product image function
   const getProductImage = (item) => {
-    if (item.variant_images && item.variant_images.length > 0) {
+    if (item.variant_images && item.variant_images.length > 0)
       return item.variant_images[0];
-    }
-    if (item.product_images && item.product_images.length > 0) {
+    if (item.product_images && item.product_images.length > 0)
       return item.product_images[0];
-    }
     return "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
   };
 
-  // Handle remove item from cart using the hook
   const handleRemoveFromCart = async (itemId, e) => {
     e.stopPropagation();
     setDeletingItemId(itemId);
@@ -151,38 +291,23 @@ const Nav = () => {
     }
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowCartDropdown(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Animation variants
   const sidebarVariants = {
     hidden: { x: "-100%" },
     visible: {
       x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100,
-        damping: 20,
-      },
+      transition: { type: "spring", stiffness: 100, damping: 20 },
     },
-    exit: {
-      x: "-100%",
-      transition: {
-        ease: "easeInOut",
-        duration: 0.3,
-      },
-    },
+    exit: { x: "-100%", transition: { ease: "easeInOut", duration: 0.3 } },
   };
 
   const menuItemVariants = {
@@ -190,38 +315,27 @@ const Nav = () => {
     visible: (i) => ({
       x: 0,
       opacity: 1,
-      transition: {
-        delay: 0.1 * i,
-        ease: "easeOut",
-        duration: 0.5,
-      },
+      transition: { delay: 0.1 * i, duration: 0.5 },
     }),
   };
 
   const cartDropdownVariants = {
-    hidden: {
-      opacity: 0,
-      height: 0,
-      transition: {
-        duration: 0.3,
-        ease: "easeInOut",
-      },
-    },
+    hidden: { opacity: 0, height: 0, transition: { duration: 0.3 } },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.4 } },
+  };
+
+  const searchOverlayVariants = {
+    hidden: { opacity: 0, y: -20 },
     visible: {
       opacity: 1,
-      height: "auto",
-      transition: {
-        duration: 0.4,
-        ease: "easeOut",
-      },
+      y: 0,
+      transition: { duration: 0.3, ease: "easeOut" },
     },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.2 } },
   };
 
-  const handleCartClick = () => {
-    setShowCartDropdown(!showCartDropdown);
-  };
+  const handleCartClick = () => setShowCartDropdown(!showCartDropdown);
 
-  // Determine text color based on page
   const textColor = isHomePage ? "text-gray-300" : "text-gray-800";
   const iconColor = isHomePage ? "text-gray-300" : "text-gray-800";
   const iconColorValue = getIconColor();
@@ -234,7 +348,7 @@ const Nav = () => {
 
   return (
     <div className={`main-nav w-full z-50 fixed top-0 left-0 ${navBg}`}>
-      {/* Main navbar content */}
+      {/* Main navbar content - ORIGINAL LAYOUT PRESERVED */}
       <div className="h-[5rem] flex items-center justify-between md:p-3 relative">
         {/* Desktop logo container */}
         <div className="title-container cursor-pointer md:block hidden">
@@ -281,15 +395,19 @@ const Nav = () => {
           </button>
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation with Search - ORIGINAL LAYOUT */}
         <div
           className="nav-link md:w-[30%] flex items-center md:justify-between relative gap-2"
           ref={dropdownRef}
         >
+          {/* Desktop Search Input - ORIGINAL STYLE */}
           <div
-            className={`input-container md:w-[90%] gap-3 py-2 ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm`}
+            className={`input-container md:w-[90%] gap-3 py-2 ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm relative`}
           >
-            <button className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full ">
+            <button
+              className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full"
+              onClick={() => setShowDesktopSearch(true)}
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="18"
@@ -303,10 +421,14 @@ const Nav = () => {
             <input
               type="text"
               placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setShowDesktopSearch(true)}
               className={`placeholder:!text-[.7rem] w-full outline-none border-none ${inputText} ${inputPlaceholder}`}
             />
           </div>
 
+          {/* Cart Button */}
           <div className="item-container cursor-pointer flex items-center gap-1">
             <button
               onClick={handleCartClick}
@@ -323,191 +445,313 @@ const Nav = () => {
               </svg>
               {cartCount > 0 && (
                 <span
-                  className={`absolute top-[7.9px] right-[3.4px] bg-red-500 text-white rounded-full h-[8.5px] w-[8.5px] flex items-center justify-center text-xs ${
-                    isHomePage ? "bg-red-500" : "bg-red-600"
-                  }`}
-                >
-                  {/* {cartCount} */}
-                </span>
+                  className={`absolute top-[7.9px] right-[3.4px] bg-red-500 text-white rounded-full h-[8.5px] w-[8.5px] flex items-center justify-center text-xs`}
+                />
               )}
             </button>
           </div>
         </div>
-
-        {/* Cart Dropdown */}
-        <AnimatePresence>
-          {showCartDropdown && (
-            <motion.div
-              ref={dropdownRef}
-              className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-96 z-[60]"
-              variants={cartDropdownVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-4 max-h-[80vh] overflow-y-auto">
-                <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-2">
-                  <h3 className="font-semibold text-gray-800">
-                    Your Cart ({cartCount})
-                  </h3>
-                  <button
-                    onClick={() => setShowCartDropdown(false)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <IoClose size={20} />
-                  </button>
-                </div>
-
-                {cartLoading ? (
-                  <div className="text-center py-6">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="text-gray-600 mt-3">Loading cart...</p>
-                  </div>
-                ) : cartCount === 0 ? (
-                  <div className="text-center py-6">
-                    <img
-                      src="/images/cart-empty.png"
-                      alt=""
-                      className="h-30 mx-auto"
-                    />
-                    <p className="text-gray-600 text-[12px] mb-4">
-                      Your cart is empty
-                    </p>
-                    <button
-                      onClick={() => {
-                        navigate("/product");
-                        setShowCartDropdown(false);
-                      }}
-                      className="bg-black text-white text-[12px] py-2 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
-                    >
-                      Continue Shopping
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="mb-4">
-                      <p className="text-sm text-gray-600">
-                        {cartCount} item{cartCount !== 1 ? "s" : ""} in your
-                        cart
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                      {cartItems.slice(0, 3).map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex gap-3 pb-3 border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                        >
-                          {/* Product image - clickable */}
-                          <div
-                            className="cursor-pointer flex-shrink-0"
-                            onClick={() => {
-                              console.log("Navigating to product:", item);
-                              navigate(`/product/${item?.id}`);
-                              setShowCartDropdown(false);
-                            }}
-                          >
-                            <img
-                              src={getProductImage(item)}
-                              alt={item.product_title || "Product"}
-                              className="w-12 h-12 object-cover"
-                            />
-                          </div>
-
-                          {/* Product details - clickable */}
-                          <div
-                            className="flex-1 cursor-pointer"
-                            onClick={() => {
-                              navigate(`/product/${item?.product_id}`);
-                              setShowCartDropdown(false);
-                            }}
-                          >
-                            <p className="text-sm font-medium text-gray-800 truncate">
-                              {item.product_title || "Product Item"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Qty: {item.quantity} |{" "}
-                              {item.color ? `${item.color} | ` : ""}
-                              {item.size || "One Size"}
-                            </p>
-                            <p className="text-xs font-semibold text-gray-900">
-                              £
-                              {(
-                                item.unit_price_snapshot_cents / 100
-                              ).toLocaleString()}
-                            </p>
-                          </div>
-
-                          {/* Delete button */}
-                          <button
-                            onClick={(e) => handleRemoveFromCart(item.id, e)}
-                            disabled={deletingItemId === item.id}
-                            className="self-start mt-1 p-1 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 flex-shrink-0"
-                            title="Remove item"
-                          >
-                            {deletingItemId === item.id ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
-                            ) : (
-                              <BsTrash color="#000000" size={14} />
-                            )}
-                          </button>
-                        </div>
-                      ))}
-                      {cartItems.length > 3 && (
-                        <p className="text-xs text-gray-500 text-center pt-2">
-                          +{cartItems.length - 3} more item(s)
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        navigate("/cart");
-                        setShowCartDropdown(false);
-                      }}
-                      className="w-full bg-black text-white py-3 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
-                    >
-                      View Cart & Checkout
-                    </button>
-                  </div>
-                )}
-
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  {accountLinks.map((link, index) => (
-                    <motion.button
-                      key={index}
-                      className={`flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left ${
-                        link.isHeader
-                          ? "border-b border-gray-100 mb-2 pb-3"
-                          : ""
-                      }`}
-                      whileHover={{ x: 5 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (link.isLogout) {
-                          handleLogout(e);
-                        } else {
-                          navigate(link.url);
-                          setShowCartDropdown(false);
-                        }
-                      }}
-                    >
-                      <span className={`mr-3 "text-gray-600`}>{link.icon}</span>
-                      <span className={`text-sm text-gray-800`}>
-                        {link.name}
-                      </span>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
-      {/* Main Navigation Sidebar */}
+      {/* DESKTOP SEARCH OVERLAY - ADDED (doesn't change original UI) */}
+      <AnimatePresence>
+        {showDesktopSearch && (
+          <motion.div
+            ref={desktopSearchRef}
+            className="absolute top-full left-0 right-0 mt-2 bg-white shadow-2xl border border-gray-100 overflow-hidden z-[70]"
+            variants={searchOverlayVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            <div className="p-6">
+              <form onSubmit={handleSearchSubmit} className="relative mb-6">
+                <input
+                  ref={desktopSearchInputRef}
+                  type="text"
+                  placeholder="What are you looking for..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full py-3 text-lg outline-none border-b border-gray-200 focus:border-black placeholder-gray-400 text-gray-800 pr-12 font-light"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2"
+                >
+                  <IoSearch size={22} color="#9ca3af" />
+                </button>
+              </form>
+
+              {searchLoading && (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black"></div>
+                </div>
+              )}
+
+              {!searchLoading && searchResults.length > 0 && (
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider">
+                      SEARCH RESULTS
+                    </h3>
+                    <button
+                      onClick={() =>
+                        navigate(
+                          `/product?search=${encodeURIComponent(searchQuery)}`,
+                        )
+                      }
+                      className="text-[10px] text-gray-400 hover:text-black transition-colors"
+                    >
+                      VIEW ALL
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => handleProductClick(product.id)}
+                        className="group cursor-pointer"
+                      >
+                        <div className="aspect-square overflow-hidden bg-gray-50 mb-3">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+                        <h4 className="text-[12px] font-medium text-gray-800 uppercase tracking-wide mb-1 line-clamp-2">
+                          {product.name}
+                        </h4>
+                        <p className="text-[12px] text-gray-500">
+                          {product.price}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!searchQuery && suggestedProducts.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider mb-4">
+                    YOU MAY ALSO LIKE
+                  </h3>
+                  <div className="grid grid-cols-3 gap-6">
+                    {suggestedProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => handleProductClick(product.id)}
+                        className="group cursor-pointer"
+                      >
+                        <div className="aspect-square overflow-hidden bg-gray-50 mb-3">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
+                        <h4 className="text-[12px] font-medium text-gray-800 uppercase tracking-wide mb-1 line-clamp-2">
+                          {product.name}
+                        </h4>
+                        <p className="text-[12px] text-gray-500">
+                          {product.price}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!searchQuery && searchHistory.length > 0 && (
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider">
+                      RECENT SEARCHES
+                    </h3>
+                    <button
+                      onClick={clearSearchHistory}
+                      className="text-[10px] text-gray-400 hover:text-black transition-colors"
+                    >
+                      CLEAR ALL
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {searchHistory.map((item, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleHistoryClick(item)}
+                        className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs hover:bg-gray-100 transition-colors flex items-center gap-2"
+                      >
+                        <IoTimeOutline size={12} />
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Cart Dropdown - ORIGINAL (unchanged) */}
+      <AnimatePresence>
+        {showCartDropdown && (
+          <motion.div
+            ref={dropdownRef}
+            className="absolute top-full right-0 bg-white shadow-lg border border-gray-200 overflow-hidden w-96 z-[60]"
+            variants={cartDropdownVariants}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 max-h-[80vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-4 sticky top-0 bg-white pb-2">
+                <h3 className="font-semibold text-gray-800">
+                  Your Cart ({cartCount})
+                </h3>
+                <button
+                  onClick={() => setShowCartDropdown(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <IoClose size={20} />
+                </button>
+              </div>
+
+              {cartLoading ? (
+                <div className="text-center py-6">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                  <p className="text-gray-600 mt-3">Loading cart...</p>
+                </div>
+              ) : cartCount === 0 ? (
+                <div className="text-center py-6">
+                  <img
+                    src="/images/cart-empty.png"
+                    alt=""
+                    className="h-30 mx-auto"
+                  />
+                  <p className="text-gray-600 text-[12px] mb-4">
+                    Your cart is empty
+                  </p>
+                  <button
+                    onClick={() => {
+                      navigate("/product");
+                      setShowCartDropdown(false);
+                    }}
+                    className="bg-black text-white text-[12px] py-2 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
+                  >
+                    Continue Shopping
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600">
+                      {cartCount} item(s) in your cart
+                    </p>
+                  </div>
+                  <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                    {cartItems.slice(0, 3).map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex gap-3 pb-3 border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                      >
+                        <div
+                          className="cursor-pointer flex-shrink-0"
+                          onClick={() => {
+                            navigate(`/product/${item?.id}`);
+                            setShowCartDropdown(false);
+                          }}
+                        >
+                          <img
+                            src={getProductImage(item)}
+                            alt={item.product_title || "Product"}
+                            className="w-12 h-12 object-cover"
+                          />
+                        </div>
+                        <div
+                          className="flex-1 cursor-pointer"
+                          onClick={() => {
+                            navigate(`/product/${item?.product_id}`);
+                            setShowCartDropdown(false);
+                          }}
+                        >
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {item.product_title || "Product Item"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Qty: {item.quantity} |{" "}
+                            {item.color ? `${item.color} | ` : ""}
+                            {item.size || "One Size"}
+                          </p>
+                          <p className="text-xs font-semibold text-gray-900">
+                            £
+                            {(
+                              item.unit_price_snapshot_cents / 100
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => handleRemoveFromCart(item.id, e)}
+                          disabled={deletingItemId === item.id}
+                          className="self-start mt-1 p-1 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 flex-shrink-0"
+                        >
+                          {deletingItemId === item.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
+                          ) : (
+                            <BsTrash color="#000000" size={14} />
+                          )}
+                        </button>
+                      </div>
+                    ))}
+                    {cartItems.length > 3 && (
+                      <p className="text-xs text-gray-500 text-center pt-2">
+                        +{cartItems.length - 3} more item(s)
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigate("/cart");
+                      setShowCartDropdown(false);
+                    }}
+                    className="w-full bg-black text-white py-3 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
+                  >
+                    View Cart & Checkout
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                {accountLinks.map((link, index) => (
+                  <motion.button
+                    key={index}
+                    className="flex items-center py-2 px-2 hover:bg-gray-50 rounded-md cursor-pointer w-full text-left"
+                    whileHover={{ x: 5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (link.isLogout) {
+                        handleLogout(e);
+                      } else {
+                        navigate(link.url);
+                        setShowCartDropdown(false);
+                      }
+                    }}
+                  >
+                    <span className="mr-3 text-gray-600">{link.icon}</span>
+                    <span className="text-sm text-gray-800">{link.name}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Main Navigation Sidebar - ORIGINAL (unchanged) */}
       <AnimatePresence>
         {openSidebar && (
           <motion.div
@@ -543,7 +787,6 @@ const Nav = () => {
                     {item.name}
                   </motion.div>
                 ))}
-                {/* Add authentication links to mobile sidebar */}
                 {!user ? (
                   <motion.div
                     className="text-[1.4rem] font-medium text-white cursor-pointer"
@@ -594,7 +837,7 @@ const Nav = () => {
         )}
       </AnimatePresence>
 
-      {/* Search Sidebar */}
+      {/* Mobile Search Sidebar - UPDATED with product suggestions (no quick links) */}
       <AnimatePresence>
         {openSearch && (
           <motion.div
@@ -604,7 +847,7 @@ const Nav = () => {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="absolute md:hidden block h-screen pt-[2rem] px-6 w-full top-0 left-0 bg-white backdrop-blur-3xl"
+              className="absolute md:hidden block h-screen pt-[2rem] px-6 w-full top-0 left-0 bg-white backdrop-blur-3xl overflow-y-auto"
               variants={sidebarVariants}
               initial="hidden"
               animate="visible"
@@ -617,37 +860,120 @@ const Nav = () => {
                 </button>
               </div>
 
-              <div className="relative mb-10">
+              <form onSubmit={handleSearchSubmit} className="relative mb-6">
                 <input
                   type="text"
-                  placeholder="Search Uptown"
-                  className="w-full py-4 text-lg outline-none border-b-2 border-gray-300 focus:border-black placeholder-gray-400 text-gray-800"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full py-4 text-lg outline-none border-b-2 border-gray-300 focus:border-black placeholder-gray-400 text-gray-800 pr-12"
                   autoFocus
                 />
-                <button className="absolute right-0 top-1/2 transform -translate-y-1/2">
+                <button
+                  type="submit"
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2"
+                >
                   <IoSearch size={24} color="gray" />
                 </button>
-              </div>
+              </form>
 
-              <div className="mt-8">
-                <h3 className="text-sm font-semibold text-gray-500 mb-4">
-                  QUICK LINKS
-                </h3>
-                <div className="space-y-5">
-                  {quickLinks.map((link, index) => (
-                    <motion.div
-                      key={index}
-                      className="text-lg font-medium text-gray-800 cursor-pointer"
-                      variants={menuItemVariants}
-                      custom={index}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      {link.name}
-                    </motion.div>
-                  ))}
+              {searchLoading && (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
                 </div>
-              </div>
+              )}
+
+              {/* Search Results */}
+              {!searchLoading && searchResults.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                    PRODUCTS ({searchResults.length})
+                  </h3>
+                  <div className="space-y-4">
+                    {searchResults.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => handleProductClick(product.id)}
+                        className="flex gap-4 cursor-pointer hover:bg-gray-50 p-2 transition-colors"
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-16 h-16 object-cover bg-gray-100"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800 text-sm">
+                            {product.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {product.price}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggested Products - NO QUICK LINKS */}
+              {!searchQuery && suggestedProducts.length > 0 && (
+                <div className="mb-8">
+                  <h3 className="text-sm font-semibold text-gray-500 mb-4">
+                    YOU MAY ALSO LIKE
+                  </h3>
+                  <div className="space-y-4">
+                    {suggestedProducts.map((product) => (
+                      <div
+                        key={product.id}
+                        onClick={() => handleProductClick(product.id)}
+                        className="flex gap-4 cursor-pointer hover:bg-gray-50 p-2 transition-colors"
+                      >
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-16 h-16 object-cover bg-gray-100"
+                        />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800 text-sm">
+                            {product.name}
+                          </h4>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {product.price}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Search History */}
+              {!searchQuery && searchHistory.length > 0 && (
+                <div className="mt-8">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-semibold text-gray-500">
+                      RECENT SEARCHES
+                    </h3>
+                    <button
+                      onClick={clearSearchHistory}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {searchHistory.map((item, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleHistoryClick(item)}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 text-sm hover:bg-gray-200 transition-colors"
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

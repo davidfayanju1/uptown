@@ -13,6 +13,7 @@ import {
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
+import api from "../lib/axios";
 
 const Checkout = () => {
   const location = useLocation();
@@ -136,6 +137,18 @@ const Checkout = () => {
     },
   ];
 
+  const fetchRates = async () => {
+    try {
+      const response = await api.get("/v1/shipping/rates");
+      console.log("Shipping Rates", response.data);
+    } catch (error) {
+      console.log("Error", error.response.data.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchRates();
+  }, []);
   // Loading state
   if (cartLoading) {
     return (
