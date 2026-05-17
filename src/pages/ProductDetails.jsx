@@ -67,8 +67,8 @@ const ProductDetails = () => {
     const allProducts = allProductsResponse.data.products;
 
     return allProducts
-      .filter((p) => p.id !== product?.id) // Exclude current product
-      .slice(0, 4) // Get first 4 similar products
+      .filter((p) => p.id !== product?.id)
+      .slice(0, 4)
       .map((p) => {
         const productVariants = p.variants || [];
         const lowestPrice = productVariants.reduce(
@@ -100,6 +100,23 @@ const ProductDetails = () => {
     ? [...new Map(variants.map((v) => [v.size, v.size])).values()].sort()
     : [];
 
+  // Helper function to check if a color has ANY available variant
+  const isColorAvailable = (color) => {
+    return variants.some((v) => v.color === color && v.stock > 0);
+  };
+
+  // Helper function to check if a size has ANY available variant
+  const isSizeAvailable = (size) => {
+    return variants.some((v) => v.size === size && v.stock > 0);
+  };
+
+  // Helper function to check if a specific color+size combination is available
+  const isVariantAvailable = (color, size) => {
+    if (!color || !size) return true; // Not selected yet
+    const variant = variants.find((v) => v.color === color && v.size === size);
+    return variant?.stock > 0;
+  };
+
   const getSelectedVariant = () => {
     if (selectedColor && selectedSize) {
       return variants.find(
@@ -107,10 +124,12 @@ const ProductDetails = () => {
       );
     }
     if (selectedColor) {
-      return variants.find((v) => v.color === selectedColor);
+      // When only color is selected, return first available variant with that color
+      return variants.find((v) => v.color === selectedColor && v.stock > 0);
     }
     if (selectedSize) {
-      return variants.find((v) => v.size === selectedSize);
+      // When only size is selected, return first available variant with that size
+      return variants.find((v) => v.size === selectedSize && v.stock > 0);
     }
     return variants[0];
   };
@@ -149,11 +168,29 @@ const ProductDetails = () => {
 
   const currentImage = getCurrentImage();
 
+  const handleColorSelect = (color) => {
+    setSelectedColor(color);
+    // Reset active image to the first variant image of selected color
+    const variantWithColor = variants.find((v) => v.color === color);
+    if (variantWithColor?.images?.[0]) {
+      setActiveImage(variantWithColor.images[0]);
+    }
+    // Clear selected size if the combination isn't available
+    if (selectedSize && !isVariantAvailable(color, selectedSize)) {
+      setSelectedSize(null);
+    }
+  };
+
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
+    // Find variant with matching size
     const variant = variants.find((v) => v.size === size);
     if (variant?.images?.[0]) {
       setActiveImage(variant.images[0]);
+    }
+    // Clear selected color if the combination isn't available
+    if (selectedColor && !isVariantAvailable(selectedColor, size)) {
+      setSelectedColor(null);
     }
   };
 
@@ -177,20 +214,33 @@ const ProductDetails = () => {
     };
   }, []);
 
-  // Auto-select first color and size when data loads
+  // Auto-select first available color and size when data loads
   useEffect(() => {
     if (variants.length === 0) return;
 
-    let color = selectedColor;
-    let size = selectedSize;
-
-    if (uniqueColors.length > 0 && !selectedColor) {
-      color = uniqueColors[0];
-      setSelectedColor(color);
+    // Find first available color (with stock)
+    let firstAvailableColor = null;
+    for (const color of uniqueColors) {
+      if (isColorAvailable(color)) {
+        firstAvailableColor = color;
+        break;
+      }
     }
-    if (uniqueSizes.length > 0 && !selectedSize) {
-      size = uniqueSizes[0];
-      setSelectedSize(size);
+
+    // Find first available size (with stock)
+    let firstAvailableSize = null;
+    for (const size of uniqueSizes) {
+      if (isSizeAvailable(size)) {
+        firstAvailableSize = size;
+        break;
+      }
+    }
+
+    if (firstAvailableColor && !selectedColor) {
+      setSelectedColor(firstAvailableColor);
+    }
+    if (firstAvailableSize && !selectedSize) {
+      setSelectedSize(firstAvailableSize);
     }
 
     if (!activeImage && variants[0]?.images?.[0]) {
@@ -209,7 +259,12 @@ const ProductDetails = () => {
 
   const handleAddToCart = async () => {
     if (!selectedVariant) {
-      alert("Please select a variant");
+      alert("Please select a size and color");
+      return;
+    }
+
+    if (selectedVariant.stock <= 0) {
+      alert("This variant is out of stock");
       return;
     }
 
@@ -430,30 +485,38 @@ const ProductDetails = () => {
               <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
-            {/* Color Selection */}
+            {/* Color Selection - FIXED */}
             {uniqueColors.length > 0 && (
               <div className="md:mt-8 mt-5">
                 <h2 className="text-sm font-medium text-gray-900">Colors</h2>
                 <div className="flex mt-2 flex-wrap gap-3">
                   {uniqueColors.map((color) => {
-                    const variant = variants.find((v) => v.color === color);
+                    const isAvailable = isColorAvailable(color);
                     const isSelected = selectedColor === color;
-                    const isOutOfStock = variant?.stock === 0;
 
                     return (
                       <div key={color} className="relative">
                         <button
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                            !isAvailable
+                              ? "opacity-50 cursor-not-allowed"
+                              : "cursor-pointer hover:scale-110"
+                          }`}
                           style={{ backgroundColor: color.toLowerCase() }}
-                          title={isOutOfStock ? "Out of stock" : color}
+                          title={!isAvailable ? "Out of stock" : color}
                           onClick={() =>
-                            !isOutOfStock && setSelectedColor(color)
+                            isAvailable && handleColorSelect(color)
                           }
-                          disabled={isOutOfStock}
+                          disabled={!isAvailable}
                         />
                         {isSelected && (
                           <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-black whitespace-nowrap">
                             Selected
+                          </span>
+                        )}
+                        {!isAvailable && (
+                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] text-red-500 whitespace-nowrap">
+                            Out of stock
                           </span>
                         )}
                       </div>
@@ -463,15 +526,17 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Size Selection */}
+            {/* Size Selection - FIXED */}
             {uniqueSizes[0] !== "" && uniqueSizes.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Size</h2>
                 <div className="grid grid-cols-5 gap-3 mt-2">
                   {uniqueSizes.map((size) => {
-                    const variant = variants.find((v) => v.size === size);
+                    const isAvailable = isSizeAvailable(size);
                     const isSelected = selectedSize === size;
-                    const isOutOfStock = variant?.stock === 0;
+                    // Check if combination is available when both are selected
+                    const combinationUnavailable =
+                      selectedColor && !isVariantAvailable(selectedColor, size);
 
                     return (
                       <button
@@ -479,12 +544,16 @@ const ProductDetails = () => {
                         className={`border py-3 px-4 text-sm font-normal transition-all ${
                           isSelected
                             ? "border-black bg-transparent text-black"
-                            : isOutOfStock
-                              ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                            : !isAvailable || combinationUnavailable
+                              ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
                               : "border-gray-200 hover:border-gray-400"
                         }`}
-                        onClick={() => !isOutOfStock && handleSizeSelect(size)}
-                        disabled={isOutOfStock}
+                        onClick={() =>
+                          isAvailable &&
+                          !combinationUnavailable &&
+                          handleSizeSelect(size)
+                        }
+                        disabled={!isAvailable || combinationUnavailable}
                       >
                         {size}
                       </button>
@@ -494,13 +563,15 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Add to Cart Button - with ref for sticky detection */}
+            {/* Add to Cart Button */}
             <div ref={addToCartRef}>
               <button
                 onClick={handleAddToCart}
-                disabled={!isVariantInStock || isAddingToCart}
+                disabled={
+                  !isVariantInStock || isAddingToCart || !selectedVariant
+                }
                 className={`mt-10 w-full py-3 px-8 flex items-center justify-center text-[15px] font-normal transition-all ${
-                  isVariantInStock && !isAddingToCart
+                  isVariantInStock && !isAddingToCart && selectedVariant
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
@@ -529,6 +600,8 @@ const ProductDetails = () => {
                     </svg>
                     Adding...
                   </>
+                ) : !selectedVariant ? (
+                  "Select Size & Color"
                 ) : isVariantInStock ? (
                   "Add to Cart"
                 ) : (
@@ -537,9 +610,9 @@ const ProductDetails = () => {
               </button>
             </div>
 
-            {/* Sticky Add to Cart Button (appears when scrolling) */}
+            {/* Sticky Add to Cart Button */}
             <AnimatePresence>
-              {isSticky && isVariantInStock && (
+              {isSticky && isVariantInStock && selectedVariant && (
                 <motion.div
                   initial={{ y: 100, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
@@ -548,35 +621,13 @@ const ProductDetails = () => {
                   className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
                 >
                   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex items-center justify-between gap-4">
-                      {/* <div className="flex bg-red-800 w-[50%] items-center gap-2 flex-1">
-                        <img
-                          src={currentImage}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover border border-gray-200"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-gray-900 truncate">
-                            {product.name}
-                          </h3>
-                          <p className="text-xs text-gray-500">
-                            {selectedColor && `${selectedColor} | `}
-                            {selectedSize && `Size ${selectedSize}`}
-                          </p>
-                          <p className="text-sm font-semibold text-gray-900">
-                            {currency === "GBP" ? "£" : "$"}
-                            {currentPrice}
-                          </p>
-                        </div>
-                      </div> */}
-                      <button
-                        onClick={handleAddToCart}
-                        disabled={isAddingToCart}
-                        className="px-8 w-full py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors whitespace-nowrap disabled:bg-gray-300"
-                      >
-                        {isAddingToCart ? "Adding..." : "Add to Cart"}
-                      </button>
-                    </div>
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={isAddingToCart}
+                      className="w-full py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-300"
+                    >
+                      {isAddingToCart ? "Adding..." : "Add to Cart"}
+                    </button>
                   </div>
                 </motion.div>
               )}
