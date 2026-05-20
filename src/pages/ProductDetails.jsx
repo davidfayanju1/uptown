@@ -65,34 +65,40 @@ const ProductDetails = () => {
 
     const allProducts = allProductsResponse.data.products;
 
-    return allProducts
-      .filter((p) => p.id !== product?.id)
-      .slice(0, 4)
-      .map((p) => {
-        const productVariants = p.variants || [];
-        const lowestPrice = productVariants.reduce(
-          (min, v) => (v.price_cents < min ? v.price_cents : min),
-          Infinity,
-        );
-        const priceInDollars =
-          lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
-        const currency = productVariants[0]?.currency === "GBP" ? "£" : "$";
-        const productImage =
-          productVariants[0]?.images?.[0] || "/images/placeholder.png";
-        const hasStock = productVariants.some((v) => v.stock > 0);
+    return (
+      allProducts
+        // .filter((p) => p.id !== product?.id)
+        .slice(0, 4)
+        .map((p) => {
+          const productVariants = p.variants || [];
+          const lowestPrice = productVariants.reduce(
+            (min, v) => (v.price_cents < min ? v.price_cents : min),
+            Infinity,
+          );
+          const priceInDollars =
+            lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
+          const currency = productVariants[0]?.currency === "GBP" ? "£" : "$";
+          const productImage =
+            productVariants[0]?.images?.[0] || "/images/placeholder.png";
+          const hasStock = productVariants.some((v) => v.stock > 0);
 
-        return {
-          id: p.id,
-          name: p.title,
-          price: `${currency}${priceInDollars}`,
-          image: productImage,
-          available: hasStock,
-        };
-      });
+          return {
+            id: p.id,
+            name: p.title,
+            price: `${currency}${priceInDollars}`,
+            image: productImage,
+            available: hasStock,
+          };
+        })
+    );
   }, [allProductsResponse, product?.id]);
 
   const uniqueColors = variants
-    ? [...new Map(variants.map((v) => [v.color, v.color])).values()]
+    ? [
+        ...new Map(
+          variants.map((v) => [v.color.trim(), v.color.trim()]),
+        ).values(),
+      ]
     : [];
 
   const uniqueSizes = variants
@@ -112,23 +118,31 @@ const ProductDetails = () => {
   // Helper function to check if a specific color+size combination is available
   const isVariantAvailable = (color, size) => {
     if (!color || !size) return true; // Not selected yet
-    const variant = variants.find((v) => v.color === color && v.size === size);
+    const variant = variants.find(
+      (v) => v.color.trim() === color.trim() && v.size.trim() === size.trim(),
+    );
     return variant?.stock > 0;
   };
 
   const getSelectedVariant = () => {
     if (selectedColor && selectedSize) {
       return variants.find(
-        (v) => v.color === selectedColor && v.size === selectedSize,
+        (v) =>
+          v.color.trim() === selectedColor.trim() &&
+          v.size.trim() === selectedSize.trim(),
       );
     }
     if (selectedColor) {
       // When only color is selected, return first available variant with that color
-      return variants.find((v) => v.color === selectedColor && v.stock > 0);
+      return variants.find(
+        (v) => v.color.trim() === selectedColor.trim() && v.stock > 0,
+      );
     }
     if (selectedSize) {
       // When only size is selected, return first available variant with that size
-      return variants.find((v) => v.size === selectedSize && v.stock > 0);
+      return variants.find(
+        (v) => v.size.trim() === selectedSize.trim() && v.stock > 0,
+      );
     }
     return variants[0];
   };
@@ -552,7 +566,7 @@ const ProductDetails = () => {
                           !combinationUnavailable &&
                           handleSizeSelect(size)
                         }
-                        disabled={!isAvailable || combinationUnavailable}
+                        // disabled={isAvailable || combinationUnavailable}
                       >
                         {size}
                       </button>
