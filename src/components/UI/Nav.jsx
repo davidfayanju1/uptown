@@ -273,10 +273,10 @@ const Nav = () => {
   const accountLinks = getAccountLinks();
 
   const handleLogout = async (e) => {
-    e.stopPropagation();
+    // e.stopPropagation();
     clearUserData();
     delete api.defaults.headers.common["Authorization"];
-    navigate("/");
+    // navigate("/");
     setShowCartDropdown(false);
   };
 
@@ -811,7 +811,7 @@ const Nav = () => {
                   </motion.div>
                 ) : (
                   <>
-                    <motion.div
+                    {/* <motion.div
                       className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
                       variants={menuItemVariants}
                       custom={menuItems.length}
@@ -823,7 +823,7 @@ const Nav = () => {
                       }}
                     >
                       My Account
-                    </motion.div>
+                    </motion.div> */}
                     <motion.div
                       className="text-[1.4rem] font-medium text-red-600 cursor-pointer"
                       variants={menuItemVariants}

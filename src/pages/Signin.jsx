@@ -5,6 +5,8 @@ import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
+import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { useCart } from "../hooks/useCart";
 
 // Extracted API function
 const loginUser = async (userData) => {
@@ -20,8 +22,10 @@ const Signin = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { setUserData } = useUserStore();
+  const { refetchCart } = useCart();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -29,6 +33,10 @@ const Signin = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   const validateForm = () => {
@@ -49,27 +57,24 @@ const Signin = () => {
     return newErrors;
   };
 
+  // Signin.jsx - Update the onSuccess handler
   const loginMutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
-      // Extract user and tokens from the response
-      const { user, tokens } = data.data;
+      // Extract user, tokens, and cart from the response
+      const { user, tokens, cart } = data.data;
 
-      // Save to Zustand store
-      if (formData.rememberMe) {
-        // Save everything (will persist to localStorage due to persist middleware)
-        setUserData(user, tokens.access_token, tokens.refresh_token);
-      } else {
-        // Save only for session (still persists but will be cleared on browser close)
-        setUserData(user, tokens.access_token, tokens.refresh_token);
-      }
+      console.log(data, "Login response data");
+
+      // Save to Zustand store with cart data
+      setUserData(user, tokens.access_token, tokens.refresh_token, cart);
 
       // Also set authorization header for future API calls
       api.defaults.headers.common["Authorization"] =
         `Bearer ${tokens.access_token}`;
 
       toast.success("Login successful! Redirecting...");
-      console.log("Login successful:", data);
+      refetchCart(); // Refetch cart data after login
 
       setTimeout(() => {
         navigate("/");
@@ -171,11 +176,11 @@ const Signin = () => {
               >
                 Password
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   value={formData.password}
                   onChange={handleChange}
@@ -183,8 +188,24 @@ const Signin = () => {
                   placeholder="Enter password..."
                   className={`appearance-none block w-full px-4 py-3 border ${
                     errors.password ? "border-red-500" : "border-gray-300"
-                  } shadow-sm placeholder-gray-400 placeholder:text-[12px] focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                  } shadow-sm placeholder-gray-400 placeholder:text-[12px] focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed pr-12`}
                 />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none disabled:opacity-50"
+                  disabled={loginMutation.isPending}
+                >
+                  {showPassword ? (
+                    <small className="underline text-[11px] text-gray-500">
+                      Hide
+                    </small>
+                  ) : (
+                    <small className="underline text-[11px] text-gray-500">
+                      Show
+                    </small>
+                  )}
+                </button>
                 {errors.password && (
                   <p className="text-[11px] text-red-600">{errors.password}</p>
                 )}

@@ -4,6 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
+import { useCart } from "../hooks/useCart";
 
 // Extracted API function
 const registerUser = async (userData) => {
@@ -25,6 +26,7 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { setUserData } = useUserStore();
+  const { refetchCart } = useCart();
 
   const navigate = useNavigate();
 
@@ -77,36 +79,26 @@ const Signup = () => {
     return newErrors;
   };
 
+  // Signup.jsx - Update the onSuccess handler
   const signupMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      // Extract user and tokens from the response
-      const { user, tokens } = data.data;
+      // Extract user, tokens, and cart from the response
+      const { user, tokens, cart } = data.data;
 
-      // Save to Zustand store
-      if (formData.rememberMe) {
-        // Save everything (will persist to localStorage due to persist middleware)
-        setUserData(user, tokens.access_token, tokens.refresh_token);
-      } else {
-        // Save only for session (still persists but will be cleared on browser close)
-        setUserData(user, tokens.access_token, tokens.refresh_token);
-      }
+      // Save to Zustand store with cart data
+      setUserData(user, tokens.access_token, tokens.refresh_token, cart);
 
       // Also set authorization header for future API calls
       api.defaults.headers.common["Authorization"] =
         `Bearer ${tokens.access_token}`;
+      refetchCart();
 
-      toast.success("Login successful! Redirecting...");
-      console.log("Login successful:", data);
+      toast.success("Account created successfully! Redirecting...");
 
-      // Redirect to OTP page after successful signup
+      // Redirect to home or OTP page
       setTimeout(() => {
-        navigate("/otp", {
-          state: {
-            email: formData.email,
-            userData: data?.user || {},
-          },
-        });
+        navigate("/");
       }, 1500);
     },
     onError: (error) => {
@@ -117,9 +109,6 @@ const Signup = () => {
       toast.error(errorMessage);
       console.error("Signup error:", error);
 
-      console.log(error?.response?.data?.errors?.fields, "Error response");
-
-      // Handle specific error cases
       if (error?.response?.status === 409) {
         setErrors({
           email:
