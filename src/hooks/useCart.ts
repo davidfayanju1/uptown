@@ -20,6 +20,8 @@ export const useCart = () => {
     queryFn: fetchCart,
   });
 
+  console.log(cartData, "Cart data from useCart hook fetching");
+
   // Add to cart mutation
   const { mutate: addToCart, isPending: isAddingToCart } = useMutation({
     mutationFn: ({
@@ -58,6 +60,8 @@ export const useCart = () => {
     (total: number, item: any) => total + item.quantity,
     0,
   );
+
+  // console.log(cartItems, "Cart data from useCart hook");
 
   return {
     cartItems,
