@@ -74,9 +74,6 @@ const Cart = () => {
     setDeletingItemId(null);
   };
 
-  // =========================================================
-  // REACT DATA TABLE CONFIGURATION & STYLING
-  // =========================================================
   const columns = [
     {
       name: "PRODUCT",

@@ -1,4 +1,4 @@
-// Nav.jsx - Original design preserved, ONLY search optimization added
+// Nav.jsx - Optimized with client-side search (fetch all products once)
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -29,6 +29,10 @@ const Nav = () => {
   const [showDesktopSearch, setShowDesktopSearch] = useState(false);
   const [suggestedProducts, setSuggestedProducts] = useState([]);
 
+  // New: Store all products for client-side search
+  const [allProducts, setAllProducts] = useState([]);
+  const [productsLoaded, setProductsLoaded] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
@@ -43,35 +47,79 @@ const Nav = () => {
     removeCartItem,
   } = useCart();
 
-  // Fetch suggested products (3 random products) on mount
+  // Fetch ALL products once on mount
   useEffect(() => {
-    const fetchSuggestedProducts = async () => {
+    const fetchAllProducts = async () => {
       try {
         const response = await api.get("/v1/products");
         if (response.data?.status && response.data?.data) {
           const products = response.data.data;
-          const shuffled = [...products];
+          // Transform products for search
+          const transformed = products.map((product) => ({
+            id: product.id,
+            name: product.title,
+            title: product.title,
+            description: product.description || "",
+            image:
+              product.variants?.[0]?.images?.[0] || "/images/placeholder.png",
+            price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${(product.variants?.[0]?.price_cents / 100 || 0).toFixed(2)}`,
+            priceCents: product.variants?.[0]?.price_cents || 0,
+            currency: product.variants?.[0]?.currency || "GBP",
+            available: product.variants?.some((v) => v.stock > 0),
+            category: product.category || "",
+            tags: product.tags || [],
+          }));
+          setAllProducts(transformed);
+
+          // Set suggested products (3 random)
+          const shuffled = [...transformed];
           for (let i = shuffled.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
           }
-          const randomThree = shuffled.slice(0, 3);
-          const transformed = randomThree.map((product) => ({
-            id: product.id,
-            name: product.title,
-            image:
-              product.variants?.[0]?.images?.[0] || "/images/placeholder.png",
-            price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${(product.variants?.[0]?.price_cents / 100 || 0).toFixed(2)}`,
-            available: product.variants?.some((v) => v.stock > 0),
-          }));
-          setSuggestedProducts(transformed);
+          setSuggestedProducts(shuffled.slice(0, 3));
+          setProductsLoaded(true);
         }
       } catch (error) {
-        console.error("Error fetching suggestions:", error);
+        console.error("Error fetching products:", error);
       }
     };
-    fetchSuggestedProducts();
+    fetchAllProducts();
   }, []);
+
+  // Client-side search function
+  const searchProductsClient = (query) => {
+    if (!query.trim() || !productsLoaded) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+
+    // Simulate tiny delay for smooth UX
+    setTimeout(() => {
+      const searchTerm = query.toLowerCase().trim();
+      const filtered = allProducts
+        .filter((product) => {
+          // Search in title, description, category, and tags
+          return (
+            product.name.toLowerCase().includes(searchTerm) ||
+            (product.description &&
+              product.description.toLowerCase().includes(searchTerm)) ||
+            (product.category &&
+              product.category.toLowerCase().includes(searchTerm)) ||
+            (product.tags &&
+              product.tags.some((tag) =>
+                tag.toLowerCase().includes(searchTerm),
+              ))
+          );
+        })
+        .slice(0, 5); // Limit to 5 results for dropdown
+
+      setSearchResults(filtered);
+      setSearchLoading(false);
+    }, 150);
+  };
 
   // Load search history from localStorage
   useEffect(() => {
@@ -98,47 +146,15 @@ const Nav = () => {
     localStorage.removeItem("searchHistory");
   };
 
-  // Search products
-  const searchProducts = async (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setSearchLoading(true);
-    try {
-      const response = await api.get(
-        `/v1/products/search?q=${encodeURIComponent(query)}`,
-      );
-      if (response.data?.status && response.data?.data) {
-        const transformedResults = response.data.data
-          .slice(0, 3)
-          .map((product) => ({
-            id: product.id,
-            name: product.title,
-            image:
-              product.variants?.[0]?.images?.[0] || "/images/placeholder.png",
-            price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${(product.variants?.[0]?.price_cents / 100 || 0).toFixed(2)}`,
-            available: product.variants?.some((v) => v.stock > 0),
-          }));
-        setSearchResults(transformedResults);
-      }
-    } catch (error) {
-      console.error("Search error:", error);
-      setSearchResults([]);
-    } finally {
-      setSearchLoading(false);
-    }
-  };
-
-  // Debounce search
+  // Debounce client-side search
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (showDesktopSearch || openSearch) {
-        searchProducts(searchQuery);
+      if ((showDesktopSearch || openSearch) && productsLoaded) {
+        searchProductsClient(searchQuery);
       }
-    }, 300);
+    }, 200);
     return () => clearTimeout(timer);
-  }, [searchQuery, showDesktopSearch, openSearch]);
+  }, [searchQuery, showDesktopSearch, openSearch, productsLoaded]);
 
   // Handle search submit
   const handleSearchSubmit = (e) => {
@@ -162,7 +178,7 @@ const Nav = () => {
   // Handle history click
   const handleHistoryClick = (historyItem) => {
     setSearchQuery(historyItem);
-    searchProducts(historyItem);
+    searchProductsClient(historyItem);
     saveSearchHistory(historyItem);
   };
 
@@ -206,13 +222,6 @@ const Nav = () => {
     { name: "Home", url: "/" },
     { name: "Shop", url: "/product" },
     { name: "Registry", url: "/registry" },
-  ];
-
-  const quickLinks = [
-    { name: "New Arrivals", url: "" },
-    { name: "Best Sellers", url: "" },
-    { name: "Deals", url: "" },
-    { name: "Store Locator", url: "" },
   ];
 
   const getAccountLinks = () => {
@@ -400,7 +409,6 @@ const Nav = () => {
           className="nav-link md:w-[30%] flex items-center md:justify-between relative gap-2"
           ref={dropdownRef}
         >
-          {/* Desktop Search Input - ORIGINAL STYLE */}
           <div
             className={`input-container md:w-[90%] gap-3 py-2 ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm relative`}
           >
@@ -453,18 +461,18 @@ const Nav = () => {
         </div>
       </div>
 
-      {/* DESKTOP SEARCH OVERLAY - ADDED (doesn't change original UI) */}
+      {/* DESKTOP SEARCH OVERLAY - Client-side search */}
       <AnimatePresence>
         {showDesktopSearch && (
           <motion.div
             ref={desktopSearchRef}
-            className="absolute top-full left-0 right-0 mt-2 bg-white shadow-2xl border border-gray-100 overflow-hidden z-[70]"
+            className="absolute top-full left-0 right-0 mt-2 bg-white shadow-2xl border border-gray-100 overflow-hidden z-[700]"
             variants={searchOverlayVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
           >
-            <div className="p-6">
+            <div className="p-6 max-h-[80vh] overflow-y-auto">
               <form onSubmit={handleSearchSubmit} className="relative mb-6">
                 <input
                   ref={desktopSearchInputRef}
@@ -493,7 +501,7 @@ const Nav = () => {
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider">
-                      SEARCH RESULTS
+                      SEARCH RESULTS ({searchResults.length})
                     </h3>
                     <button
                       onClick={() =>
@@ -837,8 +845,7 @@ const Nav = () => {
         )}
       </AnimatePresence>
 
-      {/* Mobile Search Sidebar - UPDATED with product suggestions (no quick links) */}
-      {/* Mobile Search Sidebar - WITH GLASSY EFFECT (same as sidebar) */}
+      {/* Mobile Search Sidebar - Client-side search with glassy effect */}
       <AnimatePresence>
         {openSearch && (
           <motion.div
@@ -916,7 +923,7 @@ const Nav = () => {
                 </div>
               )}
 
-              {/* Suggested Products - NO QUICK LINKS */}
+              {/* Suggested Products */}
               {!searchQuery && suggestedProducts.length > 0 && (
                 <div className="mb-8">
                   <h3 className="text-sm font-semibold text-white/70 mb-4 tracking-wider">

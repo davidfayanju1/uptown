@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { Link, useParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { useCart } from "../hooks/useCart";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,7 +21,6 @@ const ProductDetails = () => {
   const [isSticky, setIsSticky] = useState(false);
   const { addToCart, isAddingToCart } = useCart();
   const addToCartRef = useRef(null);
-  const queryClient = useQueryClient();
 
   const {
     data: response,
