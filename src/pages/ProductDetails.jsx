@@ -45,6 +45,15 @@ const ProductDetails = () => {
     },
   });
 
+  // RESET ALL STATE WHEN ID CHANGES
+  useEffect(() => {
+    // Reset all selection states when navigating to a new product
+    setActiveImage(null);
+    setSelectedColor(null);
+    setSelectedSize(null);
+    setShowSuccessNotification(false);
+  }, [id]);
+
   const productData = response?.data?.product;
   const variants = response?.data?.variants || [];
 
@@ -257,7 +266,7 @@ const ProductDetails = () => {
     if (!activeImage && variants[0]?.images?.[0]) {
       setActiveImage(variants[0].images[0]);
     }
-  }, [variants]);
+  }, [variants, uniqueColors, uniqueSizes]); // Added dependencies
 
   useEffect(() => {
     if (showSuccessNotification) {
@@ -464,7 +473,7 @@ const ProductDetails = () => {
               <div className="flex gap-4 mt-4 overflow-x-auto pb-2">
                 {allImages.map((img, index) => (
                   <div
-                    key={index}
+                    key={`${img}-${index}`}
                     className={`h-20 w-20 flex-shrink-0 cursor-pointer border-2 overflow-hidden transition-all duration-200 ${
                       currentImage === img ? "border-black" : "border-gray-200"
                     }`}
@@ -496,7 +505,7 @@ const ProductDetails = () => {
               <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
-            {/* Color Selection - FIXED */}
+            {/* Color Selection */}
             {uniqueColors.length > 0 && (
               <div className="md:mt-8 mt-5">
                 <h2 className="text-sm font-medium text-gray-900">Colors</h2>
@@ -537,7 +546,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Size Selection - FIXED */}
+            {/* Size Selection */}
             {uniqueSizes[0] !== "" && uniqueSizes.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Size</h2>
@@ -545,7 +554,6 @@ const ProductDetails = () => {
                   {uniqueSizes.map((size) => {
                     const isAvailable = isSizeAvailable(size);
                     const isSelected = selectedSize === size;
-                    // Check if combination is available when both are selected
                     const combinationUnavailable =
                       selectedColor && !isVariantAvailable(selectedColor, size);
 
@@ -564,7 +572,6 @@ const ProductDetails = () => {
                           !combinationUnavailable &&
                           handleSizeSelect(size)
                         }
-                        // disabled={isAvailable || combinationUnavailable}
                       >
                         {size}
                       </button>
@@ -678,6 +685,10 @@ const ProductDetails = () => {
                   key={item.id}
                   to={`/product/${item.id}`}
                   className="group block"
+                  // Scroll to top when clicking similar product
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
                 >
                   <div className="relative overflow-hidden bg-gray-100 aspect-square">
                     <img
