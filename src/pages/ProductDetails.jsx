@@ -65,32 +65,30 @@ const ProductDetails = () => {
 
     const allProducts = allProductsResponse.data;
 
-    return (
-      allProducts
-        // .filter((p) => p.id !== product?.id)
-        .slice(0, 4)
-        .map((p) => {
-          const productVariants = p.variants || [];
-          const lowestPrice = productVariants.reduce(
-            (min, v) => (v.price_cents < min ? v.price_cents : min),
-            Infinity,
-          );
-          const priceInDollars =
-            lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
-          const currency = productVariants[0]?.currency === "GBP" ? "£" : "$";
-          const productImage =
-            productVariants[0]?.images?.[0] || "/images/placeholder.png";
-          const hasStock = productVariants.some((v) => v.stock > 0);
+    return allProducts
+      .filter((p) => p.id !== product?.id)
+      .slice(0, 4)
+      .map((p) => {
+        const productVariants = p.variants || [];
+        const lowestPrice = productVariants.reduce(
+          (min, v) => (v.price_cents < min ? v.price_cents : min),
+          Infinity,
+        );
+        const priceInDollars =
+          lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
+        const currency = productVariants[0]?.currency === "GBP" ? "£" : "$";
+        const productImage =
+          productVariants[0]?.images?.[0] || "/images/placeholder.png";
+        const hasStock = productVariants.some((v) => v.stock > 0);
 
-          return {
-            id: p.id,
-            name: p.title,
-            price: `${currency}${priceInDollars}`,
-            image: productImage,
-            available: hasStock,
-          };
-        })
-    );
+        return {
+          id: p.id,
+          name: p.title,
+          price: `${currency}${priceInDollars}`,
+          image: productImage,
+          available: hasStock,
+        };
+      });
   }, [allProductsResponse, product?.id]);
 
   const uniqueColors = variants
