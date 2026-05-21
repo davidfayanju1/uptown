@@ -61,9 +61,9 @@ const ProductDetails = () => {
 
   // Transform similar products
   const similarProducts = React.useMemo(() => {
-    if (!allProductsResponse?.data?.products) return [];
+    if (!allProductsResponse?.data) return [];
 
-    const allProducts = allProductsResponse.data.products;
+    const allProducts = allProductsResponse.data;
 
     return (
       allProducts
