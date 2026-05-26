@@ -6,7 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { useCart } from "../hooks/useCart";
 import { motion, AnimatePresence } from "framer-motion";
-import { IoCheckmarkCircle, IoClose } from "react-icons/io5";
+import {
+  IoCheckmarkCircle,
+  IoClose,
+  IoChevronBack,
+  IoChevronForward,
+} from "react-icons/io5";
 import {
   ProductDetailsSkeleton,
   ProductNotFound,
@@ -14,13 +19,16 @@ import {
 
 const ProductDetails = () => {
   const { id } = useParams();
-  const [activeImage, setActiveImage] = useState(null);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
   const { addToCart, isAddingToCart } = useCart();
   const addToCartRef = useRef(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const {
     data: response,
@@ -48,10 +56,11 @@ const ProductDetails = () => {
   // RESET ALL STATE WHEN ID CHANGES
   useEffect(() => {
     // Reset all selection states when navigating to a new product
-    setActiveImage(null);
     setSelectedColor(null);
     setSelectedSize(null);
     setShowSuccessNotification(false);
+    setCurrentSlideIndex(0);
+    setDirection(0);
   }, [id]);
 
   const productData = response?.data?.product;
@@ -180,20 +189,60 @@ const ProductDetails = () => {
 
   const allImages = getAllImages();
 
-  const getCurrentImage = () => {
-    if (activeImage) return activeImage;
-    if (selectedVariant?.images?.[0]) return selectedVariant.images[0];
-    return allImages[0] || "/images/placeholder.png";
+  // Simplified: Always use the slider index for the current image
+  const currentImage =
+    allImages[currentSlideIndex] || "/images/placeholder.png";
+
+  // Navigation functions with direction tracking
+  const nextSlide = () => {
+    if (allImages.length === 0) return;
+    setDirection(1); //向右滑动
+    setCurrentSlideIndex((prev) => (prev + 1) % allImages.length);
   };
 
-  const currentImage = getCurrentImage();
+  const prevSlide = () => {
+    if (allImages.length === 0) return;
+    setDirection(-1); // 向左滑动
+    setCurrentSlideIndex(
+      (prev) => (prev - 1 + allImages.length) % allImages.length,
+    );
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current - touchEndX.current > 50) {
+      // Swipe left - next slide
+      nextSlide();
+    }
+    if (touchStartX.current - touchEndX.current < -50) {
+      // Swipe right - previous slide
+      prevSlide();
+    }
+    // Reset touch values
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
 
   const handleColorSelect = (color) => {
     setSelectedColor(color);
-    // Reset active image to the first variant image of selected color
+    // Find the first image of the selected color and update slider
     const variantWithColor = variants.find((v) => v.color === color);
     if (variantWithColor?.images?.[0]) {
-      setActiveImage(variantWithColor.images[0]);
+      const newIndex = allImages.findIndex(
+        (img) => img === variantWithColor.images[0],
+      );
+      if (newIndex !== -1 && newIndex !== currentSlideIndex) {
+        setDirection(newIndex > currentSlideIndex ? 1 : -1);
+        setCurrentSlideIndex(newIndex);
+      }
     }
     // Clear selected size if the combination isn't available
     if (selectedSize && !isVariantAvailable(color, selectedSize)) {
@@ -203,10 +252,14 @@ const ProductDetails = () => {
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
-    // Find variant with matching size
+    // Find the first image of the selected size and update slider
     const variant = variants.find((v) => v.size === size);
     if (variant?.images?.[0]) {
-      setActiveImage(variant.images[0]);
+      const newIndex = allImages.findIndex((img) => img === variant.images[0]);
+      if (newIndex !== -1 && newIndex !== currentSlideIndex) {
+        setDirection(newIndex > currentSlideIndex ? 1 : -1);
+        setCurrentSlideIndex(newIndex);
+      }
     }
     // Clear selected color if the combination isn't available
     if (selectedColor && !isVariantAvailable(selectedColor, size)) {
@@ -263,10 +316,11 @@ const ProductDetails = () => {
       setSelectedSize(firstAvailableSize);
     }
 
-    if (!activeImage && variants[0]?.images?.[0]) {
-      setActiveImage(variants[0].images[0]);
+    // Set initial slide index to the first image
+    if (allImages.length > 0 && currentSlideIndex === 0) {
+      setCurrentSlideIndex(0);
     }
-  }, [variants, uniqueColors, uniqueSizes]); // Added dependencies
+  }, [variants, uniqueColors, uniqueSizes, allImages]);
 
   useEffect(() => {
     if (showSuccessNotification) {
@@ -297,6 +351,24 @@ const ProductDetails = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
+  };
+
+  // Get animation variants based on direction
+  const getSlideAnimation = () => {
+    return {
+      initial: {
+        opacity: 0,
+        x: direction === 1 ? 100 : -100,
+      },
+      animate: {
+        opacity: 1,
+        x: 0,
+      },
+      exit: {
+        opacity: 0,
+        x: direction === 1 ? -100 : 100,
+      },
+    };
   };
 
   if (isLoading) {
@@ -458,26 +530,90 @@ const ProductDetails = () => {
 
       <div className="max-w-7xl md:mt-[5rem] mt-[4rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-0">
-          {/* LEFT COLUMN - Image Gallery */}
+          {/* LEFT COLUMN - Image Gallery with Slider */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
-            <div className="mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100">
-              <img
-                key={currentImage}
-                src={currentImage}
-                alt={product.name}
-                className="w-full h-full object-cover object-center"
-              />
+            <div
+              className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100 group"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.img
+                  key={currentImage}
+                  src={currentImage}
+                  alt={product.name}
+                  className="w-full h-full object-cover object-center absolute inset-0"
+                  variants={getSlideAnimation()}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{
+                    duration: 0.4,
+                    ease: [0.25, 0.1, 0.25, 1], // Smooth cubic bezier easing
+                  }}
+                />
+              </AnimatePresence>
+
+              {/* Navigation Arrows */}
+              {allImages.length > 1 && (
+                <>
+                  <button
+                    onClick={prevSlide}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 z-10 backdrop-blur-sm"
+                    aria-label="Previous image"
+                  >
+                    <IoChevronBack size={20} />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 z-10 backdrop-blur-sm"
+                    aria-label="Next image"
+                  >
+                    <IoChevronForward size={20} />
+                  </button>
+
+                  {/* Dot Indicators */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                    {allImages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          if (idx !== currentSlideIndex) {
+                            setDirection(idx > currentSlideIndex ? 1 : -1);
+                            setCurrentSlideIndex(idx);
+                          }
+                        }}
+                        className={`transition-all duration-200 rounded-full ${
+                          currentSlideIndex === idx
+                            ? "w-2 h-2 bg-white"
+                            : "w-1.5 h-1.5 bg-white/50 hover:bg-white/75"
+                        }`}
+                        aria-label={`Go to image ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
+            {/* Thumbnail Navigation */}
             {allImages.length > 1 && (
-              <div className="flex gap-4 mt-4 overflow-x-auto pb-2">
+              <div className="flex gap-4 mt-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
                 {allImages.map((img, index) => (
                   <div
                     key={`${img}-${index}`}
-                    className={`h-20 w-20 flex-shrink-0 cursor-pointer border-2 overflow-hidden transition-all duration-200 ${
-                      currentImage === img ? "border-black" : "border-gray-200"
+                    className={`relative h-20 w-20 flex-shrink-0 cursor-pointer border-2 overflow-hidden transition-all duration-200 hover:opacity-80 ${
+                      currentSlideIndex === index
+                        ? "border-black"
+                        : "border-gray-200"
                     }`}
-                    onClick={() => setActiveImage(img)}
+                    onClick={() => {
+                      if (index !== currentSlideIndex) {
+                        setDirection(index > currentSlideIndex ? 1 : -1);
+                        setCurrentSlideIndex(index);
+                      }
+                    }}
                   >
                     <img
                       src={img}
@@ -685,7 +821,6 @@ const ProductDetails = () => {
                   key={item.id}
                   to={`/product/${item.id}`}
                   className="group block"
-                  // Scroll to top when clicking similar product
                   onClick={() => {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
