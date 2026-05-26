@@ -24,9 +24,14 @@ const ProductDetails = () => {
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [direction, setDirection] = useState(0); // -1 for left, 1 for right
+
+  // Thumbnail overflow arrow visibility states
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
   const { addToCart, isAddingToCart } = useCart();
   const addToCartRef = useRef(null);
+  const thumbnailContainerRef = useRef(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
@@ -55,12 +60,10 @@ const ProductDetails = () => {
 
   // RESET ALL STATE WHEN ID CHANGES
   useEffect(() => {
-    // Reset all selection states when navigating to a new product
     setSelectedColor(null);
     setSelectedSize(null);
     setShowSuccessNotification(false);
     setCurrentSlideIndex(0);
-    setDirection(0);
   }, [id]);
 
   const productData = response?.data?.product;
@@ -80,7 +83,6 @@ const ProductDetails = () => {
   // Transform similar products
   const similarProducts = React.useMemo(() => {
     if (!allProductsResponse?.data) return [];
-
     const allProducts = allProductsResponse.data;
 
     return allProducts
@@ -121,19 +123,13 @@ const ProductDetails = () => {
     ? [...new Map(variants.map((v) => [v.size, v.size])).values()].sort()
     : [];
 
-  // Helper function to check if a color has ANY available variant
-  const isColorAvailable = (color) => {
-    return variants.some((v) => v.color === color && v.stock > 0);
-  };
+  const isColorAvailable = (color) =>
+    variants.some((v) => v.color === color && v.stock > 0);
+  const isSizeAvailable = (size) =>
+    variants.some((v) => v.size === size && v.stock > 0);
 
-  // Helper function to check if a size has ANY available variant
-  const isSizeAvailable = (size) => {
-    return variants.some((v) => v.size === size && v.stock > 0);
-  };
-
-  // Helper function to check if a specific color+size combination is available
   const isVariantAvailable = (color, size) => {
-    if (!color || !size) return true; // Not selected yet
+    if (!color || !size) return true;
     const variant = variants.find(
       (v) => v.color.trim() === color.trim() && v.size.trim() === size.trim(),
     );
@@ -149,13 +145,11 @@ const ProductDetails = () => {
       );
     }
     if (selectedColor) {
-      // When only color is selected, return first available variant with that color
       return variants.find(
         (v) => v.color.trim() === selectedColor.trim() && v.stock > 0,
       );
     }
     if (selectedSize) {
-      // When only size is selected, return first available variant with that size
       return variants.find(
         (v) => v.size.trim() === selectedSize.trim() && v.stock > 0,
       );
@@ -188,27 +182,21 @@ const ProductDetails = () => {
   };
 
   const allImages = getAllImages();
-
-  // Simplified: Always use the slider index for the current image
   const currentImage =
     allImages[currentSlideIndex] || "/images/placeholder.png";
 
-  // Navigation functions with direction tracking
   const nextSlide = () => {
     if (allImages.length === 0) return;
-    setDirection(1); //向右滑动
     setCurrentSlideIndex((prev) => (prev + 1) % allImages.length);
   };
 
   const prevSlide = () => {
     if (allImages.length === 0) return;
-    setDirection(-1); // 向左滑动
     setCurrentSlideIndex(
       (prev) => (prev - 1 + allImages.length) % allImages.length,
     );
   };
 
-  // Touch handlers for mobile swipe
   const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -218,33 +206,64 @@ const ProductDetails = () => {
   };
 
   const handleTouchEnd = () => {
-    if (touchStartX.current - touchEndX.current > 50) {
-      // Swipe left - next slide
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    if (swipeDistance > 50) {
       nextSlide();
-    }
-    if (touchStartX.current - touchEndX.current < -50) {
-      // Swipe right - previous slide
+    } else if (swipeDistance < -50) {
       prevSlide();
     }
-    // Reset touch values
     touchStartX.current = 0;
     touchEndX.current = 0;
   };
 
+  // Check overflow and scrolling parameters for thumbnails
+  const checkThumbnailOverflow = () => {
+    const container = thumbnailContainerRef.current;
+    if (container) {
+      const { scrollLeft, scrollWidth, clientWidth } = container;
+      setCanScrollLeft(scrollLeft > 2);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 2);
+    }
+  };
+
+  // Horizontal thumbnail scrolling mechanics
+  const scrollThumbnails = (scrollDirection) => {
+    const container = thumbnailContainerRef.current;
+    if (container) {
+      const scrollAmount = 240;
+      container.scrollBy({
+        left: scrollDirection === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  // Wire up resize and layout trackers to keep arrows accurate
+  useEffect(() => {
+    checkThumbnailOverflow();
+    const container = thumbnailContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", checkThumbnailOverflow);
+      window.addEventListener("resize", checkThumbnailOverflow);
+    }
+    return () => {
+      if (container)
+        container.removeEventListener("scroll", checkThumbnailOverflow);
+      window.removeEventListener("resize", checkThumbnailOverflow);
+    };
+  }, [allImages]);
+
   const handleColorSelect = (color) => {
     setSelectedColor(color);
-    // Find the first image of the selected color and update slider
     const variantWithColor = variants.find((v) => v.color === color);
     if (variantWithColor?.images?.[0]) {
       const newIndex = allImages.findIndex(
         (img) => img === variantWithColor.images[0],
       );
       if (newIndex !== -1 && newIndex !== currentSlideIndex) {
-        setDirection(newIndex > currentSlideIndex ? 1 : -1);
         setCurrentSlideIndex(newIndex);
       }
     }
-    // Clear selected size if the combination isn't available
     if (selectedSize && !isVariantAvailable(color, selectedSize)) {
       setSelectedSize(null);
     }
@@ -252,22 +271,19 @@ const ProductDetails = () => {
 
   const handleSizeSelect = (size) => {
     setSelectedSize(size);
-    // Find the first image of the selected size and update slider
     const variant = variants.find((v) => v.size === size);
     if (variant?.images?.[0]) {
       const newIndex = allImages.findIndex((img) => img === variant.images[0]);
       if (newIndex !== -1 && newIndex !== currentSlideIndex) {
-        setDirection(newIndex > currentSlideIndex ? 1 : -1);
         setCurrentSlideIndex(newIndex);
       }
     }
-    // Clear selected color if the combination isn't available
     if (selectedColor && !isVariantAvailable(selectedColor, size)) {
       setSelectedColor(null);
     }
   };
 
-  // Sticky button detection
+  // Sticky button viewport observer
   useEffect(() => {
     const handleScroll = () => {
       if (addToCartRef.current) {
@@ -287,46 +303,39 @@ const ProductDetails = () => {
     };
   }, []);
 
-  // Auto-select first available color and size when data loads
+  // Sync index focus with variant state mutations
+  useEffect(() => {
+    const activeImage = allImages[currentSlideIndex];
+    if (activeImage && thumbnailContainerRef.current) {
+      const thumbnailEl =
+        thumbnailContainerRef.current.children[currentSlideIndex];
+      if (thumbnailEl) {
+        thumbnailEl.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+          inline: "nearest",
+        });
+      }
+    }
+  }, [currentSlideIndex]);
+
   useEffect(() => {
     if (variants.length === 0) return;
 
-    // Find first available color (with stock)
-    let firstAvailableColor = null;
-    for (const color of uniqueColors) {
-      if (isColorAvailable(color)) {
-        firstAvailableColor = color;
-        break;
-      }
-    }
+    let firstAvailableColor = uniqueColors.find(isColorAvailable) || null;
+    let firstAvailableSize = uniqueSizes.find(isSizeAvailable) || null;
 
-    // Find first available size (with stock)
-    let firstAvailableSize = null;
-    for (const size of uniqueSizes) {
-      if (isSizeAvailable(size)) {
-        firstAvailableSize = size;
-        break;
-      }
-    }
-
-    if (firstAvailableColor && !selectedColor) {
+    if (firstAvailableColor && !selectedColor)
       setSelectedColor(firstAvailableColor);
-    }
-    if (firstAvailableSize && !selectedSize) {
+    if (firstAvailableSize && !selectedSize)
       setSelectedSize(firstAvailableSize);
-    }
-
-    // Set initial slide index to the first image
-    if (allImages.length > 0 && currentSlideIndex === 0) {
+    if (allImages.length > 0 && currentSlideIndex === 0)
       setCurrentSlideIndex(0);
-    }
   }, [variants, uniqueColors, uniqueSizes, allImages]);
 
   useEffect(() => {
     if (showSuccessNotification) {
-      const timer = setTimeout(() => {
-        setShowSuccessNotification(false);
-      }, 4000);
+      const timer = setTimeout(() => setShowSuccessNotification(false), 4000);
       return () => clearTimeout(timer);
     }
   }, [showSuccessNotification]);
@@ -336,39 +345,16 @@ const ProductDetails = () => {
       alert("Please select a size and color");
       return;
     }
-
     if (selectedVariant.stock <= 0) {
       alert("This variant is out of stock");
       return;
     }
-
     try {
-      await addToCart({
-        variantId: selectedVariant.id,
-        quantity: 1,
-      });
+      await addToCart({ variantId: selectedVariant.id, quantity: 1 });
       setShowSuccessNotification(true);
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
-  };
-
-  // Get animation variants based on direction
-  const getSlideAnimation = () => {
-    return {
-      initial: {
-        opacity: 0,
-        x: direction === 1 ? 100 : -100,
-      },
-      animate: {
-        opacity: 1,
-        x: 0,
-      },
-      exit: {
-        opacity: 0,
-        x: direction === 1 ? -100 : 100,
-      },
-    };
   };
 
   if (isLoading) {
@@ -414,7 +400,7 @@ const ProductDetails = () => {
 
   return (
     <PrimaryLayout>
-      {/* Success Notification */}
+      {/* Success Notification Banner */}
       <AnimatePresence>
         {showSuccessNotification && (
           <motion.div
@@ -533,54 +519,57 @@ const ProductDetails = () => {
           {/* LEFT COLUMN - Image Gallery with Slider */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
             <div
-              className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100 group"
+              className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <AnimatePresence mode="wait" custom={direction}>
-                <motion.img
-                  key={currentImage}
-                  src={currentImage}
-                  alt={product.name}
-                  className="w-full h-full object-cover object-center absolute inset-0"
-                  variants={getSlideAnimation()}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  transition={{
-                    duration: 0.4,
-                    ease: [0.25, 0.1, 0.25, 1], // Smooth cubic bezier easing
-                  }}
-                />
-              </AnimatePresence>
+              <div className="relative w-full h-full">
+                {allImages.map((img, idx) => (
+                  <div
+                    key={img}
+                    className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-out ${
+                      idx === currentSlideIndex
+                        ? "translate-x-0"
+                        : idx < currentSlideIndex
+                          ? "-translate-x-full"
+                          : "translate-x-full"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`${product.name} view ${idx + 1}`}
+                      className="w-full h-full object-cover object-center"
+                    />
+                  </div>
+                ))}
+              </div>
 
-              {/* Navigation Arrows */}
+              {/* Slider Main Controls - Always visible */}
               {allImages.length > 1 && (
                 <>
                   <button
                     onClick={prevSlide}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 z-10 backdrop-blur-sm"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all duration-200 z-10 backdrop-blur-sm"
                     aria-label="Previous image"
                   >
                     <IoChevronBack size={20} />
                   </button>
                   <button
                     onClick={nextSlide}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100 focus:opacity-100 z-10 backdrop-blur-sm"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all duration-200 z-10 backdrop-blur-sm"
                     aria-label="Next image"
                   >
                     <IoChevronForward size={20} />
                   </button>
 
-                  {/* Dot Indicators */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  {/* Slider Progress Dots */}
+                  {/* <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                     {allImages.map((_, idx) => (
                       <button
                         key={idx}
                         onClick={() => {
                           if (idx !== currentSlideIndex) {
-                            setDirection(idx > currentSlideIndex ? 1 : -1);
                             setCurrentSlideIndex(idx);
                           }
                         }}
@@ -592,41 +581,81 @@ const ProductDetails = () => {
                         aria-label={`Go to image ${idx + 1}`}
                       />
                     ))}
-                  </div>
+                  </div> */}
                 </>
               )}
             </div>
 
-            {/* Thumbnail Navigation */}
+            {/* Thumbnail Carousel Section with Context-Aware Arrows */}
             {allImages.length > 1 && (
-              <div className="flex gap-4 mt-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
-                {allImages.map((img, index) => (
-                  <div
-                    key={`${img}-${index}`}
-                    className={`relative h-20 w-20 flex-shrink-0 cursor-pointer border-2 overflow-hidden transition-all duration-200 hover:opacity-80 ${
-                      currentSlideIndex === index
-                        ? "border-black"
-                        : "border-gray-200"
-                    }`}
-                    onClick={() => {
-                      if (index !== currentSlideIndex) {
-                        setDirection(index > currentSlideIndex ? 1 : -1);
-                        setCurrentSlideIndex(index);
-                      }
-                    }}
-                  >
-                    <img
-                      src={img}
-                      alt={`${product.name} view ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+              <div className="relative group/thumbs mt-4 px-1">
+                <AnimatePresence>
+                  {canScrollLeft && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onClick={() => scrollThumbnails("left")}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors flex items-center justify-center"
+                      aria-label="Scroll thumbnails left"
+                    >
+                      <IoChevronBack size={16} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+
+                <div
+                  ref={thumbnailContainerRef}
+                  className="flex gap-4 overflow-x-auto pb-2 pt-1 scroll-smooth snap-x scrollbar-none"
+                  style={{
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {allImages.map((img, index) => (
+                    <div
+                      key={`${img}-${index}`}
+                      className={`relative h-20 w-20 flex-shrink-0 snap-start cursor-pointer border-2 overflow-hidden transition-all duration-200 hover:opacity-90 ${
+                        currentSlideIndex === index
+                          ? "border-black scale-[0.98]"
+                          : "border-gray-200"
+                      }`}
+                      onClick={() => {
+                        if (index !== currentSlideIndex) {
+                          setCurrentSlideIndex(index);
+                        }
+                      }}
+                    >
+                      <img
+                        src={img}
+                        alt={`${product.name} view ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <AnimatePresence>
+                  {canScrollRight && (
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onClick={() => scrollThumbnails("right")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors flex items-center justify-center"
+                      aria-label="Scroll thumbnails right"
+                    >
+                      <IoChevronForward size={16} />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
             )}
           </div>
 
-          {/* RIGHT COLUMN — product details */}
+          {/* RIGHT COLUMN — Product Meta details */}
           <div className="lg:w-1/2">
             <h1 className="md:text-3xl leading-[22px] text-xl font-bold text-gray-900">
               {product.name}
@@ -641,7 +670,7 @@ const ProductDetails = () => {
               <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
-            {/* Color Selection */}
+            {/* Color Matrix UI Selection */}
             {uniqueColors.length > 0 && (
               <div className="md:mt-8 mt-5">
                 <h2 className="text-sm font-medium text-gray-900">Colors</h2>
@@ -682,7 +711,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Size Selection */}
+            {/* Size Matrix UI Selection */}
             {uniqueSizes[0] !== "" && uniqueSizes.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Size</h2>
@@ -717,7 +746,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Add to Cart Button */}
+            {/* Core Action Button */}
             <div ref={addToCartRef}>
               <button
                 onClick={handleAddToCart}
@@ -764,7 +793,7 @@ const ProductDetails = () => {
               </button>
             </div>
 
-            {/* Sticky Add to Cart Button */}
+            {/* Viewport-dependent Sticky Footer Trigger */}
             <AnimatePresence>
               {isSticky && isVariantInStock && selectedVariant && (
                 <motion.div
@@ -787,7 +816,7 @@ const ProductDetails = () => {
               )}
             </AnimatePresence>
 
-            {/* Product Details */}
+            {/* Additional HTML Safe Rich Details */}
             {product.details && product.details.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Details</h2>
@@ -798,7 +827,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Variant Info */}
+            {/* Variant Core Metadata identifiers */}
             {selectedVariant && (
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <p className="text-sm text-gray-500">
@@ -809,7 +838,7 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* SIMILAR PRODUCTS SECTION */}
+        {/* Similar Item Context Grids */}
         {similarProducts.length > 0 && (
           <div className="mt-16 pt-8 border-t border-gray-200">
             <h2 className="text-xl font-light tracking-tight mb-6">
