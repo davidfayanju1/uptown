@@ -188,7 +188,7 @@ const Registry = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   onClick={handleSerialButtonClick}
-                  className="bg-white text-black px-8 py-3 font-medium hover:bg-gray-100 transition-all flex items-center mx-auto"
+                  className="bg-white text-black px-8 py-3 font-[400] hover:bg-gray-100 transition-all flex items-center mx-auto"
                 >
                   Enter Serial Number
                   <FiArrowRight className="ml-2" />
@@ -199,7 +199,7 @@ const Registry = () => {
                   initial={{ opacity: 0, width: 0 }}
                   animate={{ opacity: 1, width: "auto" }}
                   exit={{ opacity: 0, width: 0 }}
-                  className="flex items-center bg-white rounded-full pl-4 pr-2 py-2 shadow-lg"
+                  className="flex items-center bg-white pl-4 pr-2 py-2 shadow-lg"
                 >
                   <input
                     ref={inputRef}
@@ -228,7 +228,7 @@ const Registry = () => {
                       whileTap={{ scale: 0.95 }}
                       onClick={handleVerifySerial}
                       disabled={!serialNumber.trim()}
-                      className={`p-2 rounded-full ${
+                      className={`p-2 ${
                         !serialNumber.trim()
                           ? "bg-gray-300"
                           : "bg-blue-500 hover:bg-blue-600"
