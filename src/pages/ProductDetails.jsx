@@ -24,6 +24,9 @@ const ProductDetails = () => {
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   // Thumbnail overflow arrow visibility states
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -58,12 +61,23 @@ const ProductDetails = () => {
     },
   });
 
+  // Check if mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   // RESET ALL STATE WHEN ID CHANGES
   useEffect(() => {
     setSelectedColor(null);
     setSelectedSize(null);
     setShowSuccessNotification(false);
     setCurrentSlideIndex(0);
+    setDirection(0);
   }, [id]);
 
   const productData = response?.data?.product;
@@ -111,6 +125,7 @@ const ProductDetails = () => {
       });
   }, [allProductsResponse, product?.id]);
 
+  // Get all unique colors (including Black)
   const uniqueColors = variants
     ? [
         ...new Map(
@@ -182,35 +197,52 @@ const ProductDetails = () => {
   };
 
   const allImages = getAllImages();
-  const currentImage =
-    allImages[currentSlideIndex] || "/images/placeholder.png";
 
   const nextSlide = () => {
-    if (allImages.length === 0) return;
+    if (allImages.length === 0 || isAnimating) return;
+    setIsAnimating(true);
+    setDirection(1);
     setCurrentSlideIndex((prev) => (prev + 1) % allImages.length);
+    setTimeout(() => setIsAnimating(false), 300);
   };
 
   const prevSlide = () => {
-    if (allImages.length === 0) return;
+    if (allImages.length === 0 || isAnimating) return;
+    setIsAnimating(true);
+    setDirection(-1);
     setCurrentSlideIndex(
       (prev) => (prev - 1 + allImages.length) % allImages.length,
     );
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
+  const goToSlide = (index) => {
+    if (index === currentSlideIndex || isAnimating) return;
+    setIsAnimating(true);
+    setDirection(index > currentSlideIndex ? 1 : -1);
+    setCurrentSlideIndex(index);
+    setTimeout(() => setIsAnimating(false), 300);
   };
 
   const handleTouchStart = (e) => {
+    if (isAnimating) return;
     touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchMove = (e) => {
+    if (isAnimating) return;
     touchEndX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = () => {
+    if (isAnimating) return;
     const swipeDistance = touchStartX.current - touchEndX.current;
-    if (swipeDistance > 50) {
-      nextSlide();
-    } else if (swipeDistance < -50) {
-      prevSlide();
+    if (Math.abs(swipeDistance) > 50) {
+      if (swipeDistance > 50) {
+        nextSlide();
+      } else if (swipeDistance < -50) {
+        prevSlide();
+      }
     }
     touchStartX.current = 0;
     touchEndX.current = 0;
@@ -254,30 +286,50 @@ const ProductDetails = () => {
   }, [allImages]);
 
   const handleColorSelect = (color) => {
+    if (isAnimating) return;
     setSelectedColor(color);
-    const variantWithColor = variants.find((v) => v.color === color);
+
+    // Find the first image for this color and navigate to it
+    const variantWithColor = variants.find(
+      (v) => v.color === color && v.images && v.images.length > 0,
+    );
     if (variantWithColor?.images?.[0]) {
       const newIndex = allImages.findIndex(
         (img) => img === variantWithColor.images[0],
       );
       if (newIndex !== -1 && newIndex !== currentSlideIndex) {
+        setIsAnimating(true);
+        setDirection(newIndex > currentSlideIndex ? 1 : -1);
         setCurrentSlideIndex(newIndex);
+        setTimeout(() => setIsAnimating(false), 300);
       }
     }
+
+    // Clear selected size if the combination isn't available
     if (selectedSize && !isVariantAvailable(color, selectedSize)) {
       setSelectedSize(null);
     }
   };
 
   const handleSizeSelect = (size) => {
+    if (isAnimating) return;
     setSelectedSize(size);
-    const variant = variants.find((v) => v.size === size);
+
+    // Find the first image for this size and navigate to it
+    const variant = variants.find(
+      (v) => v.size === size && v.images && v.images.length > 0,
+    );
     if (variant?.images?.[0]) {
       const newIndex = allImages.findIndex((img) => img === variant.images[0]);
       if (newIndex !== -1 && newIndex !== currentSlideIndex) {
+        setIsAnimating(true);
+        setDirection(newIndex > currentSlideIndex ? 1 : -1);
         setCurrentSlideIndex(newIndex);
+        setTimeout(() => setIsAnimating(false), 300);
       }
     }
+
+    // Clear selected color if the combination isn't available
     if (selectedColor && !isVariantAvailable(selectedColor, size)) {
       setSelectedColor(null);
     }
@@ -303,22 +355,7 @@ const ProductDetails = () => {
     };
   }, []);
 
-  // Sync index focus with variant state mutations
-  useEffect(() => {
-    const activeImage = allImages[currentSlideIndex];
-    if (activeImage && thumbnailContainerRef.current) {
-      const thumbnailEl =
-        thumbnailContainerRef.current.children[currentSlideIndex];
-      if (thumbnailEl) {
-        thumbnailEl.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-          inline: "nearest",
-        });
-      }
-    }
-  }, [currentSlideIndex]);
-
+  // Auto-select first available color and size when data loads
   useEffect(() => {
     if (variants.length === 0) return;
 
@@ -355,6 +392,19 @@ const ProductDetails = () => {
     } catch (error) {
       console.error("Error adding to cart:", error);
     }
+  };
+
+  // Slide animation variants
+  const slideVariants = {
+    enter: (direction) => ({
+      x: direction > 0 ? "100%" : "-100%",
+    }),
+    center: {
+      x: 0,
+    },
+    exit: (direction) => ({
+      x: direction > 0 ? "-100%" : "100%",
+    }),
   };
 
   if (isLoading) {
@@ -397,6 +447,8 @@ const ProductDetails = () => {
   const currentPrice = getCurrentPrice();
   const currency = getCurrency();
   const isVariantInStock = selectedVariant?.stock > 0;
+  const currentImage =
+    allImages[currentSlideIndex] || "/images/placeholder.png";
 
   return (
     <PrimaryLayout>
@@ -524,26 +576,27 @@ const ProductDetails = () => {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
-              <div className="relative w-full h-full">
-                {allImages.map((img, idx) => (
-                  <div
-                    key={img}
-                    className={`absolute inset-0 w-full h-full transition-transform duration-300 ease-out ${
-                      idx === currentSlideIndex
-                        ? "translate-x-0"
-                        : idx < currentSlideIndex
-                          ? "-translate-x-full"
-                          : "translate-x-full"
-                    }`}
-                  >
-                    <img
-                      src={img}
-                      alt={`${product.name} view ${idx + 1}`}
-                      className="w-full h-full object-cover object-center"
-                    />
-                  </div>
-                ))}
-              </div>
+              <AnimatePresence mode="wait" custom={direction}>
+                <motion.img
+                  key={currentImage}
+                  src={currentImage}
+                  alt={product.name}
+                  className="absolute inset-0 w-full h-full object-cover object-center"
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{
+                    x: {
+                      type: "tween",
+                      duration: isMobile ? 0.25 : 0.3,
+                      ease: "easeInOut",
+                    },
+                  }}
+                  onAnimationComplete={() => setIsAnimating(false)}
+                />
+              </AnimatePresence>
 
               {/* Slider Main Controls - Always visible */}
               {allImages.length > 1 && (
@@ -564,15 +617,11 @@ const ProductDetails = () => {
                   </button>
 
                   {/* Slider Progress Dots */}
-                  {/* <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                     {allImages.map((_, idx) => (
                       <button
                         key={idx}
-                        onClick={() => {
-                          if (idx !== currentSlideIndex) {
-                            setCurrentSlideIndex(idx);
-                          }
-                        }}
+                        onClick={() => goToSlide(idx)}
                         className={`transition-all duration-200 rounded-full ${
                           currentSlideIndex === idx
                             ? "w-2 h-2 bg-white"
@@ -581,12 +630,12 @@ const ProductDetails = () => {
                         aria-label={`Go to image ${idx + 1}`}
                       />
                     ))}
-                  </div> */}
+                  </div>
                 </>
               )}
             </div>
 
-            {/* Thumbnail Carousel Section with Context-Aware Arrows */}
+            {/* Thumbnail Carousel Section */}
             {allImages.length > 1 && (
               <div className="relative group/thumbs mt-4 px-1">
                 <AnimatePresence>
@@ -621,11 +670,7 @@ const ProductDetails = () => {
                           ? "border-black scale-[0.98]"
                           : "border-gray-200"
                       }`}
-                      onClick={() => {
-                        if (index !== currentSlideIndex) {
-                          setCurrentSlideIndex(index);
-                        }
-                      }}
+                      onClick={() => goToSlide(index)}
                     >
                       <img
                         src={img}
@@ -670,7 +715,7 @@ const ProductDetails = () => {
               <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
-            {/* Color Matrix UI Selection */}
+            {/* Color Matrix UI Selection - Show all colors including Black */}
             {uniqueColors.length > 0 && (
               <div className="md:mt-8 mt-5">
                 <h2 className="text-sm font-medium text-gray-900">Colors</h2>
@@ -678,6 +723,10 @@ const ProductDetails = () => {
                   {uniqueColors.map((color) => {
                     const isAvailable = isColorAvailable(color);
                     const isSelected = selectedColor === color;
+                    const hasImages = variants.some(
+                      (v) =>
+                        v.color === color && v.images && v.images.length > 0,
+                    );
 
                     return (
                       <div key={color} className="relative">
