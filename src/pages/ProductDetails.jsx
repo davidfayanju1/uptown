@@ -601,7 +601,7 @@ const ProductDetails = () => {
               {/* Slider Main Controls - Always visible */}
               {allImages.length > 1 && (
                 <>
-                  <button
+                  {/* <button
                     onClick={prevSlide}
                     className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all duration-200 z-10 backdrop-blur-sm"
                     aria-label="Previous image"
@@ -614,7 +614,7 @@ const ProductDetails = () => {
                     aria-label="Next image"
                   >
                     <IoChevronForward size={20} />
-                  </button>
+                  </button> */}
 
                   {/* Slider Progress Dots */}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
