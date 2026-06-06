@@ -5,6 +5,7 @@ import PrimaryLayout from "../layout/PrimaryLayout";
 import { IoCloseOutline } from "react-icons/io5";
 import { BsTrash } from "react-icons/bs";
 import { useCart } from "../hooks/useCart";
+import ImageLoader from "../components/load-states/image-center-loader";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -227,6 +228,7 @@ const Cart = () => {
   if (isLoading) {
     return (
       <PrimaryLayout>
+        <ImageLoader />
         <div className="min-h-screen mt-[5rem] bg-gray-50 py-8 flex justify-center items-center">
           <div className="animate-spin rounded-none h-10 w-10 border-2 border-black border-t-transparent"></div>
         </div>

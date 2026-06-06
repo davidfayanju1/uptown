@@ -329,28 +329,6 @@ const Product = () => {
           </div>
         )}
       </div>
-
-      {/* Add custom animation styles */}
-      <style jsx>{`
-        @keyframes pulse-center {
-          0% {
-            transform: scale(0.95);
-            opacity: 0.7;
-          }
-          50% {
-            transform: scale(1.05);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(0.95);
-            opacity: 0.7;
-          }
-        }
-
-        .animate-pulse-center {
-          animation: pulse-center 1.5s ease-in-out infinite;
-        }
-      `}</style>
     </PrimaryLayout>
   );
 };

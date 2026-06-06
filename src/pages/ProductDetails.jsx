@@ -16,6 +16,7 @@ import {
   ProductDetailsSkeleton,
   ProductNotFound,
 } from "../components/load-states/product-details-skeleton";
+import ImageLoader from "../components/load-states/image-center-loader";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -407,9 +408,12 @@ const ProductDetails = () => {
     }),
   };
 
+  // Loading overlay with pulsing image
   if (isLoading) {
     return (
       <PrimaryLayout>
+        {/* Full-page loading overlay */}
+        <ImageLoader />
         <ProductDetailsSkeleton />
       </PrimaryLayout>
     );
@@ -601,21 +605,6 @@ const ProductDetails = () => {
               {/* Slider Main Controls - Always visible */}
               {allImages.length > 1 && (
                 <>
-                  {/* <button
-                    onClick={prevSlide}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all duration-200 z-10 backdrop-blur-sm"
-                    aria-label="Previous image"
-                  >
-                    <IoChevronBack size={20} />
-                  </button>
-                  <button
-                    onClick={nextSlide}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-all duration-200 z-10 backdrop-blur-sm"
-                    aria-label="Next image"
-                  >
-                    <IoChevronForward size={20} />
-                  </button> */}
-
                   {/* Slider Progress Dots */}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                     {allImages.map((_, idx) => (
@@ -929,6 +918,28 @@ const ProductDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Add custom animation styles */}
+      <style jsx>{`
+        @keyframes pulse-center {
+          0% {
+            transform: scale(0.95);
+            opacity: 0.7;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(0.95);
+            opacity: 0.7;
+          }
+        }
+
+        .animate-pulse-center {
+          animation: pulse-center 1.5s ease-in-out infinite;
+        }
+      `}</style>
     </PrimaryLayout>
   );
 };
