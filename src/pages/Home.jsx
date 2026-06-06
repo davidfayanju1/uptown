@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { useNavigate } from "react-router-dom";
 
@@ -15,35 +15,29 @@ const Home = () => {
   ]);
 
   // Slide data
-  const slides = [
-    {
-      title: "Atelier Made",
-      text: "Discover the New Daily Project Collection",
-      buttonText: "Explore",
-      buttonClass:
-        "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
-      mediaType: "image",
-      mediaSrc: "/images/hero_2.PNG",
-    },
-    {
-      title: "Exclusive Designs",
-      text: "Limited edition headwear for the discerning collector. Each piece tells a story.",
-      buttonText: "Discover",
-      buttonClass:
-        "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
-      mediaType: "video",
-      mediaSrc: "/images/video.mp4",
-    },
-    // {
-    //   title: "Timeless Style",
-    //   text: "Where heritage meets contemporary design. For those who appreciate the finer details.",
-    //   buttonText: "Shop Now",
-    //   buttonClass:
-    //     "rounded-none text-white cursor-pointer w-[10rem] bg-transparent border border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white hover:text-black transition-colors",
-    //   mediaType: "video",
-    //   mediaSrc: "/images/video3.mp4",
-    // },
-  ];
+  const slides = useMemo(
+    () => [
+      {
+        title: "Atelier Made",
+        text: "Discover the New Daily Project Collection",
+        buttonText: "Explore",
+        buttonClass:
+          "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
+        mediaType: "image",
+        mediaSrc: "/images/hero_2.PNG",
+      },
+      {
+        title: "Exclusive Designs",
+        text: "Limited edition headwear for the discerning collector. Each piece tells a story.",
+        buttonText: "Discover",
+        buttonClass:
+          "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
+        mediaType: "video",
+        mediaSrc: "/images/video.mp4",
+      },
+    ],
+    [],
+  );
 
   // Handle slide progression
   useEffect(() => {

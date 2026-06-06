@@ -6,6 +6,7 @@ import {
   GridSkeleton,
   ListSkeleton,
 } from "../components/load-states/products-page";
+import ImageLoader from "../components/load-states/image-center-loader";
 
 const Product = () => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
@@ -81,6 +82,9 @@ const Product = () => {
 
   return (
     <PrimaryLayout>
+      {/* Full-page loading overlay */}
+      {loading && <ImageLoader />}
+
       <div className="container min-h-screen md:mt-[5rem] mt-[4rem] mx-auto px-4 py-8">
         {/* Header with view toggle */}
         <div className="flex items-center justify-between mb-8">
@@ -136,7 +140,7 @@ const Product = () => {
           </div>
         </div>
 
-        {/* Loading Skeletons */}
+        {/* Loading Skeletons - these will be visible behind the overlay but covered by it */}
         {loading && (viewMode === "grid" ? <GridSkeleton /> : <ListSkeleton />)}
 
         {/* Products display */}
@@ -325,6 +329,28 @@ const Product = () => {
           </div>
         )}
       </div>
+
+      {/* Add custom animation styles */}
+      <style jsx>{`
+        @keyframes pulse-center {
+          0% {
+            transform: scale(0.95);
+            opacity: 0.7;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(0.95);
+            opacity: 0.7;
+          }
+        }
+
+        .animate-pulse-center {
+          animation: pulse-center 1.5s ease-in-out infinite;
+        }
+      `}</style>
     </PrimaryLayout>
   );
 };
