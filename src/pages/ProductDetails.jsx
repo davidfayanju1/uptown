@@ -509,9 +509,9 @@ const ProductDetails = () => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate mb-1">
+                    <title className="font-medium text-gray-900 text-sm truncate mb-1">
                       {product.name}
-                    </h4>
+                    </title>
                     <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-2">
                       {selectedColor && (
                         <span className="inline-flex items-center gap-1">

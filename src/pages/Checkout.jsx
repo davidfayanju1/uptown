@@ -14,6 +14,8 @@ import {
   FiTruck,
   FiClock,
   FiAlertCircle,
+  FiX,
+  FiFileText,
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
@@ -30,6 +32,7 @@ const Checkout = () => {
   const { user } = useUserStore();
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isConfirmingPayment, setIsConfirmingPayment] = useState(false); // New state for payment confirmation
   const [orderComplete, setOrderComplete] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [shippingRates, setShippingRates] = useState([]);
@@ -39,6 +42,7 @@ const Checkout = () => {
   const [isFetchingRates, setIsFetchingRates] = useState(false);
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const [quoteData, setQuoteData] = useState(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
 
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -78,10 +82,6 @@ const Checkout = () => {
     },
   });
 
-  console.log("Cart ID:", cartId);
-  console.log("Cart Items:", cartItems);
-  console.log("Total Weight:", totalWeight);
-
   const shippingStates = shippingStatesData?.data || [];
 
   // Fetch shipping rates when state changes OR totalWeight changes
@@ -93,6 +93,14 @@ const Checkout = () => {
         setShippingRates([]);
         setSelectedShipping(null);
         setHasAttemptedFetch(false);
+        return;
+      }
+
+      // Don't fetch if total weight is 0
+      if (totalWeight === 0) {
+        console.log("Total weight is 0, skipping rates fetch");
+        setShippingRates([]);
+        setSelectedShipping(null);
         return;
       }
 
@@ -115,30 +123,40 @@ const Checkout = () => {
 
         console.log("🟢 Shipping Rates Response:", response.data);
 
-        if (response.data?.status) {
-          const rates = response.data.data || [];
+        if (response.data?.status && response.data?.data?.length > 0) {
+          const rates = response.data.data;
           console.log(`Found ${rates.length} shipping rates`);
           setShippingRates(rates);
 
-          if (rates.length > 0) {
-            console.log("Auto-selecting first shipping option:", rates[0].name);
-            setSelectedShipping(rates[0]);
-          }
+          // Auto-select the first available shipping option
+          const firstRate = rates[0];
+          setSelectedShipping({
+            id: firstRate.id,
+            name: firstRate.name,
+            amount: firstRate.amount || firstRate.cost || 0,
+            eta: firstRate.eta,
+          });
+          console.log("Auto-selected shipping option:", firstRate);
         } else {
-          console.log("API returned status false");
+          console.log("No shipping rates found or API returned empty data");
           setShippingRates([]);
+          setSelectedShipping(null);
         }
       } catch (error) {
         console.error("🔴 Error fetching shipping rates:", error);
         console.error("Error details:", error.response?.data || error.message);
         setShippingRates([]);
+        setSelectedShipping(null);
+        toast.error(
+          "Failed to fetch shipping rates. Please check your address.",
+        );
       } finally {
         setIsFetchingRates(false);
       }
     };
 
     fetchShippingRates();
-  }, [formData.state, totalWeight, cartItems.length]);
+  }, [formData.state, totalWeight]);
 
   // Calculate subtotal from cart items
   const subtotal = cartItems.reduce(
@@ -152,7 +170,23 @@ const Checkout = () => {
     ? quoteData.totals.subtotal_cents / 100
     : subtotal;
 
-  const displayShipping = selectedShipping?.amount || 0;
+  // FIXED: Properly calculate display shipping amount
+  const displayShipping = (() => {
+    // If we have quote data with shipping amount, use that
+    if (quoteData?.totals?.shipping_cents !== undefined) {
+      return quoteData.totals.shipping_cents / 100;
+    }
+    // Otherwise use the selected shipping rate
+    if (selectedShipping?.amount !== undefined && selectedShipping.amount > 0) {
+      return selectedShipping.amount;
+    }
+    // If no shipping selected yet but rates exist, show 0
+    if (shippingRates.length > 0 && !selectedShipping) {
+      return 0;
+    }
+    return 0;
+  })();
+
   const displayTotal = quoteData?.totals?.grand_total_cents
     ? quoteData.totals.grand_total_cents / 100
     : displaySubtotal + displayShipping;
@@ -180,16 +214,30 @@ const Checkout = () => {
             (opt) => opt.id === selectedShipping.id,
           );
           if (matchedShipping) {
-            setSelectedShipping(matchedShipping);
+            setSelectedShipping({
+              id: matchedShipping.id,
+              name: matchedShipping.name,
+              amount: matchedShipping.amount || matchedShipping.cost || 0,
+              eta: matchedShipping.eta,
+            });
           }
         }
 
+        // Reset processing state BEFORE showing modal
+        setIsProcessing(false);
+
+        // Show the quote modal after successful quote generation
+        setShowQuoteModal(true);
         toast.success("Quote generated successfully");
+      } else {
+        setIsProcessing(false);
+        toast.error("Failed to generate quote");
       }
     },
     onError: (error) => {
       console.error("❌ Quote mutation error:", error);
       toast.error(error?.response?.data?.message || "Failed to generate quote");
+      setIsProcessing(false);
     },
   });
 
@@ -217,6 +265,8 @@ const Checkout = () => {
       console.log("✅ Confirm mutation response:", data);
       if (data?.status) {
         setOrderData(data.data);
+        setShowQuoteModal(false);
+        setIsConfirmingPayment(false);
 
         // Redirect to Paystack payment URL
         if (data.data?.payment_url) {
@@ -229,12 +279,16 @@ const Checkout = () => {
             navigate("/product");
           }, 2000);
         }
+      } else {
+        setIsConfirmingPayment(false);
+        toast.error("Failed to confirm order");
       }
     },
     onError: (error) => {
       console.error("❌ Confirm mutation error:", error);
       toast.error(error?.response?.data?.message || "Failed to confirm order");
-      setIsProcessing(false);
+      setIsConfirmingPayment(false);
+      setShowQuoteModal(false);
     },
   });
 
@@ -250,8 +304,8 @@ const Checkout = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Step 3: Generate quote first, then confirm
-  const handleSubmit = async (e) => {
+  // Generate quote first
+  const handleGenerateQuote = async (e) => {
     e.preventDefault();
 
     // Validate form
@@ -301,24 +355,39 @@ const Checkout = () => {
 
       console.log("🚀 Submitting quote payload:", quotePayload);
 
-      // Step 4: Generate quote
-      const quoteResponse = await quoteMutation.mutateAsync(quotePayload);
-
-      if (quoteResponse?.status && quoteResponse.data?.checkout_token) {
-        // Step 5: Confirm order with idempotency key
-        const idempotencyKey = generateIdempotencyKey();
-        console.log("Using Idempotency-Key:", idempotencyKey);
-        await confirmMutation.mutateAsync({
-          checkout_token: quoteResponse.data.checkout_token,
-          idempotencyKey,
-        });
-      } else {
-        throw new Error("Failed to generate checkout token");
-      }
+      // Generate quote (this will show the modal on success)
+      await quoteMutation.mutateAsync(quotePayload);
     } catch (error) {
-      console.error("❌ Checkout error:", error);
-      toast.error(error?.message || "Checkout failed. Please try again.");
+      console.error("❌ Quote generation error:", error);
+      toast.error(
+        error?.message || "Failed to generate quote. Please try again.",
+      );
       setIsProcessing(false);
+    }
+  };
+
+  // Proceed to payment from the modal
+  const handleProceedToPayment = async () => {
+    if (!checkoutToken) {
+      toast.error("Checkout token not found");
+      return;
+    }
+
+    setIsConfirmingPayment(true);
+
+    try {
+      const idempotencyKey = generateIdempotencyKey();
+      console.log("Using Idempotency-Key:", idempotencyKey);
+      await confirmMutation.mutateAsync({
+        checkout_token: checkoutToken,
+        idempotencyKey,
+      });
+    } catch (error) {
+      console.error("❌ Payment confirmation error:", error);
+      toast.error(
+        error?.message || "Failed to proceed to payment. Please try again.",
+      );
+      setIsConfirmingPayment(false);
     }
   };
 
@@ -403,6 +472,21 @@ const Checkout = () => {
     isFetchingRates && formData.state && totalWeight > 0;
   const showShippingWaiting = !formData.state || totalWeight === 0;
 
+  // Get currency symbol
+  const getCurrencySymbol = () => {
+    const currency = quoteData?.totals?.currency || "NGN";
+    switch (currency) {
+      case "GBP":
+        return "£";
+      case "USD":
+        return "$";
+      default:
+        return "₦";
+    }
+  };
+
+  const currencySymbol = getCurrencySymbol();
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
@@ -419,7 +503,7 @@ const Checkout = () => {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Column - Form */}
           <div className="lg:w-7/12">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleGenerateQuote}>
               {/* Contact Information */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -649,7 +733,14 @@ const Checkout = () => {
                             name="shipping"
                             value={rate.id}
                             checked={selectedShipping?.id === rate.id}
-                            onChange={() => setSelectedShipping(rate)}
+                            onChange={() =>
+                              setSelectedShipping({
+                                id: rate.id,
+                                name: rate.name,
+                                amount: rate.amount || rate.cost || 0,
+                                eta: rate.eta,
+                              })
+                            }
                             className="mr-3"
                           />
                           <div>
@@ -664,7 +755,7 @@ const Checkout = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            ₦{rate.amount.toLocaleString()}
+                            ₦{(rate.amount || rate.cost || 0).toLocaleString()}
                           </p>
                           <p className="text-xs text-gray-500">incl. VAT</p>
                         </div>
@@ -674,7 +765,32 @@ const Checkout = () => {
                 )}
               </div>
 
-              <button type="submit" className="hidden" />
+              <button
+                type="submit"
+                disabled={
+                  isProcessing ||
+                  !selectedShipping ||
+                  totalWeight === 0 ||
+                  isFetchingRates
+                }
+                className="w-full cursor-pointer bg-gray-900 text-white py-4 font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    Generating Quote...
+                  </>
+                ) : !selectedShipping && !isFetchingRates && formData.state ? (
+                  "Select a shipping method"
+                ) : isFetchingRates ? (
+                  "Calculating shipping..."
+                ) : (
+                  <>
+                    <FiFileText className="text-lg" />
+                    Generate Quote
+                  </>
+                )}
+              </button>
             </form>
           </div>
 
@@ -746,69 +862,272 @@ const Checkout = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="text-gray-900">
-                    ₦{displaySubtotal.toLocaleString()}
+                    {currencySymbol}
+                    {displaySubtotal.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
-                  <span className="text-gray-900">
+                  <span className="text-gray-900 font-medium">
                     {displayShipping > 0
-                      ? `₦${displayShipping.toLocaleString()}`
+                      ? `${currencySymbol}${displayShipping.toLocaleString()}`
                       : isFetchingRates
                         ? "Calculating..."
-                        : "To be calculated"}
+                        : shippingRates.length > 0 && !selectedShipping
+                          ? "Select a shipping method"
+                          : displayShipping === 0 && selectedShipping
+                            ? "Free Shipping"
+                            : "To be calculated"}
                   </span>
                 </div>
                 {quoteData?.totals?.tax_cents > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax (VAT)</span>
                     <span className="text-gray-900">
-                      ₦{(quoteData.totals.tax_cents / 100).toLocaleString()}
+                      {currencySymbol}
+                      {(quoteData.totals.tax_cents / 100).toLocaleString()}
                     </span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-semibold pt-3 border-t border-gray-200">
                   <span className="text-gray-900">Total</span>
                   <span className="text-gray-900 text-xl">
-                    ₦{displayTotal.toLocaleString()}
+                    {currencySymbol}
+                    {displayTotal.toLocaleString()}
                   </span>
                 </div>
               </div>
-
-              <button
-                onClick={handleSubmit}
-                disabled={
-                  isProcessing ||
-                  !selectedShipping ||
-                  totalWeight === 0 ||
-                  isFetchingRates
-                }
-                className="w-full cursor-pointer mt-5 bg-gray-900 text-white py-4 font-medium hover:bg-gray-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isProcessing ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                    Processing...
-                  </>
-                ) : !selectedShipping && !isFetchingRates && formData.state ? (
-                  "Select a shipping method"
-                ) : isFetchingRates ? (
-                  "Calculating shipping..."
-                ) : (
-                  <>
-                    <FiLock className="mr-2" />
-                    Proceed to Payment · ₦{displayTotal.toLocaleString()}
-                  </>
-                )}
-              </button>
-
-              <p className="text-xs text-gray-500 text-center mt-4">
-                By completing your purchase, you agree to our Terms of Service
-              </p>
             </div>
           </motion.div>
         </div>
       </div>
+
+      {/* Quote Review Modal */}
+      <AnimatePresence>
+        {showQuoteModal && quoteData && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => !isConfirmingPayment && setShowQuoteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <FiCheck className="text-green-600 text-xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Quote Summary
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                      Please review your order details
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() =>
+                    !isConfirmingPayment && setShowQuoteModal(false)
+                  }
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  disabled={isConfirmingPayment}
+                >
+                  <FiX size={24} />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Shipping Address Section */}
+                <div className="border-b border-gray-100 pb-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <FiMapPin className="text-gray-500" />
+                    Shipping Address
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-800">
+                      {quoteData.shipping_address?.first_name}{" "}
+                      {quoteData.shipping_address?.last_name}
+                    </p>
+                    <p className="text-gray-600 text-sm mt-1">
+                      {quoteData.shipping_address?.line1}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      {quoteData.shipping_address?.city},{" "}
+                      {quoteData.shipping_address?.state}{" "}
+                      {quoteData.shipping_address?.zip}
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      {quoteData.shipping_address?.country}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Section */}
+                <div className="border-b border-gray-100 pb-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <FiMail className="text-gray-500" />
+                    Contact Information
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-gray-800">{formData.email}</p>
+                  </div>
+                </div>
+
+                {/* Shipping Method Section */}
+                <div className="border-b border-gray-100 pb-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <FiTruck className="text-gray-500" />
+                    Shipping Method
+                  </h3>
+                  <div className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-gray-900">
+                        {selectedShipping?.name}
+                      </p>
+                      <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                        <FiClock className="text-xs" />
+                        {selectedShipping?.eta}
+                      </p>
+                    </div>
+                    <p className="font-semibold text-gray-900">
+                      {currencySymbol}
+                      {(selectedShipping?.amount || 0).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Order Items Summary */}
+                <div className="border-b border-gray-100 pb-4">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <FiShoppingBag className="text-gray-500" />
+                    Order Items ({cartItems.length})
+                  </h3>
+                  <div className="space-y-3 max-h-60 overflow-y-auto">
+                    {cartItems.map((product, idx) => (
+                      <div
+                        key={idx}
+                        className="flex gap-3 py-2 border-b border-gray-100 last:border-0"
+                      >
+                        <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                          <img
+                            src={getProductImage(product)}
+                            alt={product.product_title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {product.product_title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {product.color || "Default"} ·{" "}
+                            {product.size || "One Size"} · Qty:{" "}
+                            {product.quantity}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {currencySymbol}
+                            {(
+                              (product.unit_price_snapshot_cents / 100) *
+                              product.quantity
+                            ).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="text-gray-900">
+                        {currencySymbol}
+                        {(
+                          quoteData.totals?.subtotal_cents / 100
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Shipping</span>
+                      <span className="text-gray-900">
+                        {currencySymbol}
+                        {(
+                          quoteData.totals?.shipping_cents / 100
+                        ).toLocaleString()}
+                      </span>
+                    </div>
+                    {quoteData.totals?.tax_cents > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Tax (VAT)</span>
+                        <span className="text-gray-900">
+                          {currencySymbol}
+                          {(quoteData.totals?.tax_cents / 100).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="border-t border-gray-200 pt-2 mt-2">
+                      <div className="flex justify-between font-semibold">
+                        <span className="text-gray-900">Total</span>
+                        <span className="text-gray-900 text-lg">
+                          {currencySymbol}
+                          {(
+                            quoteData.totals?.grand_total_cents / 100
+                          ).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6">
+                <button
+                  onClick={handleProceedToPayment}
+                  disabled={isConfirmingPayment}
+                  className="w-full bg-gray-900 text-white py-4 font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isConfirmingPayment ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <img
+                        src="/images/paystack-logo.png"
+                        alt="Paystack"
+                        className="w-8"
+                      />
+                      Proceed to Payment · {currencySymbol}
+                      {(
+                        quoteData.totals?.grand_total_cents / 100
+                      ).toLocaleString()}
+                    </>
+                  )}
+                </button>
+                <p className="text-xs text-gray-500 text-center mt-4">
+                  By proceeding, you agree to our Terms of Service
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
