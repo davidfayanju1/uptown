@@ -15,6 +15,7 @@ import Otp from "./pages/Otp";
 import { queryClient } from "./lib/query-client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import Orders from "./pages/orders";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/registry" element={<Registry />} />
+          <Route path="/orders" element={<Orders />} />
           <Route path="/otp" element={<Otp />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/*" element={<NotFoundPage />} />
