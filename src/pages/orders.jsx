@@ -439,10 +439,10 @@ const Orders = () => {
           <div className="mt-8 sm:mt-10 pt-5 sm:pt-6 border-t border-[#EBE9E4] text-center text-xs text-[#8C8C86]">
             Need help? Contact our customer service team at{" "}
             <a
-              href="mailto:help@brand.co.uk"
+              href="mailto:thenonamestudios@gmail.com"
               className="underline underline-offset-2 hover:text-[#1C1C1A]"
             >
-              help@brand.co.uk
+              thenonamestudios@gmail.com
             </a>
           </div>
         </div>
