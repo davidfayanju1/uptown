@@ -14,6 +14,37 @@ const api = axios.create({
 // Store session ID
 let sessionId = null;
 
+let isLoggingOut = false;
+
+const logoutUser = () => {
+  if (isLoggingOut) return;
+  isLoggingOut = true;
+
+  // Clear all auth data
+  localStorage.removeItem("token");
+  localStorage.removeItem("x-session-id");
+  localStorage.removeItem("user"); // Clear user data if stored
+
+  // Clear session ID from memory
+  sessionId = null;
+
+  // Redirect to login page if we're in the browser
+  if (typeof window !== "undefined") {
+    // Check if we're not already on the login page to avoid redirect loops
+    if (
+      !window.location.pathname.includes("/signin") &&
+      !window.location.pathname.includes("/signup")
+    ) {
+      window.location.href = "/signin";
+    }
+  }
+
+  // Reset flag after a delay
+  setTimeout(() => {
+    isLoggingOut = false;
+  }, 1000);
+};
+
 // Get session ID from localStorage on initialization
 if (typeof window !== "undefined") {
   sessionId = localStorage.getItem("x-session-id");
@@ -65,7 +96,9 @@ api.interceptors.response.use(
         const token = localStorage.getItem("token");
         if (token) {
           // Try to refresh token
-          const response = await api.post("/auth/refresh-token");
+          const response = await api.post("/auth/refresh", {
+            refresh_token: token,
+          });
           const newToken = response.data.token;
 
           // Update store with new token

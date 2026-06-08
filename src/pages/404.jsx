@@ -1,154 +1,221 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiAlertTriangle, FiHome, FiSearch, FiMeh } from "react-icons/fi";
+import api from "../lib/axios";
 
 const NotFoundPage = () => {
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Transform API response to match the UI structure (same as Product component)
+  const transformProductData = (apiProducts) => {
+    return apiProducts.slice(0, 3).map((product) => {
+      // Get all unique colors from variants
+      const colors = [...new Set(product.variants?.map((v) => v.color) || [])];
+
+      // Check if product has any variant in stock
+      const hasStock = product.variants?.some((variant) => variant.stock > 0);
+
+      // Get the lowest price from variants
+      const lowestPrice = product.variants?.reduce(
+        (min, variant) =>
+          variant.price_cents < min ? variant.price_cents : min,
+        Infinity,
+      );
+
+      const priceInDollars =
+        lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
+
+      // Get first image from variants or product images
+      const productImage =
+        product.variants?.[0]?.images?.[0] ||
+        product.images?.[0] ||
+        "/images/placeholder.png";
+
+      return {
+        id: product.id,
+        name: product.title,
+        img: productImage,
+        price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${priceInDollars}`,
+        category: product.category || "Collection",
+        colors: colors.length > 0 ? colors : ["White", "Black", "Gray"],
+        available: hasStock,
+      };
+    });
+  };
+
+  const fetchSuggestedProducts = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/v1/products");
+      if (response.data?.status && response.data?.data) {
+        const transformedProducts = transformProductData(response.data.data);
+        setSuggestedProducts(transformedProducts);
+      }
+    } catch (error) {
+      console.log(error, "fetching suggested products error");
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 300);
+    }
+  };
+
+  useEffect(() => {
+    fetchSuggestedProducts();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
-      <div className="max-w-lg w-full text-center">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 100, damping: 15 }}
-          className="mb-8"
-        >
-          <div className="relative inline-block">
-            <motion.div
-              animate={{
-                rotate: [0, -10, 10, -10, 0],
-                scale: [1, 1.1, 1.1, 1.1, 1],
-              }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              <FiAlertTriangle className="text-amber-500 w-24 h-24 mx-auto" />
-            </motion.div>
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="absolute -top-4 -right-6 bg-red-500 text-white text-2xl font-bold rounded-full w-16 h-16 flex items-center justify-center shadow-lg"
-            >
+    <div className="min-h-screen bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+        {/* Main 404 content */}
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <span className="text-[#EBE9E4] text-7xl sm:text-8xl font-light tracking-wider">
               404
-            </motion.span>
-          </div>
-        </motion.div>
+            </span>
+          </motion.div>
 
-        <motion.h1
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="text-4xl md:text-5xl font-bold text-gray-900 mb-4"
-        >
-          Well, this is awkward.
-        </motion.h1>
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-2xl sm:text-3xl font-light tracking-wide text-[#1C1C1A] mt-6 mb-4"
+          >
+            This page has been discontinued
+          </motion.h1>
 
-        <motion.p
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-xl text-gray-700 mb-8"
-        >
-          The page you're looking for seems to have ghosted us.
-          <br />
-          <span className="text-sm text-gray-500">
-            (Unlike your ex, who still watches your Instagram stories)
-          </span>
-        </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-[#6B6B64] text-base font-light leading-relaxed"
+          >
+            Like last season's collection, this page is no longer available.
+            Browse our current selection below.
+          </motion.p>
 
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-8"
+          >
+            <Link
+              to="/"
+              className="inline-block px-8 py-3 border border-[#1C1C1A] text-sm font-medium tracking-wide text-[#1C1C1A] bg-transparent hover:bg-[#1C1C1A] hover:text-white transition-all duration-300"
+            >
+              Continue shopping
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* Divider */}
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl p-6 mb-8 shadow-lg"
+          className="border-t border-[#EBE9E4] pt-12"
         >
-          <div className="flex items-center justify-center mb-4">
-            <FiMeh className="w-8 h-8 text-gray-400 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-800">
-              Possible reasons for this tragedy:
-            </h2>
+          <p className="text-[#8C8C86] text-xs uppercase tracking-wider text-center mb-8">
+            You might also like
+          </p>
+
+          {/* Product suggestion grid - matches Product component styling */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {loading ? (
+              // Loading skeletons
+              [1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="bg-[#F5F4F0] h-64 w-full"></div>
+                  <div className="mt-3 space-y-2">
+                    <div className="h-3 bg-[#F5F4F0] rounded w-1/3 mx-auto"></div>
+                    <div className="h-4 bg-[#F5F4F0] rounded w-2/3 mx-auto"></div>
+                    <div className="h-3 bg-[#F5F4F0] rounded w-1/4 mx-auto"></div>
+                  </div>
+                </div>
+              ))
+            ) : suggestedProducts.length > 0 ? (
+              suggestedProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  className="group cursor-pointer"
+                >
+                  <Link to={product.available ? `/product/${product.id}` : "#"}>
+                    <div className="bg-[#FAF9F7] overflow-hidden relative">
+                      <img
+                        src={product.img}
+                        alt={product.name}
+                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {!product.available && (
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <span className="text-white text-xs font-medium tracking-wider bg-black/80 px-2 py-1">
+                            SOLD OUT
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-center">
+                      <p className="text-[#8C8C86] text-xs uppercase tracking-wide">
+                        {product.category}
+                      </p>
+                      <h3 className="text-[#1C1C1A] text-sm font-light tracking-wide mt-1">
+                        {product.name}
+                      </h3>
+                      <p className="text-[#6B6B64] text-sm mt-1">
+                        {product.price}
+                      </p>
+                      <div className="mt-2 flex space-x-1 justify-center">
+                        {product.colors.slice(0, 3).map((color, i) => (
+                          <span
+                            key={i}
+                            className="h-3 w-3 rounded-full border border-gray-300"
+                            style={{ backgroundColor: color.toLowerCase() }}
+                            title={color}
+                          />
+                        ))}
+                        {product.colors.length > 3 && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            +{product.colors.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))
+            ) : (
+              // No products found - don't show anything
+              <div className="col-span-full text-center py-8">
+                <p className="text-[#8C8C86] text-sm">No products available</p>
+              </div>
+            )}
           </div>
-          <ul className="text-left text-gray-600 space-y-2">
-            <li className="flex items-start">
-              <span className="text-red-400 mr-2">•</span>
-              You've discovered a secret page that doesn't want to be found
-            </li>
-            <li className="flex items-start">
-              <span className="text-red-400 mr-2">•</span>
-              Our content went for a coffee break and never returned
-            </li>
-            <li className="flex items-start">
-              <span className="text-red-400 mr-2">•</span>
-              You've encountered a rare digital black hole
-            </li>
-            <li className="flex items-start">
-              <span className="text-red-400 mr-2">•</span>
-              The internet gremlins are at it again
-            </li>
-          </ul>
         </motion.div>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gray-900 hover:bg-gray-800 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <FiHome className="mr-2" />
-            Take Me Home
-          </Link>
-
-          <button
-            onClick={() => window.history.back()}
-            className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            Go Back
-          </button>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-gray-700 bg-amber-100 hover:bg-amber-200 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <FiSearch className="mr-2" />
-            Try Again
-          </button>
-        </motion.div>
-
+        {/* Help section */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="mt-10 text-sm text-gray-500"
+          className="mt-12 pt-8 text-center text-xs text-[#8C8C86]"
         >
-          <p>If you think this is a mistake, you can:</p>
-          <div className="mt-2 flex justify-center space-x-4">
-            <button className="text-blue-600 hover:text-blue-800 transition-colors">
-              Contact Support
-            </button>
-            <span className="text-gray-300">•</span>
-            <button className="text-blue-600 hover:text-blue-800 transition-colors">
-              Report this issue
-            </button>
-            <span className="text-gray-300">•</span>
-            <button className="text-blue-600 hover:text-blue-800 transition-colors">
-              Pretend it never happened
-            </button>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.3 }}
-          transition={{ delay: 1 }}
-          className="mt-12"
-        >
-          <p className="text-xs text-gray-400">
-            Error code: 404 - Page Not Found | Because even websites have
-            commitment issues
+          <p>
+            Need assistance?{" "}
+            <a
+              href="mailto:help@uptown.co.uk"
+              className="underline underline-offset-2 hover:text-[#1C1C1A] transition-colors"
+            >
+              Contact our team
+            </a>
           </p>
         </motion.div>
       </div>
