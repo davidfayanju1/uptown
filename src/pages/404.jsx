@@ -106,7 +106,7 @@ const NotFoundPage = () => {
             className="mt-8"
           >
             <Link
-              to="/"
+              to="/product"
               className="inline-block px-8 py-3 border border-[#1C1C1A] text-sm font-medium tracking-wide text-[#1C1C1A] bg-transparent hover:bg-[#1C1C1A] hover:text-white transition-all duration-300"
             >
               Continue shopping

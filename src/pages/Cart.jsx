@@ -6,6 +6,7 @@ import { IoCloseOutline } from "react-icons/io5";
 import { BsTrash } from "react-icons/bs";
 import { useCart } from "../hooks/useCart";
 import ImageLoader from "../components/load-states/image-center-loader";
+import { toast } from "sonner";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -19,7 +20,10 @@ const Cart = () => {
     isUpdatingCart,
     removeCartItem,
     isRemovingFromCart,
+    updateCartError,
   } = useCart();
+
+  console.log(updateCartError?.response?.data?.message, "update cart error");
 
   // Dynamic currency contextual mapper
   const getCurrencySymbol = (currencyCode) => {
@@ -67,6 +71,12 @@ const Cart = () => {
     }
 
     updateCartItem({ itemId: item.id, quantity: newQuantity });
+
+    if (
+      updateCartError?.response?.data?.message?.includes("insufficient_stock")
+    ) {
+      toast.error("Not enough stock available for this item.");
+    }
   };
 
   const handleRemoveItem = async (itemId) => {

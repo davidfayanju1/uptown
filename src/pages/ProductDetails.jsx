@@ -25,9 +25,11 @@ const ProductDetails = () => {
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [direction, setDirection] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragDistance, setDragDistance] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [slideDirection, setSlideDirection] = useState(0);
 
   // Thumbnail overflow arrow visibility states
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -36,8 +38,10 @@ const ProductDetails = () => {
   const { addToCart, isAddingToCart } = useCart();
   const addToCartRef = useRef(null);
   const thumbnailContainerRef = useRef(null);
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
+  const sliderContainerRef = useRef(null);
+  const dragStartX = useRef(0);
+  const dragStartIndex = useRef(0);
+  const isSwiping = useRef(false);
 
   const {
     data: response,
@@ -78,7 +82,7 @@ const ProductDetails = () => {
     setSelectedSize(null);
     setShowSuccessNotification(false);
     setCurrentSlideIndex(0);
-    setDirection(0);
+    setDragDistance(0);
   }, [id]);
 
   const productData = response?.data?.product;
@@ -126,7 +130,7 @@ const ProductDetails = () => {
       });
   }, [allProductsResponse, product?.id]);
 
-  // Get all unique colors (including Black)
+  // Get all unique colors
   const uniqueColors = variants
     ? [
         ...new Map(
@@ -201,55 +205,149 @@ const ProductDetails = () => {
 
   const nextSlide = () => {
     if (allImages.length === 0 || isAnimating) return;
+    setSlideDirection(1);
     setIsAnimating(true);
-    setDirection(1);
     setCurrentSlideIndex((prev) => (prev + 1) % allImages.length);
-    setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => {
+      setIsAnimating(false);
+      setDragDistance(0);
+    }, 400);
   };
 
   const prevSlide = () => {
     if (allImages.length === 0 || isAnimating) return;
+    setSlideDirection(-1);
     setIsAnimating(true);
-    setDirection(-1);
     setCurrentSlideIndex(
       (prev) => (prev - 1 + allImages.length) % allImages.length,
     );
-    setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => {
+      setIsAnimating(false);
+      setDragDistance(0);
+    }, 400);
   };
 
   const goToSlide = (index) => {
     if (index === currentSlideIndex || isAnimating) return;
+    setSlideDirection(index > currentSlideIndex ? 1 : -1);
     setIsAnimating(true);
-    setDirection(index > currentSlideIndex ? 1 : -1);
     setCurrentSlideIndex(index);
-    setTimeout(() => setIsAnimating(false), 300);
+    setTimeout(() => {
+      setIsAnimating(false);
+      setDragDistance(0);
+    }, 400);
   };
 
+  // Touch handlers for smooth following
   const handleTouchStart = (e) => {
     if (isAnimating) return;
-    touchStartX.current = e.touches[0].clientX;
+    e.preventDefault();
+    isSwiping.current = true;
+    dragStartX.current = e.touches[0].clientX;
+    dragStartIndex.current = currentSlideIndex;
+    setIsDragging(true);
   };
 
   const handleTouchMove = (e) => {
-    if (isAnimating) return;
-    touchEndX.current = e.touches[0].clientX;
+    if (!isSwiping.current || isAnimating) return;
+    e.preventDefault();
+
+    const currentX = e.touches[0].clientX;
+    const deltaX = currentX - dragStartX.current;
+    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
+
+    // Calculate how much to translate (max 70% of container width)
+    let translateX = deltaX;
+    const maxTranslate = containerWidth * 0.7;
+    translateX = Math.min(Math.max(translateX, -maxTranslate), maxTranslate);
+
+    setDragDistance(translateX);
   };
 
   const handleTouchEnd = () => {
-    if (isAnimating) return;
-    const swipeDistance = touchStartX.current - touchEndX.current;
-    if (Math.abs(swipeDistance) > 50) {
-      if (swipeDistance > 50) {
-        nextSlide();
-      } else if (swipeDistance < -50) {
-        prevSlide();
-      }
+    if (!isSwiping.current || isAnimating) {
+      resetDrag();
+      return;
     }
-    touchStartX.current = 0;
-    touchEndX.current = 0;
+
+    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
+    const threshold = containerWidth * 0.2; // 20% of container width
+
+    if (Math.abs(dragDistance) > threshold) {
+      if (dragDistance > 0 && currentSlideIndex > 0) {
+        // Swipe right - go to previous
+        prevSlide();
+      } else if (dragDistance < 0 && currentSlideIndex < allImages.length - 1) {
+        // Swipe left - go to next
+        nextSlide();
+      } else {
+        resetDrag();
+      }
+    } else {
+      resetDrag();
+    }
+
+    isSwiping.current = false;
+    setIsDragging(false);
   };
 
-  // Check overflow and scrolling parameters for thumbnails
+  // Mouse drag handlers for desktop
+  const handleMouseDown = (e) => {
+    if (isAnimating) return;
+    e.preventDefault();
+    isSwiping.current = true;
+    dragStartX.current = e.clientX;
+    dragStartIndex.current = currentSlideIndex;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isSwiping.current || isAnimating) return;
+    e.preventDefault();
+
+    const currentX = e.clientX;
+    const deltaX = currentX - dragStartX.current;
+    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
+
+    let translateX = deltaX;
+    const maxTranslate = containerWidth * 0.7;
+    translateX = Math.min(Math.max(translateX, -maxTranslate), maxTranslate);
+
+    setDragDistance(translateX);
+  };
+
+  const handleMouseUp = () => {
+    if (!isSwiping.current || isAnimating) {
+      resetDrag();
+      return;
+    }
+
+    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
+    const threshold = containerWidth * 0.2;
+
+    if (Math.abs(dragDistance) > threshold) {
+      if (dragDistance > 0 && currentSlideIndex > 0) {
+        prevSlide();
+      } else if (dragDistance < 0 && currentSlideIndex < allImages.length - 1) {
+        nextSlide();
+      } else {
+        resetDrag();
+      }
+    } else {
+      resetDrag();
+    }
+
+    isSwiping.current = false;
+    setIsDragging(false);
+  };
+
+  const resetDrag = () => {
+    setDragDistance(0);
+    setIsDragging(false);
+    isSwiping.current = false;
+  };
+
+  // Check overflow for thumbnails
   const checkThumbnailOverflow = () => {
     const container = thumbnailContainerRef.current;
     if (container) {
@@ -259,7 +357,6 @@ const ProductDetails = () => {
     }
   };
 
-  // Horizontal thumbnail scrolling mechanics
   const scrollThumbnails = (scrollDirection) => {
     const container = thumbnailContainerRef.current;
     if (container) {
@@ -271,7 +368,6 @@ const ProductDetails = () => {
     }
   };
 
-  // Wire up resize and layout trackers to keep arrows accurate
   useEffect(() => {
     checkThumbnailOverflow();
     const container = thumbnailContainerRef.current;
@@ -290,7 +386,6 @@ const ProductDetails = () => {
     if (isAnimating) return;
     setSelectedColor(color);
 
-    // Find the first image for this color and navigate to it
     const variantWithColor = variants.find(
       (v) => v.color === color && v.images && v.images.length > 0,
     );
@@ -299,14 +394,10 @@ const ProductDetails = () => {
         (img) => img === variantWithColor.images[0],
       );
       if (newIndex !== -1 && newIndex !== currentSlideIndex) {
-        setIsAnimating(true);
-        setDirection(newIndex > currentSlideIndex ? 1 : -1);
-        setCurrentSlideIndex(newIndex);
-        setTimeout(() => setIsAnimating(false), 300);
+        goToSlide(newIndex);
       }
     }
 
-    // Clear selected size if the combination isn't available
     if (selectedSize && !isVariantAvailable(color, selectedSize)) {
       setSelectedSize(null);
     }
@@ -316,27 +407,22 @@ const ProductDetails = () => {
     if (isAnimating) return;
     setSelectedSize(size);
 
-    // Find the first image for this size and navigate to it
     const variant = variants.find(
       (v) => v.size === size && v.images && v.images.length > 0,
     );
     if (variant?.images?.[0]) {
       const newIndex = allImages.findIndex((img) => img === variant.images[0]);
       if (newIndex !== -1 && newIndex !== currentSlideIndex) {
-        setIsAnimating(true);
-        setDirection(newIndex > currentSlideIndex ? 1 : -1);
-        setCurrentSlideIndex(newIndex);
-        setTimeout(() => setIsAnimating(false), 300);
+        goToSlide(newIndex);
       }
     }
 
-    // Clear selected color if the combination isn't available
     if (selectedColor && !isVariantAvailable(selectedColor, size)) {
       setSelectedColor(null);
     }
   };
 
-  // Sticky button viewport observer
+  // Sticky button observer
   useEffect(() => {
     const handleScroll = () => {
       if (addToCartRef.current) {
@@ -356,7 +442,7 @@ const ProductDetails = () => {
     };
   }, []);
 
-  // Auto-select first available color and size when data loads
+  // Auto-select first available color and size
   useEffect(() => {
     if (variants.length === 0) return;
 
@@ -398,21 +484,31 @@ const ProductDetails = () => {
   // Slide animation variants
   const slideVariants = {
     enter: (direction) => ({
-      x: direction > 0 ? "100%" : "-100%",
+      x: direction > 0 ? 300 : -300,
+      opacity: 0.5,
     }),
     center: {
       x: 0,
+      opacity: 1,
+      transition: {
+        x: { type: "spring", stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2 },
+      },
     },
     exit: (direction) => ({
-      x: direction > 0 ? "-100%" : "100%",
+      x: direction > 0 ? -300 : 300,
+      opacity: 0,
+      transition: {
+        x: { type: "spring", stiffness: 300, damping: 30 },
+        opacity: { duration: 0.2 },
+      },
     }),
   };
 
-  // Loading overlay with pulsing image
+  // Loading overlay
   if (isLoading) {
     return (
       <PrimaryLayout>
-        {/* Full-page loading overlay */}
         <ImageLoader />
         <ProductDetailsSkeleton />
       </PrimaryLayout>
@@ -453,6 +549,22 @@ const ProductDetails = () => {
   const isVariantInStock = selectedVariant?.stock > 0;
   const currentImage =
     allImages[currentSlideIndex] || "/images/placeholder.png";
+
+  // Get preview images for swipe
+  const prevImage =
+    currentSlideIndex > 0 ? allImages[currentSlideIndex - 1] : null;
+  const nextImage =
+    currentSlideIndex < allImages.length - 1
+      ? allImages[currentSlideIndex + 1]
+      : null;
+
+  // Calculate drag offset for visual feedback
+  const getDragOffset = () => {
+    if (!isDragging) return 0;
+    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
+    const maxOffset = containerWidth * 0.3;
+    return Math.min(Math.max(dragDistance / maxOffset, -1), 1);
+  };
 
   return (
     <PrimaryLayout>
@@ -509,9 +621,9 @@ const ProductDetails = () => {
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <title className="font-medium text-gray-900 text-sm truncate mb-1">
+                    <p className="font-medium text-gray-900 text-sm truncate mb-1">
                       {product.name}
-                    </title>
+                    </p>
                     <div className="flex flex-wrap gap-2 text-xs text-gray-600 mb-2">
                       {selectedColor && (
                         <span className="inline-flex items-center gap-1">
@@ -572,54 +684,122 @@ const ProductDetails = () => {
 
       <div className="max-w-7xl md:mt-[5rem] mt-[4rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-0">
-          {/* LEFT COLUMN - Image Gallery with Slider */}
+          {/* LEFT COLUMN - Image Gallery with Smooth Swipe */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
             <div
+              ref={sliderContainerRef}
               className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
             >
-              <AnimatePresence mode="wait" custom={direction}>
+              {/* Drag Overlay for visual feedback */}
+              {isDragging && Math.abs(dragDistance) > 10 && (
+                <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-between px-4">
+                  <div
+                    className={`w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center transition-opacity duration-200 ${
+                      dragDistance > 0 ? "opacity-100" : "opacity-50"
+                    }`}
+                  >
+                    <IoChevronBack className="text-white" size={20} />
+                  </div>
+                  <div
+                    className={`w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center transition-opacity duration-200 ${
+                      dragDistance < 0 ? "opacity-100" : "opacity-50"
+                    }`}
+                  >
+                    <IoChevronForward className="text-white" size={20} />
+                  </div>
+                </div>
+              )}
+
+              {/* Main Image Slider with AnimatePresence */}
+              <AnimatePresence mode="wait" custom={slideDirection}>
                 <motion.img
-                  key={currentImage}
+                  key={currentSlideIndex}
                   src={currentImage}
                   alt={product.name}
                   className="absolute inset-0 w-full h-full object-cover object-center"
-                  custom={direction}
+                  custom={slideDirection}
                   variants={slideVariants}
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  transition={{
-                    x: {
-                      type: "tween",
-                      duration: isMobile ? 0.25 : 0.3,
-                      ease: "easeInOut",
-                    },
+                  style={{
+                    scale: isDragging ? 0.95 : 1,
+                    x: isDragging ? dragDistance : 0,
                   }}
-                  onAnimationComplete={() => setIsAnimating(false)}
+                  transition={{
+                    x: { type: "tween", duration: 0.2 },
+                    scale: { duration: 0.2 },
+                  }}
+                  draggable={false}
                 />
               </AnimatePresence>
 
-              {/* Slider Main Controls - Always visible */}
+              {/* Drag Preview Shadows */}
+              {isDragging && dragDistance > 0 && prevImage && (
+                <div
+                  className="absolute top-0 left-0 w-2/3 h-full bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-10"
+                  style={{
+                    transform: `translateX(-${Math.abs(dragDistance) * 0.5}px)`,
+                  }}
+                />
+              )}
+              {isDragging && dragDistance < 0 && nextImage && (
+                <div
+                  className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-10"
+                  style={{
+                    transform: `translateX(${Math.abs(dragDistance) * 0.5}px)`,
+                  }}
+                />
+              )}
+
+              {/* Classy Progress Indicator - Bottom Center */}
               {allImages.length > 1 && (
-                <>
-                  {/* Slider Progress Dots */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+                  <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
                     {allImages.map((_, idx) => (
                       <button
                         key={idx}
                         onClick={() => goToSlide(idx)}
-                        className={`transition-all duration-200 rounded-full ${
-                          currentSlideIndex === idx
-                            ? "w-2 h-2 bg-white"
-                            : "w-1.5 h-1.5 bg-white/50 hover:bg-white/75"
-                        }`}
+                        className="relative group"
                         aria-label={`Go to image ${idx + 1}`}
-                      />
+                      >
+                        <div
+                          className={`h-1 rounded-full transition-all duration-300 ${
+                            currentSlideIndex === idx
+                              ? "w-6 bg-white"
+                              : "w-2 bg-white/40 group-hover:bg-white/60"
+                          }`}
+                        />
+                      </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Navigation Arrows - Desktop Only */}
+              {allImages.length > 1 && !isMobile && (
+                <>
+                  <button
+                    onClick={prevSlide}
+                    disabled={isAnimating}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 disabled:opacity-50"
+                  >
+                    <IoChevronBack size={18} />
+                  </button>
+                  <button
+                    onClick={nextSlide}
+                    disabled={isAnimating}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 disabled:opacity-50"
+                  >
+                    <IoChevronForward size={18} />
+                  </button>
                 </>
               )}
             </div>
@@ -634,8 +814,7 @@ const ProductDetails = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       onClick={() => scrollThumbnails("left")}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors flex items-center justify-center"
-                      aria-label="Scroll thumbnails left"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors"
                     >
                       <IoChevronBack size={16} />
                     </motion.button>
@@ -666,6 +845,7 @@ const ProductDetails = () => {
                         alt={`${product.name} view ${index + 1}`}
                         className="w-full h-full object-cover"
                         loading="lazy"
+                        draggable={false}
                       />
                     </div>
                   ))}
@@ -678,8 +858,7 @@ const ProductDetails = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       onClick={() => scrollThumbnails("right")}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors flex items-center justify-center"
-                      aria-label="Scroll thumbnails right"
+                      className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors"
                     >
                       <IoChevronForward size={16} />
                     </motion.button>
@@ -689,7 +868,7 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* RIGHT COLUMN — Product Meta details */}
+          {/* RIGHT COLUMN - Product Details */}
           <div className="lg:w-1/2">
             <h1 className="md:text-3xl leading-[22px] text-xl font-bold text-gray-900">
               {product.name}
@@ -704,7 +883,7 @@ const ProductDetails = () => {
               <p className="text-[13px] text-gray-500">{product.description}</p>
             </div>
 
-            {/* Color Matrix UI Selection - Show all colors including Black */}
+            {/* Color Selection */}
             {uniqueColors.length > 0 && (
               <div className="md:mt-8 mt-5">
                 <h2 className="text-sm font-medium text-gray-900">Colors</h2>
@@ -712,10 +891,6 @@ const ProductDetails = () => {
                   {uniqueColors.map((color) => {
                     const isAvailable = isColorAvailable(color);
                     const isSelected = selectedColor === color;
-                    const hasImages = variants.some(
-                      (v) =>
-                        v.color === color && v.images && v.images.length > 0,
-                    );
 
                     return (
                       <div key={color} className="relative">
@@ -749,7 +924,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Size Matrix UI Selection */}
+            {/* Size Selection */}
             {uniqueSizes[0] !== "" && uniqueSizes.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Size</h2>
@@ -784,7 +959,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Core Action Button */}
+            {/* Add to Cart Button */}
             <div ref={addToCartRef}>
               <button
                 onClick={handleAddToCart}
@@ -831,7 +1006,7 @@ const ProductDetails = () => {
               </button>
             </div>
 
-            {/* Viewport-dependent Sticky Footer Trigger */}
+            {/* Sticky Footer */}
             <AnimatePresence>
               {isSticky && isVariantInStock && selectedVariant && (
                 <motion.div
@@ -854,7 +1029,7 @@ const ProductDetails = () => {
               )}
             </AnimatePresence>
 
-            {/* Additional HTML Safe Rich Details */}
+            {/* Details */}
             {product.details && product.details.length > 0 && (
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Details</h2>
@@ -865,7 +1040,7 @@ const ProductDetails = () => {
               </div>
             )}
 
-            {/* Variant Core Metadata identifiers */}
+            {/* SKU */}
             {selectedVariant && (
               <div className="mt-8 pt-6 border-t border-gray-100">
                 <p className="text-sm text-gray-500">
@@ -876,7 +1051,7 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* Similar Item Context Grids */}
+        {/* Similar Products */}
         {similarProducts.length > 0 && (
           <div className="mt-16 pt-8 border-t border-gray-200">
             <h2 className="text-xl font-light tracking-tight mb-6">
@@ -919,25 +1094,14 @@ const ProductDetails = () => {
         )}
       </div>
 
-      {/* Add custom animation styles */}
+      {/* Custom styles */}
       <style jsx>{`
-        @keyframes pulse-center {
-          0% {
-            transform: scale(0.95);
-            opacity: 0.7;
-          }
-          50% {
-            transform: scale(1.05);
-            opacity: 1;
-          }
-          100% {
-            transform: scale(0.95);
-            opacity: 0.7;
-          }
+        .scrollbar-none {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
-
-        .animate-pulse-center {
-          animation: pulse-center 1.5s ease-in-out infinite;
+        .scrollbar-none::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
     </PrimaryLayout>

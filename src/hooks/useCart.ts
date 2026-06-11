@@ -35,7 +35,11 @@ export const useCart = () => {
   });
 
   // Update cart item quantity mutation (PATCH)
-  const { mutate: updateCartItem, isPending: isUpdatingCart } = useMutation({
+  const {
+    mutate: updateCartItem,
+    isPending: isUpdatingCart,
+    error: updateCartError,
+  } = useMutation({
     mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
       updateCartItemAPI(itemId, quantity),
     onSuccess: () => {
@@ -72,5 +76,6 @@ export const useCart = () => {
     removeCartItem,
     isRemovingFromCart,
     refetchCart: refetch,
+    updateCartError,
   };
 };
