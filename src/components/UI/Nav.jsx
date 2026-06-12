@@ -33,6 +33,8 @@ const Nav = () => {
   const [allProducts, setAllProducts] = useState([]);
   const [productsLoaded, setProductsLoaded] = useState(false);
 
+  const [isScrolled, setIsScrolled] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
   const dropdownRef = useRef(null);
@@ -46,6 +48,86 @@ const Nav = () => {
     isLoading: cartLoading,
     removeCartItem,
   } = useCart();
+
+  // Pages that should have transparent background on mobile when not scrolled
+  const transparentPages = [
+    "/",
+    "/registry",
+    "/product/", // product details pages will match this pattern
+  ];
+
+  const shouldBeTransparent = () => {
+    // Check if current path matches any transparent page pattern
+    if (location.pathname === "/" || location.pathname === "/registry") {
+      return true;
+    }
+    // Check if it's a product details page (starts with /product/ and has more than just /product)
+    if (
+      location.pathname.startsWith("/product/") &&
+      location.pathname !== "/product"
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const isTransparentPage = shouldBeTransparent();
+
+  // For mobile: transparent when not scrolled on specific pages
+  // For desktop: Home and Registry have transparent background with dark text
+  const getTextColor = () => {
+    // For mobile - when on transparent pages and not scrolled, use white text
+    if (!isScrolled && isTransparentPage) {
+      return "#FFFFFF";
+    }
+    // Default dark text
+    return "#1F2937";
+  };
+
+  // Get logo based on page and scroll state
+  const getLogo = () => {
+    // For mobile - on transparent pages when not scrolled, use light logo (logo5)
+    if (!isScrolled && isTransparentPage) {
+      return "/images/logo4.png";
+    }
+    // Default dark logo
+    return "/images/logo5.png";
+  };
+
+  // Get input background color
+  const getInputBg = () => {
+    if (isHomeOrRegistry) {
+      return "bg-black/5";
+    } else {
+      return "bg-gray-100";
+    }
+  };
+
+  // Get nav background - mobile: transparent on specific pages when not scrolled
+  const getNavBg = () => {
+    // For mobile: transparent background when not scrolled on transparent pages
+    if (!isScrolled && isTransparentPage) {
+      return "bg-transparent";
+    }
+    // Default white background with shadow when scrolled or on other pages
+    return "bg-white shadow-sm";
+  };
+
+  const iconColor = getTextColor();
+  const logo = getLogo();
+  const navBg = getNavBg();
+
+  // Check if current page is Home or Registry (for desktop specific styling)
+  const isHomeOrRegistry =
+    location.pathname === "/" || location.pathname === "/registry";
+
+  // Desktop specific input background
+  const desktopInputBg = isHomeOrRegistry ? "bg-black/5" : "bg-gray-100";
+
+  // Desktop link text color
+  const desktopLinkColor = isHomeOrRegistry
+    ? "text-[#1F2937]"
+    : "text-[#1F2937]";
 
   // Fetch ALL products once on mount
   useEffect(() => {
@@ -204,14 +286,13 @@ const Nav = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Check if we're on the home page
-  const isHomePage = location.pathname === "/";
-  const logo = isHomePage ? "/images/logo4.png" : "/images/logo5.png";
-
-  const getIconColor = () => {
-    if (isHomePage) return "#F1F1F1F1";
-    return "#1f2937";
-  };
+  // Scroll effect for mobile transparency
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const links = [
     { name: "SHOP", url: "/product" },
@@ -273,11 +354,8 @@ const Nav = () => {
   const accountLinks = getAccountLinks();
 
   const handleLogout = async (e) => {
-    // e.stopPropagation();
     clearUserData();
     delete api.defaults.headers.common["Authorization"];
-    // navigate("/");
-    setShowCartDropdown(false);
   };
 
   const getProductImage = (item) => {
@@ -345,15 +423,9 @@ const Nav = () => {
 
   const handleCartClick = () => setShowCartDropdown(!showCartDropdown);
 
-  const textColor = isHomePage ? "text-gray-300" : "text-gray-800";
-  const iconColor = isHomePage ? "text-gray-300" : "text-gray-800";
-  const iconColorValue = getIconColor();
-  const inputBg = isHomePage ? "bg-gray-300/30" : "bg-gray-100";
-  const inputText = isHomePage ? "text-gray-500" : "text-gray-800";
-  const inputPlaceholder = isHomePage
-    ? "placeholder:text-gray-400"
-    : "placeholder:text-gray-500";
-  const navBg = isHomePage ? "bg-transparent" : "bg-white shadow-sm";
+  // Dynamic text color for mobile links
+  const mobileLinkColor =
+    !isScrolled && isTransparentPage ? "text-white" : "text-gray-800";
 
   return (
     <div className={`main-nav w-full z-50 fixed top-0 left-0 ${navBg}`}>
@@ -363,14 +435,18 @@ const Nav = () => {
         <div className="title-container cursor-pointer md:block hidden">
           <div className="image-text-container flex items-center gap-2">
             <Link to={"/"} className="cursor-pointer mt-2">
-              <img src={logo} alt="" className="w-[10rem] h-[15rem]" />
+              <img
+                src="/images/logo4.png"
+                alt=""
+                className="w-[10rem] h-[15rem]"
+              />
             </Link>
             <div className="flex-container md:flex hidden items-center gap-4">
               {links.map((item, index) => (
                 <small
                   onClick={() => navigate(item?.url)}
                   key={index}
-                  className={`block cursor-pointer font-[400] text-[.8rem] mt-[.7rem] ${textColor}`}
+                  className={`block cursor-pointer font-[400] text-[.8rem] mt-[.7rem] ${desktopLinkColor}`}
                 >
                   {item.name}
                 </small>
@@ -379,10 +455,10 @@ const Nav = () => {
           </div>
         </div>
 
-        {/* Mobile logo container */}
+        {/* Mobile logo container - with dynamic styling */}
         <div className="mobile-container md:hidden flex items-center justify-between w-full pl-2">
           <button onClick={() => setOpenSidebar(true)}>
-            <RxHamburgerMenu className={iconColor} size={27} />
+            <RxHamburgerMenu color={iconColor} size={27} />
           </button>
           <Link to={"/"} className="cursor-pointer">
             <img
@@ -396,7 +472,7 @@ const Nav = () => {
               xmlns="http://www.w3.org/2000/svg"
               width="25"
               height="25"
-              fill={iconColorValue}
+              fill={iconColor}
               viewBox="0 0 256 256"
             >
               <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
@@ -404,13 +480,13 @@ const Nav = () => {
           </button>
         </div>
 
-        {/* Desktop Navigation with Search - ORIGINAL LAYOUT */}
+        {/* Desktop Navigation with Search */}
         <div
           className="nav-link md:w-[30%] flex items-center md:justify-between relative gap-2"
           ref={dropdownRef}
         >
           <div
-            className={`input-container md:w-[90%] gap-3 py-2 ${inputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm relative`}
+            className={`input-container md:w-[90%] gap-3 py-2 ${desktopInputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm relative rounded-full`}
           >
             <button
               className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full"
@@ -420,7 +496,7 @@ const Nav = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 width="18"
                 height="18"
-                fill={iconColorValue}
+                fill="#1F2937"
                 viewBox="0 0 256 256"
               >
                 <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
@@ -432,7 +508,7 @@ const Nav = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setShowDesktopSearch(true)}
-              className={`placeholder:!text-[.7rem] w-full outline-none border-none ${inputText} ${inputPlaceholder}`}
+              className="placeholder:!text-[.7rem] w-full outline-none border-none text-gray-800 placeholder:text-gray-400 bg-transparent"
             />
           </div>
 
@@ -446,7 +522,7 @@ const Nav = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 width="25"
                 height="25"
-                fill={iconColorValue}
+                fill={iconColor}
                 viewBox="0 0 256 256"
               >
                 <path d="M104,216a16,16,0,1,1-16-16A16,16,0,0,1,104,216Zm88-16a16,16,0,1,0,16,16A16,16,0,0,0,192,200ZM239.71,74.14l-25.64,92.28A24.06,24.06,0,0,1,191,184H92.16A24.06,24.06,0,0,1,69,166.42L33.92,40H16a8,8,0,0,1,0-16H40a8,8,0,0,1,7.71,5.86L57.19,64H232a8,8,0,0,1,7.71,10.14ZM221.47,80H61.64l22.81,82.14A8,8,0,0,0,92.16,168H191a8,8,0,0,0,7.71-5.86Z" />
@@ -782,7 +858,7 @@ const Nav = () => {
                 {menuItems.map((item, index) => (
                   <motion.div
                     key={index}
-                    className="text-[1.4rem] font-medium text-white cursor-pointer"
+                    className={`text-[1.4rem] font-medium cursor-pointer ${mobileLinkColor}`}
                     variants={menuItemVariants}
                     custom={index}
                     initial="hidden"
@@ -797,7 +873,7 @@ const Nav = () => {
                 ))}
                 {!user ? (
                   <motion.div
-                    className="text-[1.4rem] font-medium text-white cursor-pointer"
+                    className={`text-[1.4rem] font-medium cursor-pointer ${mobileLinkColor}`}
                     variants={menuItemVariants}
                     custom={menuItems.length}
                     initial="hidden"
@@ -811,19 +887,6 @@ const Nav = () => {
                   </motion.div>
                 ) : (
                   <>
-                    {/* <motion.div
-                      className="text-[1.4rem] font-medium text-gray-800 cursor-pointer"
-                      variants={menuItemVariants}
-                      custom={menuItems.length}
-                      initial="hidden"
-                      animate="visible"
-                      onClick={() => {
-                        navigate("/account");
-                        setOpenSidebar(false);
-                      }}
-                    >
-                      My Account
-                    </motion.div> */}
                     <motion.div
                       className="text-[1.4rem] font-medium text-red-600 cursor-pointer"
                       variants={menuItemVariants}
@@ -845,7 +908,7 @@ const Nav = () => {
         )}
       </AnimatePresence>
 
-      {/* Mobile Search Sidebar - Client-side search with glassy effect */}
+      {/* Mobile Search Sidebar - Client-side search with glassy effect - UNCHANGED */}
       <AnimatePresence>
         {openSearch && (
           <motion.div

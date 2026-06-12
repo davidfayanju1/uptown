@@ -24,6 +24,7 @@ const ProductDetails = () => {
   const [selectedSize, setSelectedSize] = useState(null);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragDistance, setDragDistance] = useState(0);
@@ -617,13 +618,14 @@ const ProductDetails = () => {
         )}
       </AnimatePresence>
 
-      <div className="max-w-7xl md:mt-[5rem] mt-[4rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-0">
-          {/* LEFT COLUMN - Image Gallery with Native-Feel Swipe */}
-          <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
+      <div className="mt-0 md:mt-[5rem] mx-auto">
+        <div className="flex flex-col lg:flex-row lg:items-stretch md:gap-8 gap-0">
+          {/* LEFT COLUMN - Image Gallery */}
+          <div className="lg:w-1/2 w-full self-start">
+            {/* Mobile/Tablet: Swipeable single-image slider, full-bleed behind nav */}
             <div
               ref={sliderContainerRef}
-              className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100 select-none touch-pan-y"
+              className="relative mb-4 lg:hidden h-[85vh] md:h-[90vh] w-screen left-1/2 -translate-x-1/2 -mt-16 overflow-hidden bg-gray-100 select-none touch-pan-y"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -656,6 +658,9 @@ const ProductDetails = () => {
                 ))}
               </motion.div>
 
+              {/* Overlay for nav contrast, stronger near top */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-black/5 to-transparent pointer-events-none z-10" />
+
               {/* Progress Bar - bottom left to right, tracks scroll position live */}
               {allImages.length > 1 && (
                 <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/25 z-20">
@@ -670,31 +675,28 @@ const ProductDetails = () => {
                   />
                 </div>
               )}
+            </div>
 
-              {/* Navigation Arrows - Desktop Only */}
-              {allImages.length > 1 && !isMobile && (
-                <>
-                  <button
-                    onClick={prevSlide}
-                    disabled={currentSlideIndex === 0}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 disabled:opacity-50"
-                  >
-                    <IoChevronBack size={18} />
-                  </button>
-                  <button
-                    onClick={nextSlide}
-                    disabled={currentSlideIndex === allImages.length - 1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 disabled:opacity-50"
-                  >
-                    <IoChevronForward size={18} />
-                  </button>
-                </>
-              )}
+            {/* Desktop: All images stacked vertically, scroll through them */}
+            <div className="hidden lg:flex lg:flex-col lg:gap-2 lg:w-full">
+              {allImages.map((img, index) => (
+                <div
+                  key={`${img}-${index}`}
+                  className="w-full h-screen overflow-hidden bg-gray-100"
+                >
+                  <img
+                    src={img}
+                    alt={`${product.name} view ${index + 1}`}
+                    className="w-full h-full object-cover object-center"
+                    draggable={false}
+                  />
+                </div>
+              ))}
             </div>
 
             {/* Thumbnail Carousel Section */}
             {allImages.length > 1 && (
-              <div className="relative group/thumbs mt-4 px-1">
+              <div className="relative group/thumbs mt-4 px-4 lg:hidden">
                 <AnimatePresence>
                   {canScrollLeft && (
                     <motion.button
@@ -756,19 +758,21 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* RIGHT COLUMN - Product Details */}
-          <div className="lg:w-1/2">
-            <h1 className="md:text-3xl leading-[22px] text-xl font-bold text-gray-900">
+          {/* RIGHT COLUMN - Product Details (fixed in place on desktop while left scrolls) */}
+          <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-40 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
+            <h1 className="md:text-3xl leading-[32px] text-xl font-normal text-gray-900">
               {product.name}
             </h1>
-            <p className="md:text-2xl text-lg font-semibold text-gray-900 mt-2">
+            <p className="md:text-2xl text-lg font-normal text-gray-900 mt-2">
               {currency === "GBP" ? "£" : "$"}
               {currentPrice}
             </p>
 
             <div className="md:mt-6 mt-3">
               <h2 className="text-sm font-[500] text-gray-900">Description</h2>
-              <p className="text-[13px] text-gray-500">{product.description}</p>
+              <p className="text-[13px] md:w-[90%] text-gray-500">
+                {product.description}
+              </p>
             </div>
 
             {/* Color Selection */}
@@ -783,7 +787,9 @@ const ProductDetails = () => {
                     return (
                       <div key={color} className="relative">
                         <button
-                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all relative ${
+                            isSelected ? "ring-2 ring-black ring-offset-2" : ""
+                          } ${
                             !isAvailable
                               ? "opacity-50 cursor-not-allowed"
                               : "cursor-pointer hover:scale-110"
@@ -794,17 +800,32 @@ const ProductDetails = () => {
                             isAvailable && handleColorSelect(color)
                           }
                           disabled={!isAvailable}
-                        />
-                        {isSelected && (
-                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-black whitespace-nowrap">
-                            Selected
-                          </span>
-                        )}
-                        {!isAvailable && (
-                          <span className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] text-red-500 whitespace-nowrap">
-                            Out of stock
-                          </span>
-                        )}
+                        >
+                          {!isAvailable && (
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              className="absolute inset-0 w-full h-full"
+                            >
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="11"
+                                stroke="#ef4444"
+                                strokeWidth="2"
+                                fill="none"
+                              />
+                              <line
+                                x1="4.5"
+                                y1="19.5"
+                                x2="19.5"
+                                y2="4.5"
+                                stroke="#ef4444"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          )}
+                        </button>
                       </div>
                     );
                   })}
@@ -922,9 +943,17 @@ const ProductDetails = () => {
               <div className="mt-10">
                 <h2 className="text-sm font-medium text-gray-900">Details</h2>
                 <div
-                  className="md:mt-4 mt-1 text-[13px] text-gray-500"
+                  className={`md:mt-4 mt-1 text-[13px] text-gray-500 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 overflow-hidden transition-all duration-300 ${
+                    detailsExpanded ? "max-h-[1000px]" : "max-h-[110px]"
+                  }`}
                   dangerouslySetInnerHTML={{ __html: product.details }}
                 />
+                <button
+                  onClick={() => setDetailsExpanded((prev) => !prev)}
+                  className="mt-2 text-[13px] text-gray-900 underline hover:no-underline transition-all"
+                >
+                  {detailsExpanded ? "See Less" : "See More"}
+                </button>
               </div>
             )}
 
@@ -941,7 +970,7 @@ const ProductDetails = () => {
 
         {/* Similar Products */}
         {similarProducts.length > 0 && (
-          <div className="mt-16 pt-8 border-t border-gray-200">
+          <div className="mt-16 pt-8 border-t border-gray-200 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
             <h2 className="text-xl font-light tracking-tight mb-6">
               You May Also Like
             </h2>
