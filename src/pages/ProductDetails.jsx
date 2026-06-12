@@ -28,8 +28,6 @@ const ProductDetails = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragDistance, setDragDistance] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [slideDirection, setSlideDirection] = useState(0);
 
   // Thumbnail overflow arrow visibility states
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -40,7 +38,6 @@ const ProductDetails = () => {
   const thumbnailContainerRef = useRef(null);
   const sliderContainerRef = useRef(null);
   const dragStartX = useRef(0);
-  const dragStartIndex = useRef(0);
   const isSwiping = useRef(false);
 
   const {
@@ -204,139 +201,109 @@ const ProductDetails = () => {
   const allImages = getAllImages();
 
   const nextSlide = () => {
-    if (allImages.length === 0 || isAnimating) return;
-    setSlideDirection(1);
-    setIsAnimating(true);
-    setCurrentSlideIndex((prev) => (prev + 1) % allImages.length);
-    setTimeout(() => {
-      setIsAnimating(false);
-      setDragDistance(0);
-    }, 400);
+    if (currentSlideIndex < allImages.length - 1) {
+      setCurrentSlideIndex((p) => p + 1);
+    }
   };
 
   const prevSlide = () => {
-    if (allImages.length === 0 || isAnimating) return;
-    setSlideDirection(-1);
-    setIsAnimating(true);
-    setCurrentSlideIndex(
-      (prev) => (prev - 1 + allImages.length) % allImages.length,
-    );
-    setTimeout(() => {
-      setIsAnimating(false);
-      setDragDistance(0);
-    }, 400);
+    if (currentSlideIndex > 0) {
+      setCurrentSlideIndex((p) => p - 1);
+    }
   };
 
   const goToSlide = (index) => {
-    if (index === currentSlideIndex || isAnimating) return;
-    setSlideDirection(index > currentSlideIndex ? 1 : -1);
-    setIsAnimating(true);
     setCurrentSlideIndex(index);
-    setTimeout(() => {
-      setIsAnimating(false);
-      setDragDistance(0);
-    }, 400);
   };
 
-  // Touch handlers for smooth following
+  // ---- Touch handlers: 1:1 finger tracking ----
   const handleTouchStart = (e) => {
-    if (isAnimating) return;
-    e.preventDefault();
     isSwiping.current = true;
     dragStartX.current = e.touches[0].clientX;
-    dragStartIndex.current = currentSlideIndex;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e) => {
-    if (!isSwiping.current || isAnimating) return;
-    e.preventDefault();
-
+    if (!isSwiping.current) return;
     const currentX = e.touches[0].clientX;
     const deltaX = currentX - dragStartX.current;
+
+    // Prevent dragging past the first/last image (rubber-band resistance)
     const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
-
-    // Calculate how much to translate (max 70% of container width)
     let translateX = deltaX;
-    const maxTranslate = containerWidth * 0.7;
-    translateX = Math.min(Math.max(translateX, -maxTranslate), maxTranslate);
-
+    if (
+      (currentSlideIndex === 0 && deltaX > 0) ||
+      (currentSlideIndex === allImages.length - 1 && deltaX < 0)
+    ) {
+      translateX = deltaX * 0.35; // resistance at the edges
+    }
     setDragDistance(translateX);
   };
 
   const handleTouchEnd = () => {
-    if (!isSwiping.current || isAnimating) {
+    if (!isSwiping.current) {
       resetDrag();
       return;
     }
 
     const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
-    const threshold = containerWidth * 0.2; // 20% of container width
+    const threshold = containerWidth * 0.15; // 15% of width to trigger a slide change
 
-    if (Math.abs(dragDistance) > threshold) {
-      if (dragDistance > 0 && currentSlideIndex > 0) {
-        // Swipe right - go to previous
-        prevSlide();
-      } else if (dragDistance < 0 && currentSlideIndex < allImages.length - 1) {
-        // Swipe left - go to next
-        nextSlide();
-      } else {
-        resetDrag();
-      }
-    } else {
-      resetDrag();
+    if (dragDistance > threshold && currentSlideIndex > 0) {
+      setCurrentSlideIndex((p) => p - 1);
+    } else if (
+      dragDistance < -threshold &&
+      currentSlideIndex < allImages.length - 1
+    ) {
+      setCurrentSlideIndex((p) => p + 1);
     }
 
+    setDragDistance(0);
     isSwiping.current = false;
     setIsDragging(false);
   };
 
-  // Mouse drag handlers for desktop
+  // ---- Mouse handlers: same 1:1 tracking for desktop ----
   const handleMouseDown = (e) => {
-    if (isAnimating) return;
-    e.preventDefault();
     isSwiping.current = true;
     dragStartX.current = e.clientX;
-    dragStartIndex.current = currentSlideIndex;
     setIsDragging(true);
   };
 
   const handleMouseMove = (e) => {
-    if (!isSwiping.current || isAnimating) return;
-    e.preventDefault();
-
+    if (!isSwiping.current) return;
     const currentX = e.clientX;
     const deltaX = currentX - dragStartX.current;
-    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
 
     let translateX = deltaX;
-    const maxTranslate = containerWidth * 0.7;
-    translateX = Math.min(Math.max(translateX, -maxTranslate), maxTranslate);
-
+    if (
+      (currentSlideIndex === 0 && deltaX > 0) ||
+      (currentSlideIndex === allImages.length - 1 && deltaX < 0)
+    ) {
+      translateX = deltaX * 0.35;
+    }
     setDragDistance(translateX);
   };
 
   const handleMouseUp = () => {
-    if (!isSwiping.current || isAnimating) {
+    if (!isSwiping.current) {
       resetDrag();
       return;
     }
 
     const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
-    const threshold = containerWidth * 0.2;
+    const threshold = containerWidth * 0.15;
 
-    if (Math.abs(dragDistance) > threshold) {
-      if (dragDistance > 0 && currentSlideIndex > 0) {
-        prevSlide();
-      } else if (dragDistance < 0 && currentSlideIndex < allImages.length - 1) {
-        nextSlide();
-      } else {
-        resetDrag();
-      }
-    } else {
-      resetDrag();
+    if (dragDistance > threshold && currentSlideIndex > 0) {
+      setCurrentSlideIndex((p) => p - 1);
+    } else if (
+      dragDistance < -threshold &&
+      currentSlideIndex < allImages.length - 1
+    ) {
+      setCurrentSlideIndex((p) => p + 1);
     }
 
+    setDragDistance(0);
     isSwiping.current = false;
     setIsDragging(false);
   };
@@ -383,7 +350,6 @@ const ProductDetails = () => {
   }, [allImages]);
 
   const handleColorSelect = (color) => {
-    if (isAnimating) return;
     setSelectedColor(color);
 
     const variantWithColor = variants.find(
@@ -404,7 +370,6 @@ const ProductDetails = () => {
   };
 
   const handleSizeSelect = (size) => {
-    if (isAnimating) return;
     setSelectedSize(size);
 
     const variant = variants.find(
@@ -481,30 +446,6 @@ const ProductDetails = () => {
     }
   };
 
-  // Slide animation variants
-  const slideVariants = {
-    enter: (direction) => ({
-      x: direction > 0 ? 300 : -300,
-      opacity: 0.5,
-    }),
-    center: {
-      x: 0,
-      opacity: 1,
-      transition: {
-        x: { type: "spring", stiffness: 300, damping: 30 },
-        opacity: { duration: 0.2 },
-      },
-    },
-    exit: (direction) => ({
-      x: direction > 0 ? -300 : 300,
-      opacity: 0,
-      transition: {
-        x: { type: "spring", stiffness: 300, damping: 30 },
-        opacity: { duration: 0.2 },
-      },
-    }),
-  };
-
   // Loading overlay
   if (isLoading) {
     return (
@@ -550,21 +491,15 @@ const ProductDetails = () => {
   const currentImage =
     allImages[currentSlideIndex] || "/images/placeholder.png";
 
-  // Get preview images for swipe
-  const prevImage =
-    currentSlideIndex > 0 ? allImages[currentSlideIndex - 1] : null;
-  const nextImage =
-    currentSlideIndex < allImages.length - 1
-      ? allImages[currentSlideIndex + 1]
-      : null;
+  const containerWidth = sliderContainerRef.current?.offsetWidth || 1;
 
-  // Calculate drag offset for visual feedback
-  const getDragOffset = () => {
-    if (!isDragging) return 0;
-    const containerWidth = sliderContainerRef.current?.offsetWidth || 400;
-    const maxOffset = containerWidth * 0.3;
-    return Math.min(Math.max(dragDistance / maxOffset, -1), 1);
-  };
+  // Live progress (0 -> 1) across the whole gallery, including drag offset
+  const rawProgress =
+    allImages.length > 1
+      ? (currentSlideIndex - dragDistance / containerWidth) /
+        (allImages.length - 1)
+      : 0;
+  const progressPercent = Math.min(Math.max(rawProgress, 0), 1) * 100;
 
   return (
     <PrimaryLayout>
@@ -684,11 +619,11 @@ const ProductDetails = () => {
 
       <div className="max-w-7xl md:mt-[5rem] mt-[4rem] mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row lg:items-start md:gap-8 gap-0">
-          {/* LEFT COLUMN - Image Gallery with Smooth Swipe */}
+          {/* LEFT COLUMN - Image Gallery with Native-Feel Swipe */}
           <div className="lg:w-1/2 w-full lg:sticky lg:top-[5.5rem] self-start">
             <div
               ref={sliderContainerRef}
-              className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100"
+              className="relative mb-4 h-96 sm:h-[500px] overflow-hidden bg-gray-100 select-none touch-pan-y"
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
@@ -697,89 +632,42 @@ const ProductDetails = () => {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              {/* Drag Overlay for visual feedback */}
-              {isDragging && Math.abs(dragDistance) > 10 && (
-                <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-between px-4">
-                  <div
-                    className={`w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center transition-opacity duration-200 ${
-                      dragDistance > 0 ? "opacity-100" : "opacity-50"
-                    }`}
-                  >
-                    <IoChevronBack className="text-white" size={20} />
-                  </div>
-                  <div
-                    className={`w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center transition-opacity duration-200 ${
-                      dragDistance < 0 ? "opacity-100" : "opacity-50"
-                    }`}
-                  >
-                    <IoChevronForward className="text-white" size={20} />
-                  </div>
-                </div>
-              )}
+              {/* Sliding track - follows finger 1:1, springs to position on release */}
+              <motion.div
+                className="flex h-full w-full"
+                style={{
+                  x: `calc(${-currentSlideIndex * 100}% + ${dragDistance}px)`,
+                  cursor: isDragging ? "grabbing" : "grab",
+                }}
+                transition={
+                  isDragging
+                    ? { duration: 0 }
+                    : { type: "spring", stiffness: 420, damping: 38 }
+                }
+              >
+                {allImages.map((img, index) => (
+                  <img
+                    key={`${img}-${index}`}
+                    src={img}
+                    alt={`${product.name} view ${index + 1}`}
+                    className="h-full w-full object-cover object-center flex-shrink-0"
+                    draggable={false}
+                  />
+                ))}
+              </motion.div>
 
-              {/* Main Image Slider with AnimatePresence */}
-              <AnimatePresence mode="wait" custom={slideDirection}>
-                <motion.img
-                  key={currentSlideIndex}
-                  src={currentImage}
-                  alt={product.name}
-                  className="absolute inset-0 w-full h-full object-cover object-center"
-                  custom={slideDirection}
-                  variants={slideVariants}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  style={{
-                    scale: isDragging ? 0.95 : 1,
-                    x: isDragging ? dragDistance : 0,
-                  }}
-                  transition={{
-                    x: { type: "tween", duration: 0.2 },
-                    scale: { duration: 0.2 },
-                  }}
-                  draggable={false}
-                />
-              </AnimatePresence>
-
-              {/* Drag Preview Shadows */}
-              {isDragging && dragDistance > 0 && prevImage && (
-                <div
-                  className="absolute top-0 left-0 w-2/3 h-full bg-gradient-to-r from-black/10 to-transparent pointer-events-none z-10"
-                  style={{
-                    transform: `translateX(-${Math.abs(dragDistance) * 0.5}px)`,
-                  }}
-                />
-              )}
-              {isDragging && dragDistance < 0 && nextImage && (
-                <div
-                  className="absolute top-0 right-0 w-2/3 h-full bg-gradient-to-l from-black/10 to-transparent pointer-events-none z-10"
-                  style={{
-                    transform: `translateX(${Math.abs(dragDistance) * 0.5}px)`,
-                  }}
-                />
-              )}
-
-              {/* Classy Progress Indicator - Bottom Center */}
+              {/* Progress Bar - bottom left to right, tracks scroll position live */}
               {allImages.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
-                  <div className="flex items-center gap-2 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full">
-                    {allImages.map((_, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => goToSlide(idx)}
-                        className="relative group"
-                        aria-label={`Go to image ${idx + 1}`}
-                      >
-                        <div
-                          className={`h-1 rounded-full transition-all duration-300 ${
-                            currentSlideIndex === idx
-                              ? "w-6 bg-white"
-                              : "w-2 bg-white/40 group-hover:bg-white/60"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/25 z-20">
+                  <motion.div
+                    className="h-full bg-white"
+                    style={{ width: `${progressPercent}%` }}
+                    transition={
+                      isDragging
+                        ? { duration: 0 }
+                        : { type: "spring", stiffness: 420, damping: 38 }
+                    }
+                  />
                 </div>
               )}
 
@@ -788,14 +676,14 @@ const ProductDetails = () => {
                 <>
                   <button
                     onClick={prevSlide}
-                    disabled={isAnimating}
+                    disabled={currentSlideIndex === 0}
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 disabled:opacity-50"
                   >
                     <IoChevronBack size={18} />
                   </button>
                   <button
                     onClick={nextSlide}
-                    disabled={isAnimating}
+                    disabled={currentSlideIndex === allImages.length - 1}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white shadow-md flex items-center justify-center transition-all z-10 disabled:opacity-50"
                   >
                     <IoChevronForward size={18} />
