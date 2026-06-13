@@ -16,6 +16,7 @@ import { BsTrash } from "react-icons/bs";
 import api from "../../lib/axios";
 import { useCart } from "../../hooks/useCart";
 import useUserStore from "../../stores/auth-store";
+import { formatCurrency, getPriceRange } from "../../utils/currency";
 
 const Nav = () => {
   const [openSidebar, setOpenSidebar] = useState(false);
@@ -94,15 +95,6 @@ const Nav = () => {
     return "/images/logo5.png";
   };
 
-  // Get input background color
-  const getInputBg = () => {
-    if (isHomeOrRegistry) {
-      return "bg-black/5";
-    } else {
-      return "bg-gray-100";
-    }
-  };
-
   // Get nav background - mobile: transparent on specific pages when not scrolled
   const getNavBg = () => {
     // For mobile: transparent background when not scrolled on transparent pages
@@ -136,21 +128,30 @@ const Nav = () => {
         const response = await api.get("/v1/products");
         if (response.data?.status && response.data?.data) {
           const products = response.data.data;
-          // Transform products for search
-          const transformed = products.map((product) => ({
-            id: product.id,
-            name: product.title,
-            title: product.title,
-            description: product.description || "",
-            image:
-              product.variants?.[0]?.images?.[0] || "/images/placeholder.png",
-            price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${(product.variants?.[0]?.price_cents / 100 || 0).toFixed(2)}`,
-            priceCents: product.variants?.[0]?.price_cents || 0,
-            currency: product.variants?.[0]?.currency || "GBP",
-            available: product.variants?.some((v) => v.stock > 0),
-            category: product.category || "",
-            tags: product.tags || [],
-          }));
+          // Transform products for search with proper currency formatting
+          const transformed = products.map((product) => {
+            const productVariants = product.variants || [];
+            const priceRange = getPriceRange(productVariants);
+            const productImage =
+              productVariants[0]?.images?.[0] ||
+              product.images?.[0] ||
+              "/images/placeholder.png";
+            const hasStock = productVariants.some((v) => v.stock > 0);
+
+            return {
+              id: product.id,
+              name: product.title,
+              title: product.title,
+              description: product.description || "",
+              image: productImage,
+              price: priceRange,
+              priceCents: productVariants[0]?.price_cents || 0,
+              currency: productVariants[0]?.currency || "NGN",
+              available: hasStock,
+              category: product.category || "",
+              tags: product.tags || [],
+            };
+          });
           setAllProducts(transformed);
 
           // Set suggested products (3 random)
@@ -771,10 +772,10 @@ const Nav = () => {
                             {item.size || "One Size"}
                           </p>
                           <p className="text-xs font-semibold text-gray-900">
-                            £
-                            {(
-                              item.unit_price_snapshot_cents / 100
-                            ).toLocaleString()}
+                            {formatCurrency(
+                              item.unit_price_snapshot_cents,
+                              "NGN",
+                            )}
                           </p>
                         </div>
                         <button

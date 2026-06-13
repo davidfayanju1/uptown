@@ -1,3 +1,4 @@
+// pages/Product.jsx
 import React, { useEffect, useState } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { Link } from "react-router-dom";
@@ -7,10 +8,15 @@ import {
   ListSkeleton,
 } from "../components/load-states/products-page";
 import ImageLoader from "../components/load-states/image-center-loader";
+import {
+  formatCurrency,
+  getProductPrice,
+  getPriceRange,
+} from "../utils/currency";
 
 const Product = () => {
-  const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
-  const [wishlist, setWishlist] = useState({}); // Track wishlist status for each product
+  const [viewMode, setViewMode] = useState("grid");
+  const [wishlist, setWishlist] = useState({});
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,15 +29,8 @@ const Product = () => {
       // Check if product has any variant in stock
       const hasStock = product.variants?.some((variant) => variant.stock > 0);
 
-      // Get the lowest price from variants
-      const lowestPrice = product.variants?.reduce(
-        (min, variant) =>
-          variant.price_cents < min ? variant.price_cents : min,
-        Infinity,
-      );
-
-      const priceInDollars =
-        lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
+      // Get product price info using the utility function
+      const { formatted: price, currency } = getProductPrice(product.variants);
 
       // Get first image from variants or product images
       const productImage =
@@ -43,10 +42,11 @@ const Product = () => {
         id: product.id,
         name: product.title,
         img: productImage,
-        price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${priceInDollars}`,
+        price: price, // Now properly formatted with ₦ symbol
+        currency: currency,
         colors: colors.length > 0 ? colors : ["White", "Black", "Gray"],
         available: hasStock,
-        originalData: product, // Keep original data for detailed view
+        originalData: product,
       };
     });
   };
@@ -72,7 +72,6 @@ const Product = () => {
     handleFetchProducts();
   }, []);
 
-  // Toggle wishlist status for a product
   const toggleWishlist = (productId) => {
     setWishlist((prev) => ({
       ...prev,
@@ -82,11 +81,9 @@ const Product = () => {
 
   return (
     <PrimaryLayout>
-      {/* Full-page loading overlay */}
       {loading && <ImageLoader />}
 
       <div className="container min-h-screen md:mt-[5rem] mt-[4rem] mx-auto px-4 py-8">
-        {/* Header with view toggle */}
         <div className="flex items-center justify-between mb-8">
           <span className="text-black font-semibold text-lg md:text-xl">
             DISCOVER
@@ -140,10 +137,8 @@ const Product = () => {
           </div>
         </div>
 
-        {/* Loading Skeletons - these will be visible behind the overlay but covered by it */}
         {loading && (viewMode === "grid" ? <GridSkeleton /> : <ListSkeleton />)}
 
-        {/* Products display */}
         {!loading && (
           <>
             {viewMode === "grid" ? (
@@ -158,7 +153,6 @@ const Product = () => {
                         loading="lazy"
                       />
 
-                      {/* Sold Out Overlay */}
                       {!product.available && (
                         <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                           <span className="text-white font-bold text-sm tracking-wider bg-black/80 px-2 py-2">
@@ -166,34 +160,6 @@ const Product = () => {
                           </span>
                         </div>
                       )}
-
-                      {/* Wishlist Heart Icon */}
-                      {/* <button
-                        onClick={() => toggleWishlist(product.id)}
-                        className="absolute top-2 right-2 p-2 rounded-full bg-white/20 backdrop-blur-xl transition-all duration-300 hover:bg-white hover:scale-110 z-10"
-                        aria-label={
-                          wishlist[product.id]
-                            ? "Remove from wishlist"
-                            : "Add to wishlist"
-                        }
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className={`h-5 w-5 transition-all duration-300 ${
-                            wishlist[product.id]
-                              ? "fill-black scale-110"
-                              : "fill-none stroke-gray-600 hover:stroke-black"
-                          }`}
-                          viewBox="0 0 24 24"
-                          strokeWidth="1.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                          />
-                        </svg>
-                      </button> */}
                     </div>
                     <div className="mt-4">
                       <Link
@@ -240,7 +206,6 @@ const Product = () => {
                         loading="lazy"
                       />
 
-                      {/* Sold Out Overlay for List View */}
                       {!product.available && (
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                           <span className="text-white font-bold text-sm tracking-wider bg-black/80 px-4 py-2">
@@ -249,34 +214,6 @@ const Product = () => {
                         </div>
                       )}
                     </div>
-
-                    {/* Wishlist Heart Icon for List View */}
-                    {/* <button
-                      onClick={() => toggleWishlist(product.id)}
-                      className="absolute top-4 right-4 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 hover:bg-white hover:scale-110 z-10"
-                      aria-label={
-                        wishlist[product.id]
-                          ? "Remove from wishlist"
-                          : "Add to wishlist"
-                      }
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className={`h-5 w-5 transition-all duration-300 ${
-                          wishlist[product.id]
-                            ? "fill-black scale-110"
-                            : "fill-none stroke-gray-600 hover:stroke-black"
-                        }`}
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                        />
-                      </svg>
-                    </button> */}
 
                     <div className="flex-1">
                       <Link
@@ -322,7 +259,6 @@ const Product = () => {
           </>
         )}
 
-        {/* No products message */}
         {!loading && products.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">No products found.</p>

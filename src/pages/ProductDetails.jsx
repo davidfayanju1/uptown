@@ -17,6 +17,12 @@ import {
   ProductNotFound,
 } from "../components/load-states/product-details-skeleton";
 import ImageLoader from "../components/load-states/image-center-loader";
+import {
+  formatCurrency,
+  getVariantPrice,
+  getPriceRange,
+  getCurrencySymbol,
+} from "../utils/currency";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -97,7 +103,7 @@ const ProductDetails = () => {
       }
     : null;
 
-  // Transform similar products
+  // Transform similar products using currency utility
   const similarProducts = React.useMemo(() => {
     if (!allProductsResponse?.data) return [];
     const allProducts = allProductsResponse.data;
@@ -107,13 +113,7 @@ const ProductDetails = () => {
       .slice(0, 4)
       .map((p) => {
         const productVariants = p.variants || [];
-        const lowestPrice = productVariants.reduce(
-          (min, v) => (v.price_cents < min ? v.price_cents : min),
-          Infinity,
-        );
-        const priceInDollars =
-          lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
-        const currency = productVariants[0]?.currency === "GBP" ? "£" : "$";
+        const priceRange = getPriceRange(productVariants);
         const productImage =
           productVariants[0]?.images?.[0] || "/images/placeholder.png";
         const hasStock = productVariants.some((v) => v.stock > 0);
@@ -121,7 +121,7 @@ const ProductDetails = () => {
         return {
           id: p.id,
           name: p.title,
-          price: `${currency}${priceInDollars}`,
+          price: priceRange,
           image: productImage,
           available: hasStock,
         };
@@ -177,16 +177,24 @@ const ProductDetails = () => {
 
   const selectedVariant = getSelectedVariant();
 
+  // Use currency utility for price display
   const getCurrentPrice = () => {
-    if (selectedVariant) return (selectedVariant.price_cents / 100).toFixed(2);
-    if (variants.length > 0) return (variants[0].price_cents / 100).toFixed(2);
-    return "0.00";
+    if (selectedVariant) {
+      return formatCurrency(
+        selectedVariant.price_cents,
+        selectedVariant.currency,
+      );
+    }
+    if (variants.length > 0) {
+      return formatCurrency(variants[0].price_cents, variants[0].currency);
+    }
+    return "₦0.00";
   };
 
-  const getCurrency = () => {
-    if (selectedVariant) return selectedVariant.currency;
-    if (variants.length > 0) return variants[0].currency;
-    return "USD";
+  const getCurrentCurrencySymbol = () => {
+    if (selectedVariant) return getCurrencySymbol(selectedVariant.currency);
+    if (variants.length > 0) return getCurrencySymbol(variants[0].currency);
+    return "₦";
   };
 
   const getAllImages = () => {
@@ -487,7 +495,7 @@ const ProductDetails = () => {
   }
 
   const currentPrice = getCurrentPrice();
-  const currency = getCurrency();
+  const currencySymbol = getCurrentCurrencySymbol();
   const isVariantInStock = selectedVariant?.stock > 0;
   const currentImage =
     allImages[currentSlideIndex] || "/images/placeholder.png";
@@ -579,7 +587,6 @@ const ProductDetails = () => {
                       )}
                     </div>
                     <p className="font-semibold text-gray-900 text-sm">
-                      {currency === "GBP" ? "£" : "$"}
                       {currentPrice}
                     </p>
                   </div>
@@ -758,13 +765,12 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* RIGHT COLUMN - Product Details (fixed in place on desktop while left scrolls) */}
+          {/* RIGHT COLUMN - Product Details */}
           <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-40 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
             <h1 className="md:text-3xl leading-[32px] text-xl font-normal text-gray-900">
               {product.name}
             </h1>
             <p className="md:text-2xl text-lg font-normal text-gray-900 mt-2">
-              {currency === "GBP" ? "£" : "$"}
               {currentPrice}
             </p>
 

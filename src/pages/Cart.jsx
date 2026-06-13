@@ -7,6 +7,11 @@ import { BsTrash } from "react-icons/bs";
 import { useCart } from "../hooks/useCart";
 import ImageLoader from "../components/load-states/image-center-loader";
 import { toast } from "sonner";
+import {
+  formatCurrency,
+  getCurrencySymbol,
+  formatPriceFromUnits,
+} from "../utils/currency";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -25,26 +30,13 @@ const Cart = () => {
 
   console.log(updateCartError?.response?.data?.message, "update cart error");
 
-  // Dynamic currency contextual mapper
-  const getCurrencySymbol = (currencyCode) => {
-    switch (currencyCode?.toUpperCase()) {
-      case "GBP":
-        return "£";
-      case "USD":
-        return "$";
-      case "NGN":
-        return "₦";
-      default:
-        return "£";
-    }
-  };
-
   const activeCurrencySymbol =
-    cartItems.length > 0 ? getCurrencySymbol(cartItems[0].currency) : "£";
+    cartItems.length > 0 ? getCurrencySymbol(cartItems[0].currency) : "₦";
 
+  // IMPORTANT: unit_price_snapshot_cents is actually in regular units (not cents)
+  // So we use it directly without dividing by 100
   const subtotal = cartItems.reduce(
-    (total, item) =>
-      total + (item.unit_price_snapshot_cents / 100) * item.quantity,
+    (total, item) => total + item.unit_price_snapshot_cents * item.quantity,
     0,
   );
   const total = subtotal;
@@ -120,8 +112,7 @@ const Cart = () => {
       grow: 2,
       cell: (row) => (
         <div className="text-sm text-gray-900 font-medium">
-          {getCurrencySymbol(row.currency)}
-          {(row.unit_price_snapshot_cents / 100).toFixed(2)}
+          {formatPriceFromUnits(row.unit_price_snapshot_cents, row.currency)}
         </div>
       ),
     },
@@ -173,8 +164,10 @@ const Cart = () => {
       right: true,
       cell: (row) => (
         <div className="text-sm font-bold text-gray-900 text-right w-full">
-          {getCurrencySymbol(row.currency)}
-          {((row.unit_price_snapshot_cents / 100) * row.quantity).toFixed(2)}
+          {formatPriceFromUnits(
+            row.unit_price_snapshot_cents * row.quantity,
+            row.currency,
+          )}
         </div>
       ),
     },
@@ -196,26 +189,26 @@ const Cart = () => {
       style: {
         backgroundColor: "transparent",
         borderBottomWidth: "1px",
-        borderBottomColor: "#e5e7eb", // Unified border-gray-200
+        borderBottomColor: "#e5e7eb",
         paddingLeft: "0px",
         paddingRight: "0px",
       },
     },
     headCells: {
       style: {
-        color: "#6b7280", // text-gray-500
-        fontSize: "0.875rem", // text-sm
+        color: "#6b7280",
+        fontSize: "0.875rem",
         fontWeight: "500",
         paddingLeft: "0px",
         paddingRight: "0px",
-        borderBottom: "none", // Stripping structural cell duplicate outlines
+        borderBottom: "none",
       },
     },
     rows: {
       style: {
         backgroundColor: "transparent",
         borderBottomWidth: "1px",
-        borderBottomColor: "#e5e7eb", // Uniform line across columns
+        borderBottomColor: "#e5e7eb",
         minHeight: "auto",
         alignItems: "center",
         paddingLeft: "0px",
@@ -230,7 +223,7 @@ const Cart = () => {
       style: {
         paddingLeft: "0px",
         paddingRight: "0px",
-        borderBottom: "none", // Eradicates uneven line-fragments underneath cells
+        borderBottom: "none",
       },
     },
   };
@@ -312,8 +305,6 @@ const Cart = () => {
                 <div className="md:hidden space-y-4">
                   <div className="bg-white border border-gray-200 rounded-none p-2">
                     {cartItems.map((item) => {
-                      const currentSymbol = getCurrencySymbol(item.currency);
-                      const itemPrice = item.unit_price_snapshot_cents / 100;
                       const productImage = getProductImage(item);
                       const isMutating = isUpdatingCart || isRemovingFromCart;
                       const isCurrentItemDeleting = deletingItemId === item.id;
@@ -356,8 +347,10 @@ const Cart = () => {
 
                             <div className="mt-3 flex flex-col gap-2">
                               <div className="text-sm font-bold text-gray-900">
-                                {currentSymbol}
-                                {itemPrice.toFixed(2)}
+                                {formatPriceFromUnits(
+                                  item.unit_price_snapshot_cents,
+                                  item.currency,
+                                )}
                               </div>
 
                               <div className="flex items-center justify-between w-full bg-gray-50 border border-gray-200 h-10 rounded-none px-2">
@@ -421,8 +414,10 @@ const Cart = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Subtotal</span>
                       <span className="font-bold text-gray-900">
-                        {activeCurrencySymbol}
-                        {subtotal.toFixed(2)}
+                        {formatPriceFromUnits(
+                          subtotal,
+                          cartItems[0]?.currency || "NGN",
+                        )}
                       </span>
                     </div>
                   </div>
@@ -432,8 +427,10 @@ const Cart = () => {
                       Total
                     </span>
                     <span className="text-xl font-extrabold text-gray-900">
-                      {activeCurrencySymbol}
-                      {total.toFixed(2)}
+                      {formatPriceFromUnits(
+                        total,
+                        cartItems[0]?.currency || "NGN",
+                      )}
                     </span>
                   </div>
 
@@ -443,8 +440,11 @@ const Cart = () => {
                     }
                     className="w-full bg-black text-white py-3.5 text-sm font-bold tracking-wide hover:bg-gray-800 transition-all rounded-none shadow-sm cursor-pointer"
                   >
-                    Checkout · {activeCurrencySymbol}
-                    {total.toFixed(2)}
+                    Checkout ·{" "}
+                    {formatPriceFromUnits(
+                      total,
+                      cartItems[0]?.currency || "NGN",
+                    )}
                   </button>
 
                   <div className="mt-4 text-center text-sm text-gray-500">
