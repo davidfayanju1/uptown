@@ -14,7 +14,7 @@ export const formatCurrency = (amount, currency = "NGN", isInCents = false) => {
   }
 
   // Convert from cents to main unit if needed
-  const mainAmount = isInCents ? amount / 1000 : amount;
+  const mainAmount = amount / 100;
 
   // Format the number
   const formattedNumber = mainAmount.toLocaleString("en-NG", {

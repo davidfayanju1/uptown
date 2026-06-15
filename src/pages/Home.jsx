@@ -94,10 +94,10 @@ const Home = () => {
   };
 
   return (
-    <PrimaryLayout>
-      <div className="page-container bg-transparent overflow-hidden md:min-h-[calc(100vh-5rem)] min-h-[calc(95vh-5rem)] relative">
-        {/* Slider container with calc for viewport height minus footer */}
-        <div className="slider-container relative w-full md:h-[calc(100vh-5rem)] h-[calc(96vh-3rem)] overflow-hidden">
+    <PrimaryLayout fitScreen>
+      <div className="h-full w-full bg-transparent overflow-hidden relative">
+        {/* Slider fills all remaining space between nav and footer */}
+        <div className="slider-container relative w-full h-full overflow-hidden">
           {slides.map((slide, index) => (
             <div
               key={index}
@@ -308,15 +308,6 @@ const Home = () => {
         .animate-fade-in-more-delayed {
           animation: fade-in 1s ease-out 0.6s forwards;
           opacity: 0;
-        }
-        html,
-        body {
-          overflow: hidden;
-          height: 100%;
-          margin: 0;
-        }
-        .page-container {
-          max-height: calc(100vh - 60px);
         }
       `}</style>
     </PrimaryLayout>
