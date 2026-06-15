@@ -39,6 +39,16 @@ const Home = () => {
     [],
   );
 
+  // Lock document scroll while on the home page
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prev;
+    };
+  }, []);
+
   // Handle slide progression
   useEffect(() => {
     if (isPlaying) {

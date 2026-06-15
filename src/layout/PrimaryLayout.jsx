@@ -7,7 +7,7 @@ const PrimaryLayout = ({ children, fitScreen = false }) => {
     <div
       className={
         fitScreen
-          ? "flex flex-col overflow-hidden h-screen md:h-auto md:overflow-visible"
+          ? "flex flex-col overflow-hidden h-dvh"
           : "page-container"
       }
     >
