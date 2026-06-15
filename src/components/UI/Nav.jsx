@@ -51,24 +51,14 @@ const Nav = () => {
   } = useCart();
 
   // Pages that should have transparent background on mobile when not scrolled
-  const transparentPages = [
-    "/",
-    "/registry",
-    "/product/", // product details pages will match this pattern
-  ];
+  const transparentPages = ["/", "/registry"];
 
   const shouldBeTransparent = () => {
     // Check if current path matches any transparent page pattern
     if (location.pathname === "/" || location.pathname === "/registry") {
       return true;
     }
-    // Check if it's a product details page (starts with /product/ and has more than just /product)
-    if (
-      location.pathname.startsWith("/product/") &&
-      location.pathname !== "/product"
-    ) {
-      return true;
-    }
+
     return false;
   };
 
@@ -118,7 +108,7 @@ const Nav = () => {
 
   // Desktop link text color
   const desktopLinkColor = isHomeOrRegistry
-    ? "text-[#1F2937]"
+    ? "text-[#FFFFFF]"
     : "text-[#1F2937]";
 
   // Fetch ALL products once on mount
@@ -436,11 +426,7 @@ const Nav = () => {
         <div className="title-container cursor-pointer md:block hidden">
           <div className="image-text-container flex items-center gap-2">
             <Link to={"/"} className="cursor-pointer mt-2">
-              <img
-                src="/images/logo4.png"
-                alt=""
-                className="w-[10rem] h-[15rem]"
-              />
+              <img src={getLogo()} alt="" className="w-[10rem] h-[15rem]" />
             </Link>
             <div className="flex-container md:flex hidden items-center gap-4">
               {links.map((item, index) => (
@@ -487,7 +473,7 @@ const Nav = () => {
           ref={dropdownRef}
         >
           <div
-            className={`input-container md:w-[90%] gap-3 py-2 ${desktopInputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm relative rounded-full`}
+            className={`input-container md:w-[90%] gap-3 py-2 ${desktopInputBg} md:flex hidden items-center justify-center px-2 cursor-pointer backdrop-blur-sm relative`}
           >
             <button
               className="h-[1.6rem] cursor-pointer flex items-center justify-center w-[1.6rem] rounded-full"
@@ -497,7 +483,7 @@ const Nav = () => {
                 xmlns="http://www.w3.org/2000/svg"
                 width="18"
                 height="18"
-                fill="#1F2937"
+                fill={iconColor}
                 viewBox="0 0 256 256"
               >
                 <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
@@ -913,7 +899,7 @@ const Nav = () => {
       <AnimatePresence>
         {openSearch && (
           <motion.div
-            className="overlay bg-black/40 md:hidden block z-50 fixed h-screen w-full left-0 top-0"
+            className="overlay bg-black/40 md:hidden block z-500 fixed h-screen w-full left-0 top-0"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

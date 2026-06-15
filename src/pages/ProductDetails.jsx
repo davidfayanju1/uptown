@@ -417,7 +417,6 @@ const ProductDetails = () => {
     };
   }, []);
 
-
   useEffect(() => {
     if (showSuccessNotification) {
       const timer = setTimeout(() => setShowSuccessNotification(false), 4000);
@@ -957,7 +956,7 @@ const ProductDetails = () => {
           </div>
 
           {/* RIGHT COLUMN - Product Details */}
-          <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-40 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
+          <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
             <h1 className="md:text-3xl leading-[32px] text-xl font-normal text-gray-900">
               {product.name}
             </h1>
@@ -1070,7 +1069,7 @@ const ProductDetails = () => {
               <button
                 onClick={handleAddToCart}
                 disabled={isAddingToCart || !hasAnyAvailableVariant}
-                className={`mt-10 w-full py-3 px-8 flex items-center justify-center text-[15px] font-normal transition-all ${
+                className={`mt-10 md:w-[90%] py-3 px-8 flex items-center justify-center text-[15px] font-normal transition-all ${
                   !isAddingToCart && hasAnyAvailableVariant
                     ? "bg-black text-white hover:bg-gray-800"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
