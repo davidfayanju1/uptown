@@ -232,12 +232,12 @@ const Signin = () => {
               </div>
 
               <div className="text-[11px]">
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="font-medium underline text-black hover:text-gray-800 transition-colors duration-200"
                 >
                   Forgot your password?
-                </a>
+                </Link>
               </div>
             </div>
 

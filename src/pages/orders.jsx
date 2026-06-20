@@ -1,7 +1,24 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import api from "../lib/axios";
+
+const makeApiError = (error, fallback) => {
+  if (error.response?.status === 401) {
+    const err = new Error("You must be signed in to view your orders.");
+    err.code = "UNAUTHORIZED";
+    return err;
+  }
+  if (error.request && !error.response) {
+    const err = new Error(
+      "Unable to connect. Please check your internet connection.",
+    );
+    err.code = "NETWORK_ERROR";
+    return err;
+  }
+  return new Error(error.response?.data?.message || error.message || fallback);
+};
 
 const fetchOrders = async () => {
   try {
@@ -10,9 +27,7 @@ const fetchOrders = async () => {
     if (!data.status) throw new Error(data.message || "Failed to fetch orders");
     return data.data;
   } catch (error) {
-    throw new Error(
-      error.response?.data?.message || error.message || "Network error",
-    );
+    throw makeApiError(error, "Failed to fetch orders");
   }
 };
 
@@ -24,9 +39,7 @@ const fetchOrderById = async (id) => {
       throw new Error(data.message || "Failed to fetch order details");
     return data.data;
   } catch (error) {
-    throw new Error(
-      error.response?.data?.message || error.message || "Network error",
-    );
+    throw makeApiError(error, "Failed to fetch order details");
   }
 };
 
@@ -431,23 +444,47 @@ const Orders = () => {
   });
 
   if (error) {
+    const isAuthError = error.code === "UNAUTHORIZED";
+    const isNetworkError = error.code === "NETWORK_ERROR";
+
     return (
       <PrimaryLayout>
         <div className="min-h-screen pt-[5rem] bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
-            <div className="text-center py-12 border border-red-200 bg-red-50">
+            <div
+              className={`text-center py-12 border ${
+                isAuthError
+                  ? "border-amber-200 bg-amber-50"
+                  : isNetworkError
+                    ? "border-gray-200 bg-gray-50"
+                    : "border-red-200 bg-red-50"
+              }`}
+            >
               <h3 className="text-[#1C1C1A] font-light text-lg">
-                Failed to load orders
+                {isAuthError
+                  ? "Sign in required"
+                  : isNetworkError
+                    ? "Connection error"
+                    : "Failed to load orders"}
               </h3>
-              <p className="text-[#8C8C86] text-sm mt-1">
-                {error.message || "Something went wrong"}
+              <p className="text-[#8C8C86] text-sm mt-1 max-w-xs mx-auto">
+                {error.message}
               </p>
-              <button
-                onClick={() => refetch()}
-                className="mt-6 border border-[#1C1C1A] bg-transparent px-6 py-2 text-sm uppercase tracking-wide hover:bg-[#1C1C1A] hover:text-white transition-colors"
-              >
-                Try again
-              </button>
+              {isAuthError ? (
+                <Link
+                  to="/signin"
+                  className="inline-block mt-6 border border-[#1C1C1A] bg-transparent px-6 py-2 text-sm uppercase tracking-wide hover:bg-[#1C1C1A] hover:text-white transition-colors"
+                >
+                  Sign in
+                </Link>
+              ) : (
+                <button
+                  onClick={() => refetch()}
+                  className="mt-6 border border-[#1C1C1A] bg-transparent px-6 py-2 text-sm uppercase tracking-wide hover:bg-[#1C1C1A] hover:text-white transition-colors"
+                >
+                  Try again
+                </button>
+              )}
             </div>
           </div>
         </div>

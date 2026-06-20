@@ -50,50 +50,48 @@ const Nav = () => {
     removeCartItem,
   } = useCart();
 
-  // Pages that should have transparent background on mobile when not scrolled
-  const transparentPages = ["/", "/registry"];
+  // Home and registry get transparent nav on both mobile and desktop
+  const isTransparentPage =
+    location.pathname === "/" || location.pathname === "/registry";
 
-  const shouldBeTransparent = () => {
-    // Check if current path matches any transparent page pattern
-    if (location.pathname === "/" || location.pathname === "/registry") {
-      return true;
-    }
+  // Product detail gets transparent nav on mobile only (not desktop)
+  const isProductDetailPage = /^\/product\/[^/]+$/.test(location.pathname);
 
-    return false;
+  // Mobile: transparent when unscrolled on home/registry OR product detail
+  const mobileIsTransparent = !isScrolled && (isTransparentPage || isProductDetailPage);
+
+  // Desktop: transparent only on home/registry (unchanged behaviour)
+  const desktopIsTransparent = !isScrolled && isTransparentPage;
+
+  // Nav background — product detail uses mobile-only transparency via responsive class
+  const getNavBg = () => {
+    if (desktopIsTransparent) return "bg-transparent";
+    if (!isScrolled && isProductDetailPage) return "bg-transparent md:bg-white md:shadow-sm";
+    return "bg-white shadow-sm";
   };
 
-  const isTransparentPage = shouldBeTransparent();
-
-  // For mobile: transparent when not scrolled on specific pages
-  // For desktop: Home and Registry have transparent background with dark text
+  // Desktop icon/text color (unchanged — only home/registry go white on desktop)
   const getTextColor = () => {
-    // For mobile - when on transparent pages and not scrolled, use white text
-    if (!isScrolled && isTransparentPage) {
-      return "#FFFFFF";
-    }
-    // Default dark text
+    if (desktopIsTransparent) return "#FFFFFF";
     return "#1F2937";
   };
 
-  // Get logo based on page and scroll state
+  // Desktop logo (unchanged)
   const getLogo = () => {
-    // For mobile - on transparent pages when not scrolled, use light logo (logo5)
-    if (!isScrolled && isTransparentPage) {
-      return "/images/logo4.png";
-    }
-    // Default dark logo
+    if (desktopIsTransparent) return "/images/logo4.png";
     return "/images/logo5.png";
   };
 
-  // Get nav background - mobile: transparent on specific pages when not scrolled
-  const getNavBg = () => {
-    // For mobile: transparent background when not scrolled on transparent pages
-    if (!isScrolled && isTransparentPage) {
-      return "bg-transparent";
-    }
-    // Default white background with shadow when scrolled or on other pages
-    return "bg-white shadow-sm";
-  };
+  // Mobile-specific icon color and logo (includes product detail)
+  const mobileIconColor = mobileIsTransparent ? "#FFFFFF" : "#1F2937";
+  const mobileLogo = mobileIsTransparent ? "/images/logo4.png" : "/images/logo5.png";
+
+  // Cart button color: mobile follows mobileIsTransparent; desktop follows desktopIsTransparent
+  const cartColorClass = mobileIsTransparent && !isTransparentPage
+    ? "text-white md:text-[#1F2937]"
+    : mobileIsTransparent
+      ? "text-white"
+      : "text-[#1F2937]";
 
   const iconColor = getTextColor();
   const logo = getLogo();
@@ -414,9 +412,8 @@ const Nav = () => {
 
   const handleCartClick = () => setShowCartDropdown(!showCartDropdown);
 
-  // Dynamic text color for mobile links
-  const mobileLinkColor =
-    !isScrolled && isTransparentPage ? "text-white" : "text-gray-800";
+  // Mobile sidebar link color — white when transparent (home, registry, product detail)
+  const mobileLinkColor = mobileIsTransparent ? "text-white" : "text-gray-800";
 
   return (
     <div className={`main-nav w-full z-50 fixed top-0 left-0 ${navBg}`}>
@@ -426,7 +423,7 @@ const Nav = () => {
         <div className="title-container cursor-pointer md:block hidden">
           <div className="image-text-container flex items-center gap-2">
             <Link to={"/"} className="cursor-pointer mt-2">
-              <img src={getLogo()} alt="" className="w-[10rem] h-[15rem]" />
+              <img src={logo} alt="" className="w-[10rem] h-[15rem]" />
             </Link>
             <div className="flex-container md:flex hidden items-center gap-4">
               {links.map((item, index) => (
@@ -445,11 +442,11 @@ const Nav = () => {
         {/* Mobile logo container - with dynamic styling */}
         <div className="mobile-container md:hidden flex items-center justify-between w-full pl-2">
           <button onClick={() => setOpenSidebar(true)}>
-            <RxHamburgerMenu color={iconColor} size={27} />
+            <RxHamburgerMenu color={mobileIconColor} size={27} />
           </button>
           <Link to={"/"} className="cursor-pointer">
             <img
-              src={logo}
+              src={mobileLogo}
               alt=""
               className="w-[10rem] ml-[2.5rem] h-[15rem]"
             />
@@ -459,7 +456,7 @@ const Nav = () => {
               xmlns="http://www.w3.org/2000/svg"
               width="25"
               height="25"
-              fill={iconColor}
+              fill={mobileIconColor}
               viewBox="0 0 256 256"
             >
               <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
@@ -503,13 +500,13 @@ const Nav = () => {
           <div className="item-container cursor-pointer flex items-center gap-1">
             <button
               onClick={handleCartClick}
-              className="h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative"
+              className={`h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative ${cartColorClass}`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 width="25"
                 height="25"
-                fill={iconColor}
+                fill="currentColor"
                 viewBox="0 0 256 256"
               >
                 <path d="M104,216a16,16,0,1,1-16-16A16,16,0,0,1,104,216Zm88-16a16,16,0,1,0,16,16A16,16,0,0,0,192,200ZM239.71,74.14l-25.64,92.28A24.06,24.06,0,0,1,191,184H92.16A24.06,24.06,0,0,1,69,166.42L33.92,40H16a8,8,0,0,1,0-16H40a8,8,0,0,1,7.71,5.86L57.19,64H232a8,8,0,0,1,7.71,10.14ZM221.47,80H61.64l22.81,82.14A8,8,0,0,0,92.16,168H191a8,8,0,0,0,7.71-5.86Z" />

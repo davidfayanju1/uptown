@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../lib/axios";
+import { getPriceRange } from "../utils/currency";
 
 const NotFoundPage = () => {
   const [suggestedProducts, setSuggestedProducts] = useState([]);
@@ -16,16 +17,6 @@ const NotFoundPage = () => {
       // Check if product has any variant in stock
       const hasStock = product.variants?.some((variant) => variant.stock > 0);
 
-      // Get the lowest price from variants
-      const lowestPrice = product.variants?.reduce(
-        (min, variant) =>
-          variant.price_cents < min ? variant.price_cents : min,
-        Infinity,
-      );
-
-      const priceInDollars =
-        lowestPrice !== Infinity ? (lowestPrice / 100).toFixed(2) : "0.00";
-
       // Get first image from variants or product images
       const productImage =
         product.variants?.[0]?.images?.[0] ||
@@ -36,7 +27,7 @@ const NotFoundPage = () => {
         id: product.id,
         name: product.title,
         img: productImage,
-        price: `${product.variants?.[0]?.currency === "USD" ? "$" : "£"}${priceInDollars}`,
+        price: getPriceRange(product.variants || []),
         category: product.category || "Collection",
         colors: colors.length > 0 ? colors : ["White", "Black", "Gray"],
         available: hasStock,

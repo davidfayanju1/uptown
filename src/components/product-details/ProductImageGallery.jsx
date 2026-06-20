@@ -177,7 +177,7 @@ const ProductImageGallery = ({
         {images.length > 1 && (
           <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/25 z-20">
             <motion.div
-              className="h-full bg-white"
+              className="h-full bg-black"
               style={{ width: `${progressPercent}%` }}
               transition={
                 isDragging
