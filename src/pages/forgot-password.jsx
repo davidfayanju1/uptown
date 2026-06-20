@@ -84,9 +84,9 @@ const ForgotPassword = () => {
     },
     onError: (error) => {
       const msg =
-        error?.response?.data?.message || "Invalid or expired code. Please try again.";
+        error?.response?.data?.message || "Something went wrong. Please try again.";
       toast.error(msg);
-      setOtpError(msg);
+      setPasswordError(msg);
     },
   });
 
@@ -123,18 +123,23 @@ const ForgotPassword = () => {
     }
   };
 
-  const handleReset = (e) => {
+  const handleVerifyOtp = (e) => {
     e.preventDefault();
     setOtpError("");
-    setPasswordError("");
-
     const otpString = otp.join("");
-    if (otpString.length !== 6) return setOtpError("Please enter the complete 6-digit code");
+    if (otpString.length !== 6) {
+      return setOtpError("Please enter the complete 6-digit code");
+    }
+    setStep(3);
+  };
+
+  const handleReset = (e) => {
+    e.preventDefault();
+    setPasswordError("");
     if (!password) return setPasswordError("Password is required");
     if (password.length < 6) return setPasswordError("Password must be at least 6 characters");
     if (password !== confirmPassword) return setPasswordError("Passwords do not match");
-
-    resetMutation.mutate({ token: otpString, password });
+    resetMutation.mutate({ token: otp.join(""), password });
   };
 
   const handleResend = () => {
@@ -146,6 +151,14 @@ const ForgotPassword = () => {
     `appearance-none block w-full px-4 py-3 border ${
       hasError ? "border-red-500" : "border-gray-300"
     } shadow-sm placeholder-gray-400 placeholder:text-[12px] focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`;
+
+  const headings = [
+    { title: "Forgot your password?", sub: "Enter your email and we'll send you a reset code." },
+    { title: "Check your email", sub: `We sent a 6-digit code to ${email}` },
+    { title: "Create new password", sub: "Almost done. Enter your new password below." },
+  ];
+
+  const { title, sub } = headings[step - 1];
 
   return (
     <div className="min-h-screen flex flex-col px-4 justify-center py-12 sm:px-6 lg:px-8 bg-gray-50">
@@ -159,58 +172,34 @@ const ForgotPassword = () => {
         </div>
 
         <AnimatePresence mode="wait">
-          {step === 1 ? (
-            <motion.div
-              key="heading-1"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-            >
-              <h2 className="md:mt-6 text-center text-3xl font-normal text-gray-900">
-                Forgot your password?
-              </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
-                Enter your email and we'll send you a reset code.
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="heading-2"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.25 }}
-            >
-              <h2 className="md:mt-6 text-center text-3xl font-normal text-gray-900">
-                Reset your password
-              </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
-                Code sent to{" "}
-                <span className="font-medium text-gray-900">{email}</span>
-              </p>
-            </motion.div>
-          )}
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+          >
+            <h2 className="md:mt-6 text-center text-3xl font-normal text-gray-900">{title}</h2>
+            <p className="mt-2 text-center text-sm text-gray-600">{sub}</p>
+          </motion.div>
         </AnimatePresence>
       </div>
 
       <div className="md:mt-8 mt-4 sm:mx-auto sm:w-full sm:max-w-md">
         <AnimatePresence mode="wait">
-          {step === 1 ? (
+          {/* ── Step 1: Email ── */}
+          {step === 1 && (
             <motion.div
-              key="form-1"
-              initial={{ opacity: 0, x: 20 }}
+              key="step-1"
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.3 }}
               className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10"
             >
               <form className="space-y-6" onSubmit={handleSendCode}>
                 <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-[11px] font-[300] text-gray-700"
-                  >
+                  <label htmlFor="email" className="block text-[11px] font-[300] text-gray-700">
                     Email address
                   </label>
                   <div className="mt-1">
@@ -258,17 +247,19 @@ const ForgotPassword = () => {
                 </Link>
               </div>
             </motion.div>
-          ) : (
+          )}
+
+          {/* ── Step 2: OTP ── */}
+          {step === 2 && (
             <motion.div
-              key="form-2"
-              initial={{ opacity: 0, x: 20 }}
+              key="step-2"
+              initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.3 }}
               className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10"
             >
-              <form className="space-y-6" onSubmit={handleReset}>
-                {/* OTP */}
+              <form className="space-y-6" onSubmit={handleVerifyOtp}>
                 <div>
                   <label className="block text-[11px] font-[300] text-gray-700 mb-3">
                     Verification code
@@ -285,18 +276,18 @@ const ForgotPassword = () => {
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
                         onPaste={handleOtpPaste}
-                        disabled={resetMutation.isPending}
                         autoFocus={index === 0}
                         className={`w-11 h-11 text-center text-xl font-semibold border-2 ${
                           otpError ? "border-red-400" : "border-gray-300"
-                        } focus:border-black focus:outline-none transition-all duration-200 disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                        } focus:border-black focus:outline-none transition-all duration-200`}
                       />
                     ))}
                   </div>
                   {otpError && (
                     <p className="mt-2 text-[11px] text-red-600 text-center">{otpError}</p>
                   )}
-                  <p className="mt-3 text-center text-sm text-gray-600">
+                  <p className="mt-4 text-center text-sm text-gray-600">
+                    Didn't receive it?{" "}
                     {resendCooldown > 0 ? (
                       <span className="text-gray-400 text-[11px]">
                         Resend in {resendCooldown}s
@@ -314,7 +305,41 @@ const ForgotPassword = () => {
                   </p>
                 </div>
 
-                {/* New Password */}
+                <button
+                  type="submit"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transition-all duration-300"
+                >
+                  Continue
+                </button>
+              </form>
+
+              <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(1);
+                    setOtp(["", "", "", "", "", ""]);
+                    setOtpError("");
+                  }}
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  ← Change email address
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 3: New password ── */}
+          {step === 3 && (
+            <motion.div
+              key="step-3"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -30 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10"
+            >
+              <form className="space-y-6" onSubmit={handleReset}>
                 <div>
                   <label
                     htmlFor="new-password"
@@ -347,7 +372,6 @@ const ForgotPassword = () => {
                   </div>
                 </div>
 
-                {/* Confirm Password */}
                 <div>
                   <label
                     htmlFor="confirm-password"
@@ -403,16 +427,14 @@ const ForgotPassword = () => {
                 <button
                   type="button"
                   onClick={() => {
-                    setStep(1);
-                    setOtp(["", "", "", "", "", ""]);
-                    setOtpError("");
+                    setStep(2);
                     setPasswordError("");
                     setPassword("");
                     setConfirmPassword("");
                   }}
                   className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
-                  ← Change email address
+                  ← Back to verification code
                 </button>
               </div>
             </motion.div>
