@@ -53,7 +53,7 @@ const ProductInfo = ({
 
       <div className="md:mt-6 mt-3">
         <h2 className="text-sm font-[500] text-gray-900">Description</h2>
-        <p className="text-[13px] md:w-[90%] text-gray-500">
+        <p className="text-[13px] md:w-[90%] text-justify text-gray-500">
           {product.description}
         </p>
       </div>
@@ -126,7 +126,7 @@ const ProductInfo = ({
         <div className="mt-10">
           <h2 className="text-sm font-medium text-gray-900">Details</h2>
           <div
-            className={`md:mt-4 mt-1 text-[13px] text-gray-500 leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 overflow-hidden transition-all duration-300 ${
+            className={`md:mt-4 mt-1 text-[13px] text-gray-500 leading-relaxed text-justify [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 overflow-hidden transition-all duration-300 ${
               detailsExpanded ? "max-h-[1000px]" : "max-h-[110px]"
             }`}
             dangerouslySetInnerHTML={{ __html: product.details }}
