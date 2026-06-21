@@ -15,7 +15,7 @@ const StickyAddToCart = ({ visible, isAddingToCart, onAddToCart }) => (
           <button
             onClick={onAddToCart}
             disabled={isAddingToCart}
-            className="w-full py-3 bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-300"
+            className="w-full py-4 bg-white border border-gray-800 text-gray-900 text-sm font-bold uppercase tracking-wider hover:bg-black hover:text-white transition-colors disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-white disabled:hover:text-gray-400"
           >
             {isAddingToCart ? "Adding..." : "Add to Cart"}
           </button>
