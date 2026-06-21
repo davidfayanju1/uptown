@@ -48,7 +48,7 @@ const ProductInfo = ({
         <h1 className="font-['Montserrat'] text-[14.4px] sm:text-base md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
           {product.name}
         </h1>
-        <p className="text-[14.4px] sm:text-base md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
+        <p className="text-[17.3px] sm:text-base md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
           {currentPrice}
         </p>
       </div>
