@@ -19,7 +19,7 @@ const Footer = () => {
 
         <div className="mega-container">
           <span className="text-container block text-[.9rem] text-gray-400">
-            &copy; 2025 UPTOWN
+            &copy; {new Date().getFullYear()} UPTOWN
           </span>
         </div>
       </div>

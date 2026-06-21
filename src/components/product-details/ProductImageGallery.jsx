@@ -1,13 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   motion,
-  AnimatePresence,
   useMotionValue,
   useTransform,
   animate,
 } from "framer-motion";
-import { IoChevronBack, IoChevronForward } from "react-icons/io5";
-
 const SPRING = { type: "spring", stiffness: 280, damping: 28, mass: 0.9 };
 
 const ProductImageGallery = ({
@@ -18,8 +15,6 @@ const ProductImageGallery = ({
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
   const sliderRef = useRef(null);
   const thumbnailContainerRef = useRef(null);
@@ -85,31 +80,6 @@ const ProductImageGallery = ({
     snapTo(target);
   };
 
-  // ── Thumbnail scrolling ──────────────────────────────────────────────────
-  const checkThumbOverflow = () => {
-    const c = thumbnailContainerRef.current;
-    if (!c) return;
-    setCanScrollLeft(c.scrollLeft > 2);
-    setCanScrollRight(c.scrollLeft + c.clientWidth < c.scrollWidth - 2);
-  };
-
-  const scrollThumbs = (dir) =>
-    thumbnailContainerRef.current?.scrollBy({
-      left: dir === "left" ? -240 : 240,
-      behavior: "smooth",
-    });
-
-  useEffect(() => {
-    checkThumbOverflow();
-    const c = thumbnailContainerRef.current;
-    c?.addEventListener("scroll", checkThumbOverflow);
-    window.addEventListener("resize", checkThumbOverflow);
-    return () => {
-      c?.removeEventListener("scroll", checkThumbOverflow);
-      window.removeEventListener("resize", checkThumbOverflow);
-    };
-  }, [images]);
-
   return (
     <div className="lg:w-1/2 w-full self-start">
       {/* ── Mobile swipeable slider ── */}
@@ -161,6 +131,36 @@ const ProductImageGallery = ({
             <motion.div className="h-full bg-black" style={{ width: progressPercent }} />
           </div>
         )}
+
+        {/* Floating thumbnail strip — overlaid on the bottom of the main image */}
+        {images.length > 1 && (
+          <div className="absolute bottom-2 left-0 right-0 z-30 px-4">
+            <div
+              ref={thumbnailContainerRef}
+              className="flex gap-3 overflow-x-auto pb-1 scroll-smooth snap-x scrollbar-none"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {images.map((img, index) => (
+                <button
+                  key={`${img}-${index}`}
+                  type="button"
+                  onClick={() => snapTo(index)}
+                  className={`relative h-20 w-20 flex-shrink-0 snap-start overflow-hidden rounded-2xl shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-all duration-200 ${
+                    currentSlideIndex === index ? "" : "opacity-90"
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`${productName} view ${index + 1}`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    draggable={false}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Desktop stacked images ── */}
@@ -179,65 +179,6 @@ const ProductImageGallery = ({
           </div>
         ))}
       </div>
-
-      {/* ── Thumbnail carousel ── */}
-      {images.length > 1 && (
-        <div className="relative group/thumbs mt-4 px-4 lg:hidden">
-          <AnimatePresence>
-            {canScrollLeft && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => scrollThumbs("left")}
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors"
-              >
-                <IoChevronBack size={16} />
-              </motion.button>
-            )}
-          </AnimatePresence>
-
-          <div
-            ref={thumbnailContainerRef}
-            className="flex gap-4 overflow-x-auto pb-2 pt-1 scroll-smooth snap-x scrollbar-none"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {images.map((img, index) => (
-              <div
-                key={`${img}-${index}`}
-                onClick={() => snapTo(index)}
-                className={`relative h-20 w-20 flex-shrink-0 snap-start cursor-pointer border-2 overflow-hidden transition-all duration-200 hover:opacity-90 ${
-                  currentSlideIndex === index
-                    ? "border-black scale-[0.98]"
-                    : "border-gray-200"
-                }`}
-              >
-                <img
-                  src={img}
-                  alt={`${productName} view ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                  draggable={false}
-                />
-              </div>
-            ))}
-          </div>
-
-          <AnimatePresence>
-            {canScrollRight && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => scrollThumbs("right")}
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white shadow-xl hover:bg-gray-50 border border-gray-100 text-black p-1.5 rounded-full transition-colors"
-              >
-                <IoChevronForward size={16} />
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
     </div>
   );
 };
