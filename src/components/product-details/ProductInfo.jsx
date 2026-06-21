@@ -44,12 +44,19 @@ const ProductInfo = ({
 
   return (
     <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
-      <h1 className="md:text-3xl leading-[32px] text-xl font-normal text-gray-900">
-        {product.name}
-      </h1>
-      <p className="md:text-2xl text-lg font-normal text-gray-900 mt-2">
-        {currentPrice}
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="md:text-2xl text-xl font-semibold uppercase tracking-tight leading-tight text-gray-900">
+          {product.name}
+        </h1>
+        <p className="md:text-2xl text-lg font-semibold whitespace-nowrap text-[#8f7355]">
+          {currentPrice}
+        </p>
+      </div>
+      {selectedVariant && (
+        <p className="text-sm font-medium uppercase tracking-wide text-gray-400 mt-1">
+          SKU: {selectedVariant.sku}
+        </p>
+      )}
 
       <div className="md:mt-6 mt-3">
         <h2 className="text-sm font-[500] text-gray-900">Description</h2>
@@ -137,12 +144,6 @@ const ProductInfo = ({
           >
             {detailsExpanded ? "See Less" : "See More"}
           </button>
-        </div>
-      )}
-
-      {selectedVariant && (
-        <div className="mt-8 pt-6 border-t border-gray-100">
-          <p className="text-sm text-gray-500">SKU: {selectedVariant.sku}</p>
         </div>
       )}
     </div>
