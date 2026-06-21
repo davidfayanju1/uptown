@@ -45,10 +45,10 @@ const ProductInfo = ({
   return (
     <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="md:text-2xl text-xl font-semibold uppercase tracking-tight leading-tight text-gray-900">
+        <h1 className="font-['Montserrat'] text-[14.4px] sm:text-base md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
           {product.name}
         </h1>
-        <p className="md:text-2xl text-lg font-semibold whitespace-nowrap text-[#8f7355]">
+        <p className="text-[17.3px] sm:text-base md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
           {currentPrice}
         </p>
       </div>
