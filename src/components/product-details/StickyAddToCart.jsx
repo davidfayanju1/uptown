@@ -9,7 +9,7 @@ const StickyAddToCart = ({ visible, isAddingToCart, onAddToCart }) => (
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-lg"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <button
