@@ -134,10 +134,10 @@ const ProductImageGallery = ({
 
         {/* Floating thumbnail strip — overlaid on the bottom of the main image */}
         {images.length > 1 && (
-          <div className="absolute bottom-2 left-0 right-0 z-30 px-4">
+          <div className="absolute bottom-2 left-0 right-0 z-30 pl-6 pr-4">
             <div
               ref={thumbnailContainerRef}
-              className="flex gap-3 overflow-x-auto pb-1 scroll-smooth snap-x scrollbar-none"
+              className="flex gap-2 overflow-x-auto pb-1 scroll-smooth snap-x scrollbar-none"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {images.map((img, index) => (
@@ -145,7 +145,7 @@ const ProductImageGallery = ({
                   key={`${img}-${index}`}
                   type="button"
                   onClick={() => snapTo(index)}
-                  className={`relative h-20 w-20 flex-shrink-0 snap-start overflow-hidden rounded-2xl shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-all duration-200 ${
+                  className={`relative h-[72px] w-[72px] flex-shrink-0 snap-start overflow-hidden rounded-2xl transition-all duration-200 ${
                     currentSlideIndex === index ? "" : "opacity-90"
                   }`}
                 >

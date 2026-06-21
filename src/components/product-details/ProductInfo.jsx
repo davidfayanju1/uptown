@@ -53,7 +53,7 @@ const ProductInfo = ({
         </p>
       </div>
       {selectedVariant && (
-        <p className="text-sm font-medium uppercase tracking-wide text-gray-400 mt-1">
+        <p className="text-sm font-medium uppercase tracking-wide text-[#B2A68B] mt-1">
           SKU: {selectedVariant.sku}
         </p>
       )}
@@ -85,16 +85,16 @@ const ProductInfo = ({
         <button
           onClick={onAddToCart}
           disabled={isAddingToCart || !hasAnyAvailableVariant}
-          className={`mt-10 md:w-[90%] py-3 px-8 flex items-center justify-center text-[15px] font-normal transition-all ${
+          className={`mt-10 md:w-[90%] w-full py-4 px-8 flex items-center justify-center text-sm font-bold uppercase tracking-wider border transition-all ${
             !isAddingToCart && hasAnyAvailableVariant
-              ? "bg-black text-white hover:bg-gray-800"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ? "border-gray-800 text-gray-900 hover:bg-black hover:text-white"
+              : "border-gray-300 text-gray-400 cursor-not-allowed"
           }`}
         >
           {isAddingToCart ? (
             <>
               <svg
-                className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                className="animate-spin -ml-1 mr-3 h-5 w-5 text-current"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
