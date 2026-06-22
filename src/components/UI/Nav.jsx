@@ -58,7 +58,8 @@ const Nav = () => {
   const isProductDetailPage = /^\/product\/[^/]+$/.test(location.pathname);
 
   // Mobile: transparent when unscrolled on home/registry OR product detail
-  const mobileIsTransparent = !isScrolled && (isTransparentPage || isProductDetailPage);
+  const mobileIsTransparent =
+    !isScrolled && (isTransparentPage || isProductDetailPage);
 
   // Desktop: transparent only on home/registry (unchanged behaviour)
   const desktopIsTransparent = !isScrolled && isTransparentPage;
@@ -66,7 +67,8 @@ const Nav = () => {
   // Nav background — product detail uses mobile-only transparency via responsive class
   const getNavBg = () => {
     if (desktopIsTransparent) return "bg-transparent";
-    if (!isScrolled && isProductDetailPage) return "bg-transparent md:bg-white md:shadow-sm";
+    if (!isScrolled && isProductDetailPage)
+      return "bg-transparent md:bg-white md:shadow-sm";
     return "bg-white shadow-sm";
   };
 
@@ -84,14 +86,17 @@ const Nav = () => {
 
   // Mobile-specific icon color and logo (includes product detail)
   const mobileIconColor = mobileIsTransparent ? "#FFFFFF" : "#1F2937";
-  const mobileLogo = mobileIsTransparent ? "/images/logo4.png" : "/images/logo5.png";
+  const mobileLogo = mobileIsTransparent
+    ? "/images/logo4.png"
+    : "/images/logo5.png";
 
   // Cart button color: mobile follows mobileIsTransparent; desktop follows desktopIsTransparent
-  const cartColorClass = mobileIsTransparent && !isTransparentPage
-    ? "text-white md:text-[#1F2937]"
-    : mobileIsTransparent
-      ? "text-white"
-      : "text-[#1F2937]";
+  const cartColorClass =
+    mobileIsTransparent && !isTransparentPage
+      ? "text-white md:text-[#1F2937]"
+      : mobileIsTransparent
+        ? "text-white"
+        : "text-[#1F2937]";
 
   const iconColor = getTextColor();
   const logo = getLogo();
@@ -326,11 +331,11 @@ const Nav = () => {
           url: "/signin",
           icon: <IoPersonOutline size={20} />,
         },
-        {
-          name: "My Orders",
-          url: "/orders",
-          icon: <IoBagHandleOutline size={20} />,
-        },
+        // {
+        //   name: "My Orders",
+        //   url: "/orders",
+        //   icon: <IoBagHandleOutline size={20} />,
+        // },
         {
           name: "Wishlist",
           url: "/wishlist",

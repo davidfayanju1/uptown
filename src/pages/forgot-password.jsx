@@ -40,6 +40,7 @@ const ForgotPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [resetError, setResetError] = useState(null); // { type: "token"|"network"|"generic", message: string }
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -83,10 +84,35 @@ const ForgotPassword = () => {
       setTimeout(() => navigate("/signin"), 1500);
     },
     onError: (error) => {
-      const msg =
-        error?.response?.data?.message || "Something went wrong. Please try again.";
-      toast.error(msg);
-      setPasswordError(msg);
+      const status = error?.response?.status;
+      const msg = error?.response?.data?.message || "";
+
+      if (!error.response) {
+        setResetError({
+          type: "network",
+          message: "Unable to connect. Please check your internet connection.",
+        });
+        return;
+      }
+
+      const isTokenError =
+        status === 400 ||
+        status === 401 ||
+        status === 422 ||
+        /expired|invalid|token/i.test(msg);
+
+      if (isTokenError) {
+        setResetError({
+          type: "token",
+          message: msg || "Your reset code has expired or is invalid. Please request a new one.",
+        });
+        return;
+      }
+
+      setResetError({
+        type: "generic",
+        message: msg || "Something went wrong. Please try again.",
+      });
     },
   });
 
@@ -136,6 +162,7 @@ const ForgotPassword = () => {
   const handleReset = (e) => {
     e.preventDefault();
     setPasswordError("");
+    setResetError(null);
     if (!password) return setPasswordError("Password is required");
     if (password.length < 6) return setPasswordError("Password must be at least 6 characters");
     if (password !== confirmPassword) return setPasswordError("Passwords do not match");
@@ -355,6 +382,7 @@ const ForgotPassword = () => {
                       onChange={(e) => {
                         setPassword(e.target.value);
                         setPasswordError("");
+                        setResetError(null);
                       }}
                       disabled={resetMutation.isPending}
                       placeholder="Enter new password..."
@@ -387,6 +415,7 @@ const ForgotPassword = () => {
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
                         setPasswordError("");
+                        setResetError(null);
                       }}
                       disabled={resetMutation.isPending}
                       placeholder="Confirm new password..."
@@ -406,6 +435,45 @@ const ForgotPassword = () => {
                     <p className="mt-1 text-[11px] text-red-600">{passwordError}</p>
                   )}
                 </div>
+
+                {/* API error banner */}
+                {resetError && (
+                  <div
+                    className={`p-4 border text-sm ${
+                      resetError.type === "network"
+                        ? "bg-gray-50 border-gray-200 text-gray-700"
+                        : "bg-red-50 border-red-200 text-red-700"
+                    }`}
+                  >
+                    <p className="font-medium leading-snug">{resetError.message}</p>
+                    {resetError.type === "token" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStep(2);
+                          setOtp(["", "", "", "", "", ""]);
+                          setResetError(null);
+                          setPassword("");
+                          setConfirmPassword("");
+                          setTimeout(() => inputRefs.current[0]?.focus(), 100);
+                        }}
+                        className="mt-2 text-[11px] underline hover:no-underline transition-all"
+                      >
+                        ← Go back and enter a new code
+                      </button>
+                    )}
+                    {resetError.type === "network" && (
+                      <button
+                        type="button"
+                        onClick={() => resetMutation.mutate({ token: otp.join(""), password })}
+                        disabled={resetMutation.isPending}
+                        className="mt-2 text-[11px] underline hover:no-underline transition-all disabled:opacity-50"
+                      >
+                        Try again
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 <button
                   type="submit"

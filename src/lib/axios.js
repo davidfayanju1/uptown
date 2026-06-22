@@ -93,13 +93,13 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("refresh_token");
         if (token) {
           // Try to refresh token
-          const response = await api.post("/auth/refresh", {
+          const response = await api.post("/v1/auth/refresh", {
             refresh_token: token,
           });
-          const newToken = response.data.token;
+          const newToken = response.data.data?.tokens?.access_token;
 
           // Update store with new token
           localStorage.setItem("token", newToken);
