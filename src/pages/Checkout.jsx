@@ -246,10 +246,39 @@ const Checkout = () => {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
   };
 
+  // POST to Interswitch via a hidden form — Interswitch requires a form POST,
+  // not a GET redirect, so window.location.href won't work here.
+  const submitInterswitchForm = (paymentData) => {
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = paymentData.payment_url;
+
+    const fields = {
+      merchant_code: paymentData.merchant_code,
+      pay_item_id: paymentData.pay_item_id,
+      txn_ref: paymentData.reference,
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      mode: paymentData.mode,
+      cust_email: paymentData.cust_email,
+      cust_name: paymentData.cust_name,
+    };
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value ?? "";
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  };
+
   // Confirm mutation - Step 5
   const confirmMutation = useMutation({
     mutationFn: async ({ checkout_token, idempotencyKey }) => {
-      console.log("📦 Confirm mutation payload:", { checkout_token });
       const response = await api.post(
         "/v1/checkout/confirm",
         { checkout_token },
@@ -262,22 +291,16 @@ const Checkout = () => {
       return response.data;
     },
     onSuccess: (data) => {
-      console.log("✅ Confirm mutation response:", data);
       if (data?.status) {
         setOrderData(data.data);
         setShowQuoteModal(false);
         setIsConfirmingPayment(false);
 
-        // Redirect to Paystack payment URL
         if (data.data?.payment_url) {
-          console.log("Redirecting to payment URL:", data.data.payment_url);
-          window.location.href = data.data.payment_url;
+          submitInterswitchForm(data.data);
         } else {
-          // If no payment URL, show order created message
-          toast.success("Order created!...");
-          setTimeout(() => {
-            navigate("/product");
-          }, 2000);
+          toast.success("Order created!");
+          setTimeout(() => navigate("/product"), 2000);
         }
       } else {
         setIsConfirmingPayment(false);
@@ -285,7 +308,6 @@ const Checkout = () => {
       }
     },
     onError: (error) => {
-      console.error("❌ Confirm mutation error:", error);
       toast.error(error?.response?.data?.message || "Failed to confirm order");
       setIsConfirmingPayment(false);
       setShowQuoteModal(false);
@@ -1104,15 +1126,11 @@ const Checkout = () => {
                   {isConfirmingPayment ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                      Processing...
+                      Redirecting to payment...
                     </>
                   ) : (
                     <>
-                      <img
-                        src="/images/paystack-logo.png"
-                        alt="Paystack"
-                        className="w-8"
-                      />
+                      <FiLock className="text-lg" />
                       Proceed to Payment · {currencySymbol}
                       {(
                         quoteData.totals?.grand_total_cents / 100
