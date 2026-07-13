@@ -262,6 +262,7 @@ const Checkout = () => {
       mode: paymentData.mode,
       cust_email: paymentData.cust_email,
       cust_name: paymentData.cust_name,
+      site_redirect_url: `${window.location.origin}/checkout`,
     };
 
     Object.entries(fields).forEach(([name, value]) => {
@@ -413,13 +414,13 @@ const Checkout = () => {
     }
   };
 
-  // Handle payment verification after returning from Paystack
+  // Handle payment verification after returning from Interswitch (txnref) or legacy (reference)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const reference = urlParams.get("reference");
+    const ref = urlParams.get("txnref") || urlParams.get("reference");
 
-    if (reference && !orderComplete) {
-      verifyPayment(reference);
+    if (ref && !orderComplete) {
+      verifyPayment(ref);
     }
   }, []);
 
@@ -428,12 +429,11 @@ const Checkout = () => {
       const response = await api.get(`/v1/payments/verify/${reference}`);
       if (response.data?.status) {
         setOrderComplete(true);
-        // Refetch cart to clear it
         await refetchCart();
         toast.success("Payment verified! Order confirmed.");
         setTimeout(() => {
           navigate("/orders");
-        }, 3000);
+        }, 2000);
       }
     } catch (error) {
       console.error("Payment verification error:", error);
