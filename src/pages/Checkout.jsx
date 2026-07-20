@@ -33,7 +33,8 @@ const Checkout = () => {
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false); // New state for payment confirmation
-  const [orderComplete, setOrderComplete] = useState(false);
+  // null | "VERIFYING" | "SUCCEEDED" | "FAILED" | "PENDING"
+  const [paymentStatus, setPaymentStatus] = useState(null);
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [shippingRates, setShippingRates] = useState([]);
   const [checkoutToken, setCheckoutToken] = useState(null);
@@ -419,24 +420,32 @@ const Checkout = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const ref = urlParams.get("txnref") || urlParams.get("reference");
 
-    if (ref && !orderComplete) {
+    if (ref && paymentStatus === null) {
       verifyPayment(ref);
     }
   }, []);
 
   const verifyPayment = async (reference) => {
+    setPaymentStatus("VERIFYING");
     try {
       const response = await api.get(`/v1/payments/verify/${reference}`);
-      if (response.data?.status) {
-        setOrderComplete(true);
+      const status = response.data?.status;
+
+      if (status === "SUCCEEDED") {
+        setPaymentStatus("SUCCEEDED");
         await refetchCart();
         toast.success("Payment verified! Order confirmed.");
         setTimeout(() => {
           navigate("/orders");
         }, 2000);
+      } else if (status === "PENDING") {
+        setPaymentStatus("PENDING");
+      } else {
+        setPaymentStatus("FAILED");
       }
     } catch (error) {
       console.error("Payment verification error:", error);
+      setPaymentStatus("FAILED");
       toast.error("Payment verification failed. Please contact support.");
     }
   };
@@ -449,11 +458,27 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0 && !orderComplete) {
-    return <EmptyCart />;
+  if (paymentStatus === "VERIFYING") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white shadow-xl p-8 max-w-md w-full text-center"
+        >
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Verifying Payment
+          </h2>
+          <p className="text-gray-600">
+            Please wait while we confirm your payment...
+          </p>
+        </motion.div>
+      </div>
+    );
   }
 
-  if (orderComplete) {
+  if (paymentStatus === "SUCCEEDED") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <motion.div
@@ -480,6 +505,92 @@ const Checkout = () => {
         </motion.div>
       </div>
     );
+  }
+
+  if (paymentStatus === "FAILED") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white shadow-xl p-8 max-w-md w-full text-center"
+        >
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FiX className="text-red-600 text-2xl" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Payment Failed
+          </h2>
+          <p className="text-gray-600 mb-6">
+            We couldn't confirm your payment. Please try again or contact
+            support if the issue persists.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                window.history.replaceState({}, "", "/checkout");
+                setPaymentStatus(null);
+              }}
+              className="w-full bg-gray-900 text-white py-3 font-medium hover:bg-gray-800 transition-colors"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => navigate("/orders")}
+              className="w-full border border-gray-300 text-gray-900 py-3 font-medium hover:bg-gray-100 transition-colors"
+            >
+              View Orders
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (paymentStatus === "PENDING") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white shadow-xl p-8 max-w-md w-full text-center"
+        >
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <FiClock className="text-amber-600 text-2xl" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Payment Pending
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Your payment is still being processed. This can take a few
+            minutes — we'll update your order as soon as it's confirmed.
+          </p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const ref =
+                  urlParams.get("txnref") || urlParams.get("reference");
+                if (ref) verifyPayment(ref);
+              }}
+              className="w-full bg-gray-900 text-white py-3 font-medium hover:bg-gray-800 transition-colors"
+            >
+              Check Again
+            </button>
+            <button
+              onClick={() => navigate("/orders")}
+              className="w-full border border-gray-300 text-gray-900 py-3 font-medium hover:bg-gray-100 transition-colors"
+            >
+              View Orders
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return <EmptyCart />;
   }
 
   // Determine shipping section state
