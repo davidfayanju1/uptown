@@ -252,7 +252,7 @@ const Checkout = () => {
   const submitInterswitchForm = (paymentData) => {
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = "https://newwebpay.interswitchng.com/collections/w/pay";
+    form.action = paymentData.payment_url;
 
     const fields = {
       merchant_code: paymentData.merchant_code,
@@ -263,7 +263,6 @@ const Checkout = () => {
       mode: paymentData.mode,
       cust_email: paymentData.cust_email,
       cust_name: paymentData.cust_name,
-      payment_url: paymentData.payment_url,
     };
 
     Object.entries(fields).forEach(([name, value]) => {
