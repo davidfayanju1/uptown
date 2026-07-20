@@ -262,7 +262,7 @@ const Checkout = () => {
       mode: paymentData.mode,
       cust_email: paymentData.cust_email,
       cust_name: paymentData.cust_name,
-      site_redirect_url: `${window.location.origin}/checkout`,
+      site_redirect_url: `${window.location.origin}/orders`,
     };
 
     Object.entries(fields).forEach(([name, value]) => {
