@@ -1,6 +1,11 @@
 import React from "react";
 
-const ColorSelector = ({ colors, selectedColor, isColorAvailable, onSelect }) => {
+const ColorSelector = ({
+  colors,
+  selectedColor,
+  isColorAvailable,
+  onSelect,
+}) => {
   if (colors.length === 0) return null;
 
   return (

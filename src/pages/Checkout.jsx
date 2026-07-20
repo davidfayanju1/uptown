@@ -252,18 +252,18 @@ const Checkout = () => {
   const submitInterswitchForm = (paymentData) => {
     const form = document.createElement("form");
     form.method = "POST";
-    form.action = paymentData.payment_url;
+    form.action = "https://newwebpay.interswitchng.com/collections/w/pay";
 
     const fields = {
       merchant_code: paymentData.merchant_code,
       pay_item_id: paymentData.pay_item_id,
-      txn_ref: paymentData.reference,
+      reference: paymentData.reference,
       amount: paymentData.amount,
       currency: paymentData.currency,
       mode: paymentData.mode,
       cust_email: paymentData.cust_email,
       cust_name: paymentData.cust_name,
-      site_redirect_url: `${window.location.origin}/checkout`,
+      payment_url: paymentData.payment_url,
     };
 
     Object.entries(fields).forEach(([name, value]) => {
