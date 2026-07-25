@@ -15,6 +15,7 @@ import ProductInfo from "../components/product-details/ProductInfo";
 import AddToCartNotification from "../components/product-details/AddToCartNotification";
 import VariantSelectionPopup from "../components/product-details/VariantSelectionPopup";
 import SimilarProducts from "../components/product-details/SimilarProducts";
+import ProductPolicies from "../components/product-details/ProductPolicies";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -308,6 +309,8 @@ const ProductDetails = () => {
         </div>
 
         <SimilarProducts items={similarProducts} />
+
+        <ProductPolicies />
       </div>
 
       <style jsx>{`
