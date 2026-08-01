@@ -1,8 +1,19 @@
 // lib/axios.ts
 "use client";
 import axios from "axios";
+import useUserStore from "../stores/auth-store";
 
 const API_BASE_URL = "https://uptown-api-00m6.onrender.com";
+
+const REFRESH_URL = "/v1/auth/refresh";
+
+// The store is the source of truth; localStorage is only a legacy fallback for
+// flows that wrote the token directly (e.g. OTP verification).
+const getAccessToken = () =>
+  useUserStore.getState().accessToken || localStorage.getItem("token");
+
+const getRefreshToken = () =>
+  useUserStore.getState().refreshToken || localStorage.getItem("refresh_token");
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,24 +31,10 @@ const logoutUser = () => {
   if (isLoggingOut) return;
   isLoggingOut = true;
 
-  // Clear all auth data
-  localStorage.removeItem("token");
-  localStorage.removeItem("x-session-id");
-  localStorage.removeItem("user"); // Clear user data if stored
-
-  // Clear session ID from memory
-  sessionId = null;
-
-  // Redirect to login page if we're in the browser
-  if (typeof window !== "undefined") {
-    // Check if we're not already on the login page to avoid redirect loops
-    if (
-      !window.location.pathname.includes("/signin") &&
-      !window.location.pathname.includes("/signup")
-    ) {
-      window.location.href = "/signin";
-    }
-  }
+  // Clear all auth data (store clears localStorage.token for us)
+  useUserStore.getState().clearUserData();
+  localStorage.removeItem("refresh_token");
+  delete api.defaults.headers.common["Authorization"];
 
   // Reset flag after a delay
   setTimeout(() => {
@@ -53,7 +50,7 @@ if (typeof window !== "undefined") {
 // Request interceptor to add auth token and session ID
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -87,22 +84,33 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    const isRefreshCall = originalRequest?.url?.includes(REFRESH_URL);
 
-    // Handle token expiration (401)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle token expiration (401). Never try to refresh the refresh call
+    // itself — that recurses until the stack blows.
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isRefreshCall
+    ) {
       originalRequest._retry = true;
 
-      try {
-        const token = localStorage.getItem("refresh_token");
-        if (token) {
-          // Try to refresh token
-          const response = await api.post("/v1/auth/refresh", {
-            refresh_token: token,
+      const refreshToken = getRefreshToken();
+      if (refreshToken) {
+        try {
+          const response = await api.post(REFRESH_URL, {
+            refresh_token: refreshToken,
           });
-          const newToken = response.data.data?.tokens?.access_token;
+          const tokens = response.data?.data?.tokens || {};
+          const newToken = tokens.access_token;
 
-          // Update store with new token
-          localStorage.setItem("token", newToken);
+          if (!newToken) throw new Error("No access token in refresh response");
+
+          // Keep the store and localStorage in sync
+          useUserStore
+            .getState()
+            .setTokens(newToken, tokens.refresh_token || refreshToken);
+          api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
           // Capture session ID from refresh response as well
           const refreshSessionId = response.headers["x-session-id"];
@@ -117,18 +125,15 @@ api.interceptors.response.use(
             originalRequest.headers["x-session-id"] = sessionId;
           }
           return api(originalRequest);
+        } catch (refreshError) {
+          console.log("Token refresh failed, logging out user");
+          logoutUser();
+          return Promise.reject(refreshError);
         }
-      } catch (refreshError) {
-        console.log("Token refresh failed, logging out user");
-        return Promise.reject(refreshError);
       }
-    }
 
-    // Handle other auth errors
-    if (error.response?.status === 403 || error.response?.status === 401) {
-      console.log("Auth error detected, logging out user");
-      localStorage.removeItem("token");
-      // Don't remove session ID as it might still be valid
+      // No refresh token to work with — the session is genuinely over.
+      logoutUser();
     }
 
     return Promise.reject(error);
