@@ -28,12 +28,16 @@ import useUserStore from "../stores/auth-store";
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cartItems, isLoading: cartLoading, refetchCart } = useCart();
+  const { cartItems, isLoading: cartLoading } = useCart();
   const { user } = useUserStore();
+
+  // Set when a gateway redirects back here instead of /payment/callback.
+  const returningPaymentRef =
+    new URLSearchParams(location.search).get("txnref") ||
+    new URLSearchParams(location.search).get("reference");
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false); // New state for payment confirmation
-  const [orderComplete, setOrderComplete] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState(null);
   const [shippingRates, setShippingRates] = useState([]);
   const [checkoutToken, setCheckoutToken] = useState(null);
@@ -262,7 +266,9 @@ const Checkout = () => {
       mode: paymentData.mode,
       cust_email: paymentData.cust_email,
       cust_name: paymentData.cust_name,
-      site_redirect_url: `${window.location.origin}/orders`,
+      // Points at the bounce endpoint, not the SPA route — the gateway returns
+      // via POST, which a static route can't serve.
+      site_redirect_url: `${window.location.origin}/api/payment/callback`,
     };
 
     Object.entries(fields).forEach(([name, value]) => {
@@ -414,32 +420,26 @@ const Checkout = () => {
     }
   };
 
-  // Handle payment verification after returning from Interswitch (txnref) or legacy (reference)
+  // A gateway that still points at /checkout (legacy config, or a transaction
+  // started before the redirect URL changed) is handed to the callback page,
+  // which owns verification and the payment-successful screen.
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const ref = urlParams.get("txnref") || urlParams.get("reference");
-
-    if (ref && !orderComplete) {
-      verifyPayment(ref);
+    if (returningPaymentRef) {
+      navigate(
+        `/payment/callback?txnref=${encodeURIComponent(returningPaymentRef)}`,
+        { replace: true },
+      );
     }
-  }, []);
+  }, [returningPaymentRef, navigate]);
 
-  const verifyPayment = async (reference) => {
-    try {
-      const response = await api.get(`/v1/payments/verify/${reference}`);
-      if (response.data?.status) {
-        setOrderComplete(true);
-        await refetchCart();
-        toast.success("Payment verified! Order confirmed.");
-        setTimeout(() => {
-          navigate("/orders");
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Payment verification error:", error);
-      toast.error("Payment verification failed. Please contact support.");
-    }
-  };
+  // Don't flash the empty-cart screen while that redirect is in flight.
+  if (returningPaymentRef) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   if (cartLoading) {
     return (
@@ -449,37 +449,8 @@ const Checkout = () => {
     );
   }
 
-  if (cartItems.length === 0 && !orderComplete) {
+  if (cartItems.length === 0) {
     return <EmptyCart />;
-  }
-
-  if (orderComplete) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white shadow-xl p-8 max-w-md w-full text-center"
-        >
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <FiCheck className="text-green-600 text-2xl" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Order Confirmed!
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Thank you for your purchase. Your order has been confirmed and will
-            be shipped soon.
-          </p>
-          <button
-            onClick={() => navigate("/orders")}
-            className="w-full bg-gray-900 text-white py-3 font-medium hover:bg-gray-800 transition-colors"
-          >
-            View Orders
-          </button>
-        </motion.div>
-      </div>
-    );
   }
 
   // Determine shipping section state

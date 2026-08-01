@@ -17,6 +17,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import Orders from "./pages/orders";
 import ForgotPassword from "./pages/forgot-password";
+import PaymentCallback from "./pages/PaymentCallback";
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/registry" element={<Registry />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/otp" element={<Otp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/product/:id" element={<ProductDetails />} />
