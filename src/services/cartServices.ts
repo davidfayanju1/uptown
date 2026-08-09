@@ -23,3 +23,8 @@ export const removeCartItemAPI = async (itemId: string) => {
   const response = await api.delete(`/v1/cart/items/${itemId}`);
   return response.data;
 };
+
+export const applyCouponAPI = async (code: string) => {
+  const response = await api.post("/v1/cart/apply-coupon", { code });
+  return response.data;
+};
