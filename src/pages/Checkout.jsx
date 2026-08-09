@@ -16,25 +16,35 @@ import {
   FiAlertCircle,
   FiX,
   FiFileText,
+  FiTag,
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
 import api from "../lib/axios";
 import EmptyCart from "../components/checkout/EmptyCart";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { applyCouponAPI } from "../services/cartServices";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
+import {
+  markGatewayHandoff,
+  useGatewayBackGuard,
+} from "../hooks/useGatewayBackGuard";
 
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartItems, isLoading: cartLoading } = useCart();
   const { user } = useUserStore();
+  const queryClient = useQueryClient();
 
   // Set when a gateway redirects back here instead of /payment/callback.
   const returningPaymentRef =
     new URLSearchParams(location.search).get("txnref") ||
     new URLSearchParams(location.search).get("reference");
+
+  // Back from here would otherwise land on the expired gateway page.
+  useGatewayBackGuard("/cart");
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false); // New state for payment confirmation
@@ -47,6 +57,9 @@ const Checkout = () => {
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const [quoteData, setQuoteData] = useState(null);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
 
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -191,9 +204,24 @@ const Checkout = () => {
     return 0;
   })();
 
+  // totals.discount_cents is what came off the order; the top-level
+  // discount_cents is the coupon's face value, which is larger whenever the
+  // coupon is worth more than the subtotal it can be spent against.
+  const displayDiscount = quoteData?.totals?.discount_cents
+    ? quoteData.totals.discount_cents / 100
+    : 0;
+
+  const couponValue = quoteData?.discount_cents
+    ? quoteData.discount_cents / 100
+    : 0;
+
+  const unusedDiscount = Math.max(couponValue - displayDiscount, 0);
+
+  const couponLabel = quoteData?.coupon_code || appliedCoupon;
+
   const displayTotal = quoteData?.totals?.grand_total_cents
     ? quoteData.totals.grand_total_cents / 100
-    : displaySubtotal + displayShipping;
+    : Math.max(displaySubtotal + displayShipping - displayDiscount, 0);
 
   // Quote mutation - Step 4
   const quoteMutation = useMutation({
@@ -245,6 +273,36 @@ const Checkout = () => {
     },
   });
 
+  // Apply coupon - the discount itself comes back on the next quote
+  const couponMutation = useMutation({
+    mutationFn: (code) => applyCouponAPI(code),
+    onSuccess: (data) => {
+      if (data?.status) {
+        setAppliedCoupon(data.data?.cart?.coupon_code || couponCode.trim());
+        setCouponError("");
+        // Totals from an earlier quote no longer reflect the cart
+        setQuoteData(null);
+        setCheckoutToken(null);
+        queryClient.invalidateQueries({ queryKey: ["cart"] });
+        toast.success(data.message || "Promo code applied");
+      } else {
+        setCouponError(data?.message || "This promo code isn't valid");
+      }
+    },
+    onError: (error) => {
+      setCouponError(
+        error?.response?.data?.message || "This promo code isn't valid",
+      );
+    },
+  });
+
+  const handleApplyCoupon = () => {
+    const code = couponCode.trim();
+    if (!code) return;
+    setCouponError("");
+    couponMutation.mutate(code);
+  };
+
   // Generate idempotency key
   const generateIdempotencyKey = () => {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
@@ -280,6 +338,7 @@ const Checkout = () => {
     });
 
     document.body.appendChild(form);
+    markGatewayHandoff();
     form.submit();
   };
 
@@ -873,6 +932,27 @@ const Checkout = () => {
                             : "To be calculated"}
                   </span>
                 </div>
+                {displayDiscount > 0 && (
+                  <div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        Discount{couponLabel ? ` (${couponLabel})` : ""}
+                      </span>
+                      <span className="text-green-600 font-medium">
+                        -{currencySymbol}
+                        {displayDiscount.toLocaleString()}
+                      </span>
+                    </div>
+                    {unusedDiscount > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {currencySymbol}
+                        {couponValue.toLocaleString()} code · {currencySymbol}
+                        {unusedDiscount.toLocaleString()} exceeds this order's
+                        subtotal
+                      </p>
+                    )}
+                  </div>
+                )}
                 {quoteData?.totals?.tax_cents > 0 && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax (VAT)</span>
@@ -889,6 +969,73 @@ const Checkout = () => {
                     {displayTotal.toLocaleString()}
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <label
+                  htmlFor="couponCode"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Promo code
+                </label>
+
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between border border-gray-900 px-4 py-3">
+                    <span className="flex items-center gap-2 text-gray-900 font-medium">
+                      <FiTag className="text-gray-500" />
+                      {appliedCoupon}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAppliedCoupon(null);
+                        setCouponCode("");
+                      }}
+                      className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors"
+                    >
+                      Change
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex">
+                    <input
+                      type="text"
+                      id="couponCode"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value);
+                        setCouponError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleApplyCoupon();
+                        }
+                      }}
+                      className="flex-1 min-w-0 border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      placeholder="Enter promo code"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={!couponCode.trim() || couponMutation.isPending}
+                      className="bg-gray-900 text-white px-8 py-3 font-medium hover:bg-gray-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {couponMutation.isPending ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        "Apply"
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {couponError && (
+                  <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
+                    <FiAlertCircle className="flex-shrink-0" />
+                    {couponError}
+                  </p>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1063,6 +1210,28 @@ const Checkout = () => {
                         ).toLocaleString()}
                       </span>
                     </div>
+                    {displayDiscount > 0 && (
+                      <div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            Discount{couponLabel ? ` (${couponLabel})` : ""}
+                          </span>
+                          <span className="text-green-600 font-medium">
+                            -{currencySymbol}
+                            {displayDiscount.toLocaleString()}
+                          </span>
+                        </div>
+                        {unusedDiscount > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {currencySymbol}
+                            {couponValue.toLocaleString()} code ·{" "}
+                            {currencySymbol}
+                            {unusedDiscount.toLocaleString()} exceeds this
+                            order's subtotal
+                          </p>
+                        )}
+                      </div>
+                    )}
                     {quoteData.totals?.tax_cents > 0 && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Tax (VAT)</span>
