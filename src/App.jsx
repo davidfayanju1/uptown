@@ -18,6 +18,7 @@ import { Toaster } from "sonner";
 import Orders from "./pages/orders";
 import ForgotPassword from "./pages/forgot-password";
 import PaymentCallback from "./pages/PaymentCallback";
+import GuestOrder from "./pages/GuestOrder";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
           <Route path="/registry" element={<Registry />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/payment/callback" element={<PaymentCallback />} />
+          <Route path="/order/:reference" element={<GuestOrder />} />
           <Route path="/otp" element={<Otp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/product/:id" element={<ProductDetails />} />

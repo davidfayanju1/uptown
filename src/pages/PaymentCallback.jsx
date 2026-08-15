@@ -6,18 +6,64 @@ import { motion } from "framer-motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { FiAlertCircle, FiX } from "react-icons/fi";
 import AnimatedCheckmark from "../components/UI/AnimatedCheckmark";
+import useUserStore from "../stores/auth-store";
 import { formatPriceFromCents } from "../utils/currency";
 import api from "../lib/axios";
 
 const REDIRECT_SECONDS = 6;
 
+// The API answers errors with
+// { status: false, status_code, error_type, message, errors: { reason } }
+// where `message` is often a bare word ("forbidden"). The reason lives in
+// `errors.reason`, so pull the whole envelope apart rather than trusting
+// `message` alone.
+const describeError = (error) => {
+  const status = error.response?.status;
+  const body = error.response?.data;
+  const reason = body?.errors?.reason;
+
+  if (!error.response) {
+    return {
+      message: error.request
+        ? "We couldn't reach our servers to confirm this payment."
+        : "We couldn't confirm this payment.",
+      detail: null,
+    };
+  }
+
+  // 401/403 mean the request arrived with an identity the payment doesn't
+  // belong to — an expired session, or a different account than the one that
+  // checked out. Retrying as-is lands the same way, so say what to do instead.
+  const message =
+    status === 403
+      ? "This payment is registered to a different account or session, so it can't be confirmed from here. Sign in with the account you used at checkout — if the payment went through, the order is waiting under your orders."
+      : status === 401
+        ? "Your session expired before we could confirm this payment. Sign in again and check your orders."
+        : // A one-word message ("forbidden") is the error type, not an
+          // explanation — the detail line below carries that.
+          body?.message?.includes(" ")
+          ? body.message
+          : "We couldn't confirm this payment.";
+
+  return {
+    message,
+    // Kept visible: this is what makes a failed verification diagnosable
+    // when a shopper reports it.
+    detail: [status, body?.error_type, reason].filter(Boolean).join(" · "),
+  };
+};
+
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isAuthenticated } = useUserStore();
 
-  // Interswitch returns `txnref`; older gateways used `reference`.
-  const reference = searchParams.get("txnref") || searchParams.get("reference");
+  // Interswitch returns `txnref`; Paystack sends `trxref` and `reference`.
+  const reference =
+    searchParams.get("txnref") ||
+    searchParams.get("trxref") ||
+    searchParams.get("reference");
 
   // Interswitch signals the outcome with `resp` — "00" is the only approved
   // code. Anything else means no money moved, but the backend stays the
@@ -28,6 +74,8 @@ const PaymentCallback = () => {
   const [status, setStatus] = useState(reference ? "verifying" : "missing");
   const [details, setDetails] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorDetail, setErrorDetail] = useState("");
+  const [needsSignIn, setNeedsSignIn] = useState(false);
   const [countdown, setCountdown] = useState(REDIRECT_SECONDS);
 
   // Guards the double-invoke of effects under StrictMode so we only verify once.
@@ -35,12 +83,29 @@ const PaymentCallback = () => {
 
   const verifyPayment = useCallback(async () => {
     setStatus("verifying");
+    setErrorDetail("");
+    setNeedsSignIn(false);
+
+    console.log("🔵 Callback params:", Object.fromEntries(searchParams));
+    console.log(
+      "🔵 Reference — sent:",
+      sessionStorage.getItem("last-txn-ref"),
+      "| returned:",
+      reference,
+    );
+
     try {
-      const response = await api.get(`/v1/payments/verify/${reference}`);
+      const response = await api.get(
+        `/v1/payments/verify/${encodeURIComponent(reference)}`,
+      );
       const body = response.data;
+      console.log("✅ Verify response:", body);
 
       if (!body?.status) {
         setErrorMessage(body?.message || "This payment could not be verified.");
+        setErrorDetail(
+          [body?.error_type, body?.errors?.reason].filter(Boolean).join(" · "),
+        );
         setStatus(gatewayDidNotApprove ? "cancelled" : "failed");
         return;
       }
@@ -52,21 +117,25 @@ const PaymentCallback = () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["cart"] });
     } catch (error) {
+      console.log("❌ Verify failed:", error.response?.status, error.response?.data);
+
       // A cancelled transaction often has no payment record to verify, so a
       // 404 here alongside a non-approval code is the expected shape.
-      if (gatewayDidNotApprove) {
+      // …but an auth failure is never a cancellation, and softening it to one
+      // hides the actual problem behind reassuring copy.
+      const authFailure = [401, 403].includes(error.response?.status);
+      if (gatewayDidNotApprove && !authFailure) {
         setStatus("cancelled");
         return;
       }
-      setErrorMessage(
-        error.response?.data?.message ||
-          (error.request && !error.response
-            ? "We couldn't reach our servers to confirm this payment."
-            : "We couldn't confirm this payment."),
-      );
+
+      const { message, detail } = describeError(error);
+      setErrorMessage(message);
+      setErrorDetail(detail || "");
+      setNeedsSignIn(authFailure);
       setStatus("failed");
     }
-  }, [reference, queryClient, gatewayDidNotApprove]);
+  }, [reference, queryClient, gatewayDidNotApprove, searchParams]);
 
   useEffect(() => {
     if (!reference || hasVerified.current) return;
@@ -74,7 +143,13 @@ const PaymentCallback = () => {
     verifyPayment();
   }, [reference, verifyPayment]);
 
-  // Auto-advance to the orders page once the payment is confirmed.
+  // A guest has no orders list to land on, so their order is reachable only
+  // by the payment reference they just paid with.
+  const orderPath = isAuthenticated
+    ? "/orders"
+    : `/order/${encodeURIComponent(reference || "")}`;
+
+  // Auto-advance to the order once the payment is confirmed.
   useEffect(() => {
     if (status !== "success") return;
 
@@ -82,7 +157,7 @@ const PaymentCallback = () => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(tick);
-          navigate("/orders", { replace: true });
+          navigate(orderPath, { replace: true });
           return 0;
         }
         return prev - 1;
@@ -90,7 +165,7 @@ const PaymentCallback = () => {
     }, 1000);
 
     return () => clearInterval(tick);
-  }, [status, navigate]);
+  }, [status, navigate, orderPath]);
 
   const order = details?.order || details;
   const snap = order?.totals_snapshot_json || {};
@@ -157,13 +232,15 @@ const PaymentCallback = () => {
             )}
 
             <button
-              onClick={() => navigate("/orders", { replace: true })}
+              onClick={() => navigate(orderPath, { replace: true })}
               className="w-full mt-7 bg-[#1C1C1A] text-white py-3 text-sm uppercase tracking-wide hover:bg-black transition-colors"
             >
               View your order
             </button>
             <p className="text-xs text-[#8C8C86] mt-3">
-              Redirecting to your orders in {countdown}s
+              {isAuthenticated
+                ? `Redirecting to your orders in ${countdown}s`
+                : `Redirecting to your order in ${countdown}s`}
             </p>
           </div>
         )}
@@ -197,6 +274,7 @@ const PaymentCallback = () => {
               </button>
               <Link
                 to="/cart"
+                replace
                 className="block w-full py-3 text-sm text-[#8C8C86] hover:text-[#1C1C1A] transition-colors underline underline-offset-4"
               >
                 Back to bag
@@ -236,10 +314,11 @@ const PaymentCallback = () => {
                 Try again
               </button>
               <Link
-                to="/orders"
+                to={orderPath}
+                replace
                 className="block w-full py-3 text-sm text-[#8C8C86] hover:text-[#1C1C1A] transition-colors underline underline-offset-4"
               >
-                Go to your orders
+                {isAuthenticated ? "Go to your orders" : "Check your order"}
               </Link>
             </div>
           </div>
@@ -254,14 +333,17 @@ const PaymentCallback = () => {
               Nothing to confirm
             </h1>
             <p className="text-sm text-[#6B6B64] mt-2 max-w-xs mx-auto font-light">
-              We couldn&apos;t find a payment reference in this link. If you just
-              paid, your order will still show up under your orders.
+              We couldn&apos;t find a payment reference in this link.{" "}
+              {isAuthenticated
+                ? "If you just paid, your order will still show up under your orders."
+                : "If you just paid, check the confirmation email for your order link."}
             </p>
             <Link
-              to="/orders"
+              to={isAuthenticated ? "/orders" : "/product"}
+              replace
               className="inline-block w-full mt-7 bg-[#1C1C1A] text-white py-3 text-sm uppercase tracking-wide hover:bg-black transition-colors"
             >
-              Go to your orders
+              {isAuthenticated ? "Go to your orders" : "Continue shopping"}
             </Link>
           </div>
         )}

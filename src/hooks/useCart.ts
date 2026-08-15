@@ -58,6 +58,8 @@ export const useCart = () => {
   );
 
   const cartItems = cartData?.items || [];
+  // The coupon is stored on the cart, so it outlives a page reload
+  const cartCoupon = cartData?.cart?.coupon_code || cartData?.coupon_code || null;
   const cartCount = cartItems.reduce(
     (total: number, item: any) => total + item.quantity,
     0,
@@ -67,6 +69,7 @@ export const useCart = () => {
 
   return {
     cartItems,
+    cartCoupon,
     cartCount,
     isLoading,
     addToCart,
