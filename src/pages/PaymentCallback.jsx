@@ -12,6 +12,16 @@ import api from "../lib/axios";
 
 const REDIRECT_SECONDS = 6;
 
+const PAID_STATES = ["SUCCESS", "SUCCESSFUL", "PAID", "COMPLETED", "CONFIRMED"];
+const UNPAID_STATES = [
+  "FAILED",
+  "CANCELLED",
+  "CANCELED",
+  "ABANDONED",
+  "DECLINED",
+  "REVERSED",
+];
+
 // The API answers errors with
 // { status: false, status_code, error_type, message, errors: { reason } }
 // where `message` is often a bare word ("forbidden"). The reason lives in
@@ -107,6 +117,28 @@ const PaymentCallback = () => {
           [body?.error_type, body?.errors?.reason].filter(Boolean).join(" · "),
         );
         setStatus(gatewayDidNotApprove ? "cancelled" : "failed");
+        return;
+      }
+
+      // `body.status` only says the request succeeded — a cancelled payment
+      // verifies perfectly well. The outcome is the payment's own state.
+      const paymentState = String(
+        body.data?.status ??
+          body.data?.payment?.status ??
+          body.data?.order?.status ??
+          "",
+      ).toUpperCase();
+
+      const paid = PAID_STATES.includes(paymentState);
+
+      // Trust an explicit failure, and trust the gateway's own non-approval
+      // code unless the payment record positively says it was paid.
+      if (
+        UNPAID_STATES.includes(paymentState) ||
+        (gatewayDidNotApprove && !paid)
+      ) {
+        setDetails(body.data || null);
+        setStatus("cancelled");
         return;
       }
 
