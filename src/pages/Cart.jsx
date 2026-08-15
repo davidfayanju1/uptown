@@ -5,6 +5,7 @@ import PrimaryLayout from "../layout/PrimaryLayout";
 import { IoCloseOutline } from "react-icons/io5";
 import { BsTrash } from "react-icons/bs";
 import { useCart } from "../hooks/useCart";
+import { useGatewayBackGuard } from "../hooks/useGatewayBackGuard";
 import ImageLoader from "../components/load-states/image-center-loader";
 import { toast } from "sonner";
 import {
@@ -15,6 +16,9 @@ import {
 
 const Cart = () => {
   const navigate = useNavigate();
+
+  // Back from here would otherwise land on the expired gateway page.
+  useGatewayBackGuard("/");
   const [deletingItemId, setDeletingItemId] = useState(null);
   const {
     cartItems,

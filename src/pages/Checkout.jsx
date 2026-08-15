@@ -31,10 +31,23 @@ import {
   useGatewayBackGuard,
 } from "../hooks/useGatewayBackGuard";
 
+const resolveOrderId = (order) =>
+  order?.order_id || order?.order?.id || order?.id || null;
+
+// The intent schema types its extra fields loosely, so take the first value
+// that actually looks like somewhere to send the shopper.
+const resolveAuthorizationUrl = (intent) => {
+  const candidate =
+    intent?.authorization_url || intent?.payment_url || intent?.client_secret;
+  return typeof candidate === "string" && candidate.startsWith("https://")
+    ? candidate
+    : null;
+};
+
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cartItems, isLoading: cartLoading } = useCart();
+  const { cartItems, cartCoupon, isLoading: cartLoading } = useCart();
   const { user } = useUserStore();
   const queryClient = useQueryClient();
 
@@ -57,8 +70,10 @@ const Checkout = () => {
   const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const [quoteData, setQuoteData] = useState(null);
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [showPaymentSheet, setShowPaymentSheet] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState(null);
   const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isEditingCoupon, setIsEditingCoupon] = useState(false);
   const [couponError, setCouponError] = useState("");
 
   const [formData, setFormData] = useState({
@@ -217,7 +232,9 @@ const Checkout = () => {
 
   const unusedDiscount = Math.max(couponValue - displayDiscount, 0);
 
-  const couponLabel = quoteData?.coupon_code || appliedCoupon;
+  // Server state, not local — the cart keeps the coupon across a reload, so
+  // remembering it in component state only makes the two disagree.
+  const appliedCoupon = quoteData?.coupon_code || cartCoupon;
 
   const displayTotal = quoteData?.totals?.grand_total_cents
     ? quoteData.totals.grand_total_cents / 100
@@ -225,12 +242,12 @@ const Checkout = () => {
 
   // Quote mutation - Step 4
   const quoteMutation = useMutation({
-    mutationFn: async (data) => {
-      console.log("📦 Quote mutation payload:", data);
-      const response = await api.post("/v1/checkout/quote", data);
+    mutationFn: async ({ payload }) => {
+      console.log("📦 Quote mutation payload:", payload);
+      const response = await api.post("/v1/checkout/quote", payload);
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, { silent }) => {
       console.log("✅ Quote mutation response:", data);
       if (data?.status) {
         setQuoteData(data.data);
@@ -258,17 +275,23 @@ const Checkout = () => {
         // Reset processing state BEFORE showing modal
         setIsProcessing(false);
 
-        // Show the quote modal after successful quote generation
-        setShowQuoteModal(true);
-        toast.success("Quote generated successfully");
-      } else {
+        // A silent refresh only exists to update the totals in place
+        if (!silent) {
+          setShowQuoteModal(true);
+          toast.success("Quote generated successfully");
+        }
+      } else if (!silent) {
         setIsProcessing(false);
         toast.error("Failed to generate quote");
       }
     },
-    onError: (error) => {
+    onError: (error, { silent }) => {
       console.error("❌ Quote mutation error:", error);
-      toast.error(error?.response?.data?.message || "Failed to generate quote");
+      if (!silent) {
+        toast.error(
+          error?.response?.data?.message || "Failed to generate quote",
+        );
+      }
       setIsProcessing(false);
     },
   });
@@ -278,13 +301,21 @@ const Checkout = () => {
     mutationFn: (code) => applyCouponAPI(code),
     onSuccess: (data) => {
       if (data?.status) {
-        setAppliedCoupon(data.data?.cart?.coupon_code || couponCode.trim());
         setCouponError("");
-        // Totals from an earlier quote no longer reflect the cart
-        setQuoteData(null);
+        setIsEditingCoupon(false);
+        setCouponCode("");
+        // The token belongs to totals that predate the discount
         setCheckoutToken(null);
         queryClient.invalidateQueries({ queryKey: ["cart"] });
         toast.success(data.message || "Promo code applied");
+
+        // apply-coupon returns no amounts, so the discount only becomes
+        // visible once the quote has been recalculated against the cart.
+        if (canQuote) {
+          quoteMutation.mutate({ payload: buildQuotePayload(), silent: true });
+        } else {
+          setQuoteData(null);
+        }
       } else {
         setCouponError(data?.message || "This promo code isn't valid");
       }
@@ -337,17 +368,22 @@ const Checkout = () => {
       form.appendChild(input);
     });
 
+    console.log("🔵 Interswitch form fields:", fields);
+    // Survives the full-page POST, so the callback can be compared against it
+    sessionStorage.setItem("last-txn-ref", fields.txn_ref ?? "");
+
     document.body.appendChild(form);
     markGatewayHandoff();
     form.submit();
   };
 
-  // Confirm mutation - Step 5
+  // Confirm mutation - Step 5. Creates the order; how the shopper then pays
+  // depends on the gateway they picked, so the redirect lives with the caller.
   const confirmMutation = useMutation({
-    mutationFn: async ({ checkout_token, idempotencyKey }) => {
+    mutationFn: async ({ checkout_token, payment_provider, idempotencyKey }) => {
       const response = await api.post(
         "/v1/checkout/confirm",
-        { checkout_token },
+        { checkout_token, payment_provider },
         {
           headers: {
             "Idempotency-Key": idempotencyKey,
@@ -356,27 +392,19 @@ const Checkout = () => {
       );
       return response.data;
     },
-    onSuccess: (data) => {
-      if (data?.status) {
-        setOrderData(data.data);
-        setShowQuoteModal(false);
-        setIsConfirmingPayment(false);
+  });
 
-        if (data.data?.payment_url) {
-          submitInterswitchForm(data.data);
-        } else {
-          toast.success("Order created!");
-          setTimeout(() => navigate("/product"), 2000);
-        }
-      } else {
-        setIsConfirmingPayment(false);
-        toast.error("Failed to confirm order");
-      }
-    },
-    onError: (error) => {
-      toast.error(error?.response?.data?.message || "Failed to confirm order");
-      setIsConfirmingPayment(false);
-      setShowQuoteModal(false);
+  // Paystack is initialised against the order that confirm just created,
+  // rather than coming back on the confirm response the way Interswitch does.
+  const paystackIntentMutation = useMutation({
+    mutationFn: async (orderId) => {
+      const response = await api.post("/v1/payments/intent", {
+        order_id: orderId,
+        // Paystack returns via GET, so it can land on the SPA route directly
+        // rather than bouncing through /api the way Interswitch has to.
+        callback_url: `${window.location.origin}/payment/callback`,
+      });
+      return response.data;
     },
   });
 
@@ -391,6 +419,34 @@ const Checkout = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
+  const buildQuotePayload = () => ({
+    cart_id: cartId,
+    contact: {
+      email: formData.email,
+    },
+    shipping_address: {
+      first_name: formData.firstName,
+      last_name: formData.lastName,
+      line1: formData.address,
+      city: formData.city,
+      state: formData.state,
+      zip: formData.zipCode,
+      country: "NG",
+    },
+    shipping_option_id: selectedShipping?.id,
+  });
+
+  const canQuote =
+    !!cartId &&
+    !!selectedShipping &&
+    !!formData.email &&
+    !!formData.firstName &&
+    !!formData.lastName &&
+    !!formData.address &&
+    !!formData.city &&
+    !!formData.state &&
+    !!formData.zipCode;
 
   // Generate quote first
   const handleGenerateQuote = async (e) => {
@@ -423,28 +479,11 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
-      // Prepare quote payload
-      const quotePayload = {
-        cart_id: cartId,
-        contact: {
-          email: formData.email,
-        },
-        shipping_address: {
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          line1: formData.address,
-          city: formData.city,
-          state: formData.state,
-          zip: formData.zipCode,
-          country: "NG",
-        },
-        shipping_option_id: selectedShipping.id,
-      };
-
+      const quotePayload = buildQuotePayload();
       console.log("🚀 Submitting quote payload:", quotePayload);
 
       // Generate quote (this will show the modal on success)
-      await quoteMutation.mutateAsync(quotePayload);
+      await quoteMutation.mutateAsync({ payload: quotePayload });
     } catch (error) {
       console.error("❌ Quote generation error:", error);
       toast.error(
@@ -455,27 +494,100 @@ const Checkout = () => {
   };
 
   // Proceed to payment from the modal
-  const handleProceedToPayment = async () => {
+  const handleProceedToPayment = () => {
     if (!checkoutToken) {
       toast.error("Checkout token not found");
       return;
     }
 
+    setShowPaymentSheet(true);
+  };
+
+  // Handing off to a gateway is a full-page navigation, so settle the UI first
+  // — otherwise a slow redirect, or a bfcache restore on the way back, leaves
+  // the sheet sitting there mid-spin.
+  const closePaymentUi = () => {
+    setIsConfirmingPayment(false);
+    setSelectedGateway(null);
+    setShowPaymentSheet(false);
+    setShowQuoteModal(false);
+  };
+
+  const handleSelectGateway = async (provider) => {
+    if (isConfirmingPayment) return;
+
+    setSelectedGateway(provider);
     setIsConfirmingPayment(true);
 
     try {
       const idempotencyKey = generateIdempotencyKey();
       console.log("Using Idempotency-Key:", idempotencyKey);
-      await confirmMutation.mutateAsync({
+      const confirmed = await confirmMutation.mutateAsync({
         checkout_token: checkoutToken,
+        payment_provider: provider,
         idempotencyKey,
       });
+
+      console.log("✅ Confirm response:", confirmed);
+
+      if (!confirmed?.status) {
+        throw new Error(confirmed?.message || "Failed to confirm order");
+      }
+
+      const order = confirmed.data;
+      setOrderData(order);
+
+      if (provider === "paystack") {
+        const orderId = resolveOrderId(order);
+        if (!orderId) {
+          throw new Error(
+            `Confirm returned no order id — got: ${Object.keys(order || {}).join(", ") || "nothing"}`,
+          );
+        }
+
+        const intent = await paystackIntentMutation.mutateAsync(orderId);
+        const authorizationUrl = resolveAuthorizationUrl(intent?.data);
+        if (!authorizationUrl) {
+          throw new Error(
+            intent?.message || "Paystack didn't return a payment link",
+          );
+        }
+
+        closePaymentUi();
+        markGatewayHandoff();
+        window.location.href = authorizationUrl;
+        return;
+      }
+
+      if (!order?.payment_url) {
+        closePaymentUi();
+        toast.success("Order created!");
+        setTimeout(() => navigate("/product"), 2000);
+        return;
+      }
+
+      closePaymentUi();
+      submitInterswitchForm(order);
     } catch (error) {
       console.error("❌ Payment confirmation error:", error);
+
+      // Confirm spends the token, so a rejected one can never be retried as-is
+      // — drop the stale quote instead of leaving the sheet open to fail again.
+      if (error?.response?.data?.message === "invalid_checkout_token") {
+        closePaymentUi();
+        setQuoteData(null);
+        setCheckoutToken(null);
+        toast.error("This quote is no longer valid. Please generate a new one.");
+        return;
+      }
+
       toast.error(
-        error?.message || "Failed to proceed to payment. Please try again.",
+        error?.response?.data?.message ||
+          error?.message ||
+          "Failed to proceed to payment. Please try again.",
       );
       setIsConfirmingPayment(false);
+      setSelectedGateway(null);
     }
   };
 
@@ -936,7 +1048,7 @@ const Checkout = () => {
                   <div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">
-                        Discount{couponLabel ? ` (${couponLabel})` : ""}
+                        Discount{appliedCoupon ? ` (${appliedCoupon})` : ""}
                       </span>
                       <span className="text-green-600 font-medium">
                         -{currencySymbol}
@@ -979,7 +1091,7 @@ const Checkout = () => {
                   Promo code
                 </label>
 
-                {appliedCoupon ? (
+                {appliedCoupon && !isEditingCoupon ? (
                   <div className="flex items-center justify-between border border-gray-900 px-4 py-3">
                     <span className="flex items-center gap-2 text-gray-900 font-medium">
                       <FiTag className="text-gray-500" />
@@ -988,7 +1100,7 @@ const Checkout = () => {
                     <button
                       type="button"
                       onClick={() => {
-                        setAppliedCoupon(null);
+                        setIsEditingCoupon(true);
                         setCouponCode("");
                       }}
                       className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors"
@@ -1027,6 +1139,18 @@ const Checkout = () => {
                         "Apply"
                       )}
                     </button>
+                    {appliedCoupon && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingCoupon(false);
+                          setCouponError("");
+                        }}
+                        className="ml-3 flex-shrink-0 text-sm text-gray-500 hover:text-gray-900 underline transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1214,7 +1338,7 @@ const Checkout = () => {
                       <div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">
-                            Discount{couponLabel ? ` (${couponLabel})` : ""}
+                            Discount{appliedCoupon ? ` (${appliedCoupon})` : ""}
                           </span>
                           <span className="text-green-600 font-medium">
                             -{currencySymbol}
@@ -1263,23 +1387,87 @@ const Checkout = () => {
                   disabled={isConfirmingPayment}
                   className="w-full bg-gray-900 text-white py-4 font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isConfirmingPayment ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                      Redirecting to payment...
-                    </>
-                  ) : (
-                    <>
-                      <FiLock className="text-lg" />
-                      Proceed to Payment · {currencySymbol}
-                      {(
-                        quoteData.totals?.grand_total_cents / 100
-                      ).toLocaleString()}
-                    </>
-                  )}
+                  <FiLock className="text-lg" />
+                  Proceed to Payment · {currencySymbol}
+                  {(quoteData.totals?.grand_total_cents / 100).toLocaleString()}
                 </button>
                 <p className="text-xs text-gray-500 text-center mt-4">
                   By proceeding, you agree to our Terms of Service
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Payment Method Sheet */}
+      <AnimatePresence>
+        {showPaymentSheet && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-[60] flex items-end justify-center"
+            onClick={() => !isConfirmingPayment && setShowPaymentSheet(false)}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "tween", duration: 0.25 }}
+              className="bg-white w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center border-b border-gray-200 px-4 py-4">
+                <button
+                  onClick={() => setShowPaymentSheet(false)}
+                  disabled={isConfirmingPayment}
+                  className="text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50"
+                  aria-label="Close payment options"
+                >
+                  <FiX size={22} />
+                </button>
+                <span className="flex-1 text-center text-gray-900 font-medium pr-6">
+                  Select Payment Method
+                </span>
+              </div>
+
+              <div className="p-6 space-y-3">
+                <button
+                  onClick={() => handleSelectGateway("paystack")}
+                  disabled={isConfirmingPayment}
+                  className="w-full h-14 bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {selectedGateway === "paystack" ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                  ) : (
+                    <img
+                      src="/images/paystack-logo.png"
+                      alt="Pay with Paystack"
+                      className="h-6 object-contain"
+                    />
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handleSelectGateway("interswitch")}
+                  disabled={isConfirmingPayment}
+                  className="w-full h-14 border border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {selectedGateway === "interswitch" ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-900 border-t-transparent"></div>
+                  ) : (
+                    <img
+                      src="/images/interswitch-powered.png"
+                      alt="Pay with Interswitch"
+                      className="h-5 object-contain"
+                    />
+                  )}
+                </button>
+
+                <p className="text-xs text-gray-500 text-center pt-1">
+                  By selecting a payment option, you confirm that you have read,
+                  understood, and accepted our terms and conditions.
                 </p>
               </div>
             </motion.div>

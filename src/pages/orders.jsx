@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import api from "../lib/axios";
+import { useGatewayBackGuard } from "../hooks/useGatewayBackGuard";
+import {
+  formatDate,
+  formatMoney,
+  formatStatus,
+  getStatusStyles,
+} from "../utils/orders";
 
 const makeApiError = (error, fallback) => {
   if (error.response?.status === 401) {
@@ -41,48 +48,6 @@ const fetchOrderById = async (id) => {
   } catch (error) {
     throw makeApiError(error, "Failed to fetch order details");
   }
-};
-
-const formatDate = (dateString) =>
-  new Date(dateString).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-const formatMoney = (cents, currency) => {
-  if (typeof cents !== "number") return "—";
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: currency || "NGN",
-  }).format(cents / 100);
-};
-
-const getStatusStyles = (status) => {
-  switch (status?.toUpperCase()) {
-    case "DELIVERED":
-    case "COMPLETED":
-      return "bg-[#EFF3EA] text-[#3B5C2E]";
-    case "SHIPPED":
-    case "FULFILLING":
-      return "bg-[#E8EDF2] text-[#2C4C6B]";
-    case "PROCESSING":
-    case "PENDING":
-    case "PENDING_PAYMENT":
-      return "bg-[#F5F0E8] text-[#8B6B3D]";
-    case "CANCELLED":
-      return "bg-[#F5E8E8] text-[#8B3D3D]";
-    default:
-      return "bg-gray-100 text-gray-700";
-  }
-};
-
-const formatStatus = (status) => {
-  if (!status) return "Unknown";
-  return status
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
 // ── Order Card ────────────────────────────────────────────────────────────────
@@ -436,12 +401,42 @@ const OrderDetailModal = ({ orderId, onClose }) => {
 // ── Page ──────────────────────────────────────────────────────────────────────
 const Orders = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  // Paystack's configured callback lands here, but verification and the
+  // payment-successful screen belong to /payment/callback.
+  const returningPaymentRef =
+    searchParams.get("reference") || searchParams.get("trxref");
+
+  // Back from here would otherwise land on the expired gateway page.
+  useGatewayBackGuard("/");
+
+  useEffect(() => {
+    if (returningPaymentRef) {
+      navigate(
+        `/payment/callback?reference=${encodeURIComponent(returningPaymentRef)}`,
+        { replace: true },
+      );
+    }
+  }, [returningPaymentRef, navigate]);
 
   const { data: orders, isLoading, error, refetch } = useQuery({
     queryKey: ["orders"],
     queryFn: fetchOrders,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Don't flash the orders list while that redirect is in flight.
+  if (returningPaymentRef) {
+    return (
+      <PrimaryLayout>
+        <div className="min-h-screen pt-[5rem] bg-white flex items-center justify-center">
+          <div className="w-12 h-12 border-2 border-[#EBE9E4] border-t-[#1C1C1A] rounded-full animate-spin" />
+        </div>
+      </PrimaryLayout>
+    );
+  }
 
   if (error) {
     const isAuthError = error.code === "UNAUTHORIZED";
