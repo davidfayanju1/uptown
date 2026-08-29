@@ -26,13 +26,9 @@ const Cart = () => {
     error,
     refetchCart,
     updateCartItem,
-    isUpdatingCart,
     removeCartItem,
     isRemovingFromCart,
-    updateCartError,
   } = useCart();
-
-  console.log(updateCartError?.response?.data?.message, "update cart error");
 
   const activeCurrencySymbol =
     cartItems.length > 0 ? getCurrencySymbol(cartItems[0].currency) : "₦";
@@ -55,24 +51,20 @@ const Cart = () => {
     return "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
   };
 
+  // The new quantity lands in the cache immediately; useCart rolls it back and
+  // reports the reason if the request fails.
   const handleUpdateQuantity = (item, newQuantity) => {
     if (newQuantity < 1) return;
 
     const maxAvailableStock = item.max_stock || 10;
     if (newQuantity > maxAvailableStock) {
-      alert(
+      toast.error(
         `Maximum available stock limit (${maxAvailableStock}) reached for this item.`,
       );
       return;
     }
 
     updateCartItem({ itemId: item.id, quantity: newQuantity });
-
-    if (
-      updateCartError?.response?.data?.message?.includes("insufficient_stock")
-    ) {
-      toast.error("Not enough stock available for this item.");
-    }
   };
 
   const handleRemoveItem = async (itemId) => {
@@ -124,14 +116,13 @@ const Cart = () => {
       name: "QUANTITY",
       grow: 3,
       cell: (row) => {
-        const isMutating = isUpdatingCart || isRemovingFromCart;
         const isCurrentItemDeleting = deletingItemId === row.id;
         return (
           <div className="flex items-center">
             <div className="flex items-center border border-gray-200 bg-white">
               <button
                 onClick={() => handleUpdateQuantity(row, row.quantity - 1)}
-                disabled={isMutating || row.quantity <= 1}
+                disabled={isRemovingFromCart || row.quantity <= 1}
                 className="px-3 py-1 cursor-pointer text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
               >
                 −
@@ -141,7 +132,7 @@ const Cart = () => {
               </span>
               <button
                 onClick={() => handleUpdateQuantity(row, row.quantity + 1)}
-                disabled={isMutating}
+                disabled={isRemovingFromCart}
                 className="px-3 cursor-pointer py-1 text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
               >
                 +
@@ -149,7 +140,7 @@ const Cart = () => {
             </div>
             <button
               onClick={() => handleRemoveItem(row.id)}
-              disabled={isMutating}
+              disabled={isRemovingFromCart}
               className="delete-btn ml-4 transition-all duration-200 rounded-full p-2 flex items-center justify-center disabled:opacity-50"
             >
               {isCurrentItemDeleting ? (
@@ -310,7 +301,6 @@ const Cart = () => {
                   <div className="bg-white border border-gray-200 rounded-none p-2">
                     {cartItems.map((item) => {
                       const productImage = getProductImage(item);
-                      const isMutating = isUpdatingCart || isRemovingFromCart;
                       const isCurrentItemDeleting = deletingItemId === item.id;
 
                       return (
@@ -365,7 +355,9 @@ const Cart = () => {
                                       item.quantity - 1,
                                     )
                                   }
-                                  disabled={isMutating || item.quantity <= 1}
+                                  disabled={
+                                    isRemovingFromCart || item.quantity <= 1
+                                  }
                                   className="text-lg font-medium text-gray-500 hover:text-black transition-colors px-2 disabled:opacity-30 cursor-pointer"
                                 >
                                   −
@@ -380,7 +372,7 @@ const Cart = () => {
                                       item.quantity + 1,
                                     )
                                   }
-                                  disabled={isMutating}
+                                  disabled={isRemovingFromCart}
                                   className="text-lg font-medium text-gray-500 hover:text-black transition-colors px-2 disabled:opacity-30 cursor-pointer"
                                 >
                                   +
@@ -391,7 +383,7 @@ const Cart = () => {
 
                           <button
                             onClick={() => handleRemoveItem(item.id)}
-                            disabled={isMutating}
+                            disabled={isRemovingFromCart}
                             className="absolute right-0 top-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
                           >
                             {isCurrentItemDeleting ? (
