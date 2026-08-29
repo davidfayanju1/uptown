@@ -15,8 +15,53 @@
   font-display: swap;
 }
 
+/* Asangha Expanded — display face for the Daily Project wordmark.
+   Drop the files into /public/fonts using these names; woff2 is preferred and
+   otf/ttf is there so a font straight from the designer works as-is. */
+@font-face {
+  font-family: "Asangha Expanded";
+  src:
+    url("/fonts/AsanghaExpanded-Bold.woff2") format("woff2"),
+    url("/fonts/AsanghaExpanded-Bold.otf") format("opentype"),
+    url("/fonts/AsanghaExpanded-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Asangha Expanded";
+  src:
+    url("/fonts/AsanghaExpanded-BoldItalic.woff2") format("woff2"),
+    url("/fonts/AsanghaExpanded-BoldItalic.otf") format("opentype"),
+    url("/fonts/AsanghaExpanded-BoldItalic.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Archivo — SIL OFL 1.1 (see /fonts/Archivo-OFL.txt). Variable grotesque with a
+   real width axis, self-hosted. Stands in for Asangha Expanded until that one is
+   licensed; Asangha wins automatically once its files land. */
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/Archivo.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Archivo";
+  src: url("/fonts/Archivo-Italic.woff2") format("woff2");
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme {
   --font-now: "Now", "Poppins", sans-serif;
+  --font-asangha: "Asangha Expanded", "Archivo", "Now", "Poppins", sans-serif;
 }
 
 body {
