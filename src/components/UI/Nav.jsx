@@ -10,6 +10,7 @@ import {
   IoLogOutOutline,
   IoTimeOutline,
   IoChevronForward,
+  IoChevronBack,
 } from "react-icons/io5";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -21,6 +22,7 @@ import { formatCurrency, getPriceRange } from "../../utils/currency";
 
 const Nav = () => {
   const [openSidebar, setOpenSidebar] = useState(false);
+  const [activeSubmenu, setActiveSubmenu] = useState(null);
   const [openSearch, setOpenSearch] = useState(false);
   const [showCartDropdown, setShowCartDropdown] = useState(false);
   const [deletingItemId, setDeletingItemId] = useState(null);
@@ -300,8 +302,31 @@ const Nav = () => {
     { name: "Shop Uptown", url: "/product" },
     { name: "Shop Daily Project", url: "/product?collection=daily-project" },
     { name: "Uptown Registre", url: "/registry" },
-    { name: "Discover the Maison", url: "/explore" },
+    {
+      name: "Discover the Maison",
+      submenu: [
+        { name: "The Maison Uptown", url: "/maison" },
+        { name: "Read our poems", url: "/poems" },
+        { name: "Artworks", url: "/artworks" },
+      ],
+    },
   ];
+
+  // Second level reached from the welcome row when signed in
+  const accountSubmenu = {
+    name: "My Account",
+    submenu: [
+      { name: "Orders", url: "/orders" },
+      { name: "Address Book", url: "/address-book" },
+      { name: "Certificates", url: "/certificates" },
+      { name: "Account Info", url: "/account" },
+    ],
+    secondary: [
+      { name: "Sign Out", isLogout: true },
+      { name: "Delete Account", url: "/account/delete" },
+      { name: "Help Center", url: "/help" },
+    ],
+  };
 
   // Mobile sidebar — secondary links below the divider
   const secondaryItems = [
@@ -510,8 +535,13 @@ const Nav = () => {
 
   // PrimaryLayout remounts Nav on every route change, which would cut the
   // menu's exit animation short — let it play out before navigating.
-  const closeSidebarAndGo = (url) => {
+  const closeSidebar = () => {
     setOpenSidebar(false);
+    setActiveSubmenu(null);
+  };
+
+  const closeSidebarAndGo = (url) => {
+    closeSidebar();
     setTimeout(
       () => navigate(url),
       (MENU_ROW_EXIT_DURATION + MENU_EXIT_DURATION) * 1000,
@@ -570,7 +600,7 @@ const Nav = () => {
             </button>
             {cartButton}
             <button
-              onClick={() => setOpenSidebar((prev) => !prev)}
+              onClick={() => (openSidebar ? closeSidebar() : setOpenSidebar(true))}
               aria-label={openSidebar ? "Close menu" : "Menu"}
             >
               {openSidebar ? (
@@ -930,12 +960,83 @@ const Nav = () => {
             exit="exit"
           >
             <div className="absolute md:hidden block h-screen pt-[6rem] px-6 w-full top-0 left-0 overflow-y-auto font-now">
+              {activeSubmenu ? (
+                <>
+                  {/* Second level — title replaces the account row */}
+                  <motion.button
+                    className={`flex w-full items-center gap-3 py-4 cursor-pointer ${mobileLinkColor}`}
+                    variants={menuItemVariants}
+                    custom={0}
+                    onClick={() => setActiveSubmenu(null)}
+                    aria-label="Back to menu"
+                  >
+                    <IoChevronBack size={18} className="opacity-70" />
+                    <span className="flex-1 text-center text-[1.05rem] font-bold uppercase tracking-[0.04em] pr-[18px]">
+                      {activeSubmenu.name}
+                    </span>
+                  </motion.button>
+
+                  <motion.div
+                    className={`border-t mt-2 ${mobileDividerColor}`}
+                    variants={menuItemVariants}
+                    custom={0}
+                  />
+
+                  <div className="flex flex-col pt-8">
+                    {activeSubmenu.submenu.map((sub, index) => (
+                      <motion.button
+                        key={sub.name}
+                        className={`w-full py-[0.9rem] text-left text-[1.05rem] font-bold cursor-pointer ${mobileLinkColor}`}
+                        variants={menuItemVariants}
+                        custom={index + 1}
+                        onClick={() => closeSidebarAndGo(sub.url)}
+                      >
+                        {sub.name}
+                      </motion.button>
+                    ))}
+                  </div>
+
+                  <motion.div
+                    className={`border-t mt-16 ${mobileDividerColor}`}
+                    variants={menuItemVariants}
+                    custom={activeSubmenu.submenu.length + 1}
+                  />
+
+                  {activeSubmenu.secondary && (
+                    <div className="flex flex-col items-start pl-8 pt-6 pb-10">
+                      {activeSubmenu.secondary.map((sub, index) => (
+                        <motion.button
+                          key={sub.name}
+                          className={`py-[0.55rem] text-[0.8rem] font-bold uppercase tracking-[0.15em] cursor-pointer ${mobileLinkColor}`}
+                          variants={menuItemVariants}
+                          custom={activeSubmenu.submenu.length + 1 + index}
+                          onClick={() => {
+                            if (sub.isLogout) {
+                              handleLogout();
+                              closeSidebar();
+                            } else {
+                              closeSidebarAndGo(sub.url);
+                            }
+                          }}
+                        >
+                          {sub.name}
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
               {/* Account row — greets the user when signed in */}
               <motion.button
                 className={`flex w-full items-center justify-between py-4 cursor-pointer ${mobileLinkColor}`}
                 variants={menuItemVariants}
                 custom={0}
-                onClick={() => closeSidebarAndGo(user ? "/orders" : "/signin")}
+                onClick={() =>
+                  user
+                    ? setActiveSubmenu(accountSubmenu)
+                    : closeSidebarAndGo("/signin")
+                }
               >
                 <span className="flex items-center gap-3">
                   <IoPersonOutline size={22} />
@@ -967,7 +1068,11 @@ const Nav = () => {
                     className={`flex w-full items-center justify-between py-[0.7rem] text-left cursor-pointer ${mobileLinkColor}`}
                     variants={menuItemVariants}
                     custom={index + 1}
-                    onClick={() => closeSidebarAndGo(item.url)}
+                    onClick={() =>
+                      item.submenu
+                        ? setActiveSubmenu(item)
+                        : closeSidebarAndGo(item.url)
+                    }
                   >
                     <span className="text-[1.05rem] font-bold">
                       {item.name}
@@ -995,20 +1100,9 @@ const Nav = () => {
                     {item.name}
                   </motion.button>
                 ))}
-                {user && (
-                  <motion.button
-                    className="py-[0.55rem] text-[0.8rem] font-bold uppercase tracking-[0.15em] text-red-500 cursor-pointer"
-                    variants={menuItemVariants}
-                    custom={menuItems.length + 1 + secondaryItems.length}
-                    onClick={() => {
-                      handleLogout();
-                      setOpenSidebar(false);
-                    }}
-                  >
-                    Sign Out
-                  </motion.button>
-                )}
               </div>
+                </>
+              )}
             </div>
           </motion.div>
         )}

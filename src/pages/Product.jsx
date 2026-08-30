@@ -15,7 +15,7 @@ import {
 } from "../utils/currency";
 
 const Product = () => {
-  const [viewMode, setViewMode] = useState("grid");
+  const viewMode = "grid";
   const [wishlist, setWishlist] = useState({});
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,53 +88,6 @@ const Product = () => {
           <span className="text-black font-semibold text-lg md:text-xl">
             DISCOVER
           </span>
-
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 ${
-                viewMode === "grid" ? "bg-gray-200" : "hover:bg-gray-100"
-              }`}
-              aria-label="Grid view"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                />
-              </svg>
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 ${
-                viewMode === "list" ? "bg-gray-200" : "hover:bg-gray-100"
-              }`}
-              aria-label="List view"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-            </button>
-          </div>
         </div>
 
         {loading && (viewMode === "grid" ? <GridSkeleton /> : <ListSkeleton />)}
@@ -144,7 +97,11 @@ const Product = () => {
             {viewMode === "grid" ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3">
                 {products.map((product) => (
-                  <div key={product.id} className="group relative w-full">
+                  <Link
+                    key={product.id}
+                    to={product.available ? `/product/${product.id}` : "#"}
+                    className="group relative w-full block"
+                  >
                     <div className="h-[13.5rem] md:h-[17.5rem] w-full overflow-hidden bg-[#F7F7F7] flex items-center justify-center relative">
                       <img
                         src={product.img}
@@ -162,13 +119,9 @@ const Product = () => {
                       )}
                     </div>
                     <div className="mt-4">
-                      <Link
-                        to={product.available ? `/product/${product.id}` : "#"}
-                      >
-                        <h3 className="text-[14px] uppercase truncate font-semibold text-gray-900">
-                          {product.name}
-                        </h3>
-                      </Link>
+                      <h3 className="text-[14px] uppercase truncate font-semibold text-gray-900">
+                        {product.name}
+                      </h3>
                       <p className="mt-1 text-sm text-gray-700">
                         {product.price}
                       </p>
@@ -188,7 +141,7 @@ const Product = () => {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (
