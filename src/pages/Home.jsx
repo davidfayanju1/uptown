@@ -21,9 +21,10 @@ const Home = () => {
         title: "COLETTE.",
         // Upright caps at normal width/tracking, unlike the slide 2 wordmark.
         // Uses the display stack so the bold is a real weight, not synthesized.
-        titleClass: "font-asangha font-bold text-3xl",
+        titleClass:
+          "font-asangha font-bold text-[30.8px] leading-none mb-[0.1rem]",
         text: "From the studio of the Maison",
-        textClass: "font-now",
+        textClass: "font-now text-[18.8px] leading-none mb-[0.4rem]",
         buttonText: "Explore",
         buttonClass:
           "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] font-now hover:bg-white/10 transition-colors",
@@ -32,11 +33,15 @@ const Home = () => {
       },
       {
         title: "DAILYPROJECT™",
-        // Wordmark treatment from the comp: Asangha Expanded at its own spacing
-        titleClass:
-          "font-asangha font-stretch-[125%] font-bold italic text-[26.5px]",
+        // Supplied wordmark artwork — no font dependency, matches the comp exactly
+        titleImage: "/images/dailyproject-white.png",
+        titleImageClass: "w-[12rem]",
+        // The cropped wordmark has no descender space inside its box, unlike
+        // slide 1's live text (~5.1px), so the margin absorbs that difference:
+        // 1rem here reads as roughly double slide 1's gap, not half of it.
+        titleClass: "leading-none mb-[1rem]",
         text: "For the Gifted & Disturbed",
-        textClass: "font-now",
+        textClass: "font-now text-[18.8px] leading-none mb-[0.4rem]",
         buttonText: "Shop Now",
         buttonClass:
           "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] font-now hover:bg-white/10 transition-colors",
@@ -150,15 +155,23 @@ const Home = () => {
               {/* Text overlay */}
               <div className="text-container absolute inset-0 bg-black/40 h-full w-full flex flex-col items-center justify-center px-4">
                 <h1
-                  className={`text-white  md:text-6xl font-semibold mb-4 text-center animate-fade-in ${
-                    slide.titleClass || "text-3xl"
+                  className={`text-white  md:text-6xl font-semibold text-center animate-fade-in ${
+                    slide.titleClass || "text-3xl mb-4"
                   }`}
                 >
-                  {slide.title}
+                  {slide.titleImage ? (
+                    <img
+                      src={slide.titleImage}
+                      alt={slide.title}
+                      className={`block mx-auto h-auto ${slide.titleImageClass || ""}`}
+                    />
+                  ) : (
+                    slide.title
+                  )}
                 </h1>
                 <p
-                  className={`block max-w-[400px] text-md font-[300] text-lg mx-auto text-center md:w-[50%] w-full text-white mb-8 animate-fade-in-delayed ${
-                    slide.textClass || ""
+                  className={`block max-w-[400px] font-[300] mx-auto text-center md:w-[50%] w-full text-white animate-fade-in-delayed ${
+                    slide.textClass || "text-lg mb-8"
                   }`}
                 >
                   {slide.text}
