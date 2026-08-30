@@ -193,9 +193,9 @@ const Otp = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <img
-            src="/images/companylogo.png"
-            alt="Company Logo"
-            className="md:w-[7rem] w-[8rem] h-[8rem] md:h-[7rem]"
+            src="/images/logo-black.png"
+            alt="Uptown Maison"
+            className="w-[11rem] md:w-[12rem] h-auto"
           />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">

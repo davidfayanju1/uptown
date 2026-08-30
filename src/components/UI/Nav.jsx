@@ -9,6 +9,7 @@ import {
   IoBagHandleOutline,
   IoLogOutOutline,
   IoTimeOutline,
+  IoChevronForward,
 } from "react-icons/io5";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -78,17 +79,17 @@ const Nav = () => {
     return "#1F2937";
   };
 
-  // Desktop logo (unchanged)
+  // Desktop logo
   const getLogo = () => {
-    if (desktopIsTransparent) return "/images/logo4.png";
-    return "/images/logo5.png";
+    if (desktopIsTransparent) return "/images/logo-white.png";
+    return "/images/logo-black.png";
   };
 
   // Mobile-specific icon color and logo (includes product detail)
   const mobileIconColor = mobileIsTransparent ? "#FFFFFF" : "#1F2937";
   const mobileLogo = mobileIsTransparent
-    ? "/images/logo4.png"
-    : "/images/logo5.png";
+    ? "/images/logo-white.png"
+    : "/images/logo-black.png";
 
   // Cart button color: mobile follows mobileIsTransparent; desktop follows desktopIsTransparent
   const cartColorClass =
@@ -293,10 +294,21 @@ const Nav = () => {
     { name: "REGISTRY", url: "/registry" },
   ];
 
+  // Mobile sidebar — primary destinations (chevron rows)
   const menuItems = [
     { name: "Home", url: "/" },
-    { name: "Shop", url: "/product" },
-    { name: "Registry", url: "/registry" },
+    { name: "Shop Uptown", url: "/product" },
+    { name: "Shop Daily Project", url: "/product?collection=daily-project" },
+    { name: "Uptown Registre", url: "/registry" },
+    { name: "Discover the Maison", url: "/explore" },
+  ];
+
+  // Mobile sidebar — secondary links below the divider
+  const secondaryItems = [
+    { name: "Wishlist", url: "/wishlist" },
+    { name: "Order Status", url: "/orders" },
+    { name: "Help Center", url: "/help" },
+    { name: "Returns & Exchanges", url: "/returns" },
   ];
 
   const getAccountLinks = () => {
@@ -391,13 +403,62 @@ const Nav = () => {
     exit: { x: "-100%", transition: { ease: "easeInOut", duration: 0.3 } },
   };
 
+  // Scrim/blur ramp and the per-row curve are measured off the reference
+  // recording; each row eases in over 0.63s, 0.1s apart, drifting in from the
+  // left. Closing runs in two beats: the rows fade out, then the scrim/blur.
+  const MENU_EASE = [0.1, 0.45, 0.4, 1];
+  const MENU_ROW_DURATION = 0.63;
+  const MENU_ROW_STAGGER = 0.1;
+  const MENU_ROW_LEAD = 0.18;
+  const MENU_ROW_OFFSET = -24;
+  const MENU_ROW_EXIT_DURATION = 0.25;
+  const MENU_EXIT_DURATION = 0.35;
+
+  // The scrim and blur are animated directly rather than via opacity: an
+  // ancestor with opacity < 1 becomes a backdrop root, which kills the
+  // backdrop-filter mid-transition and makes the fade look like a hard cut.
+  const menuOverlayVariants = {
+    hidden: {
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      backdropFilter: "blur(0px)",
+      WebkitBackdropFilter: "blur(0px)",
+    },
+    visible: {
+      backgroundColor: "rgba(0, 0, 0, 0.4)",
+      backdropFilter: "blur(24px)",
+      WebkitBackdropFilter: "blur(24px)",
+      transition: { duration: 0.45, ease: MENU_EASE },
+    },
+    exit: {
+      backgroundColor: "rgba(0, 0, 0, 0)",
+      backdropFilter: "blur(0px)",
+      WebkitBackdropFilter: "blur(0px)",
+      transition: {
+        duration: MENU_EXIT_DURATION,
+        ease: MENU_EASE,
+        // hold until the rows have cleared
+        delay: MENU_ROW_EXIT_DURATION,
+      },
+    },
+  };
+
+  // Rows resolve top to bottom, each drifting left to right as it fades in.
+  // They inherit these labels from the overlay, so they exit with it.
   const menuItemVariants = {
-    hidden: { x: -50, opacity: 0 },
+    hidden: { opacity: 0, x: MENU_ROW_OFFSET },
     visible: (i) => ({
-      x: 0,
       opacity: 1,
-      transition: { delay: 0.1 * i, duration: 0.5 },
+      x: 0,
+      transition: {
+        duration: MENU_ROW_DURATION,
+        ease: MENU_EASE,
+        delay: MENU_ROW_LEAD + i * MENU_ROW_STAGGER,
+      },
     }),
+    exit: {
+      opacity: 0,
+      transition: { duration: MENU_ROW_EXIT_DURATION, ease: MENU_EASE },
+    },
   };
 
   const cartDropdownVariants = {
@@ -417,25 +478,67 @@ const Nav = () => {
 
   const handleCartClick = () => setShowCartDropdown(!showCartDropdown);
 
+  // Cart button is rendered twice — in the mobile icon cluster and in the desktop nav
+  const cartButton = (
+    <button
+      onClick={handleCartClick}
+      aria-label="Cart"
+      className={`h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative ${cartColorClass}`}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="25"
+        height="25"
+        fill="currentColor"
+        viewBox="0 0 256 256"
+      >
+        <path d="M104,216a16,16,0,1,1-16-16A16,16,0,0,1,104,216Zm88-16a16,16,0,1,0,16,16A16,16,0,0,0,192,200ZM239.71,74.14l-25.64,92.28A24.06,24.06,0,0,1,191,184H92.16A24.06,24.06,0,0,1,69,166.42L33.92,40H16a8,8,0,0,1,0-16H40a8,8,0,0,1,7.71,5.86L57.19,64H232a8,8,0,0,1,7.71,10.14ZM221.47,80H61.64l22.81,82.14A8,8,0,0,0,92.16,168H191a8,8,0,0,0,7.71-5.86Z" />
+      </svg>
+      {cartCount > 0 && (
+        <span
+          className={`absolute top-[7.9px] right-[3.4px] bg-red-500 text-white rounded-full h-[8.5px] w-[8.5px] flex items-center justify-center text-xs`}
+        />
+      )}
+    </button>
+  );
+
   // Mobile sidebar link color — white when transparent (home, registry, product detail)
   const mobileLinkColor = mobileIsTransparent ? "text-white" : "text-gray-800";
+  const mobileDividerColor = mobileIsTransparent
+    ? "border-white/30"
+    : "border-gray-400/50";
+
+  // PrimaryLayout remounts Nav on every route change, which would cut the
+  // menu's exit animation short — let it play out before navigating.
+  const closeSidebarAndGo = (url) => {
+    setOpenSidebar(false);
+    setTimeout(
+      () => navigate(url),
+      (MENU_ROW_EXIT_DURATION + MENU_EXIT_DURATION) * 1000,
+    );
+  };
 
   return (
     <div className={`main-nav w-full z-50 fixed top-0 left-0 ${navBg}`}>
       {/* Main navbar content - ORIGINAL LAYOUT PRESERVED */}
-      <div className="h-[5rem] flex items-center justify-between md:p-3 relative">
+      {/* Header stays above the mobile sidebar overlay so the X remains reachable */}
+      <div className="h-[5rem] flex items-center justify-between md:p-3 relative z-[60]">
         {/* Desktop logo container */}
         <div className="title-container cursor-pointer md:block hidden">
           <div className="image-text-container flex items-center gap-2">
-            <Link to={"/"} className="cursor-pointer mt-2">
-              <img src={logo} alt="" className="w-[10rem] h-[15rem]" />
+            <Link to={"/"} className="cursor-pointer">
+              <img
+                src={logo}
+                alt="Uptown Maison"
+                className="w-[11rem] h-auto ml-3"
+              />
             </Link>
             <div className="flex-container md:flex hidden items-center gap-4">
               {links.map((item, index) => (
                 <small
                   onClick={() => navigate(item?.url)}
                   key={index}
-                  className={`block cursor-pointer font-[400] text-[.8rem] mt-[.7rem] ${desktopLinkColor}`}
+                  className={`block cursor-pointer font-[400] text-[.8rem] ${desktopLinkColor}`}
                 >
                   {item.name}
                 </small>
@@ -444,29 +547,39 @@ const Nav = () => {
           </div>
         </div>
 
-        {/* Mobile logo container - with dynamic styling */}
-        <div className="mobile-container md:hidden flex items-center justify-between w-full pl-2">
-          <button onClick={() => setOpenSidebar(true)}>
-            <RxHamburgerMenu color={mobileIconColor} size={27} />
-          </button>
+        {/* Mobile logo container - logo left, icon cluster right */}
+        <div className="mobile-container md:hidden flex items-center justify-between w-full px-5">
           <Link to={"/"} className="cursor-pointer">
             <img
               src={mobileLogo}
-              alt=""
-              className="w-[10rem] ml-[2.5rem] h-[15rem]"
+              alt="Uptown Maison"
+              className="w-[9.25rem] h-auto"
             />
           </Link>
-          <button onClick={() => setOpenSearch(true)}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="25"
-              height="25"
-              fill={mobileIconColor}
-              viewBox="0 0 256 256"
+          <div className="flex items-center gap-4">
+            <button onClick={() => setOpenSearch(true)} aria-label="Search">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                fill={mobileIconColor}
+                viewBox="0 0 256 256"
+              >
+                <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
+              </svg>
+            </button>
+            {cartButton}
+            <button
+              onClick={() => setOpenSidebar((prev) => !prev)}
+              aria-label={openSidebar ? "Close menu" : "Menu"}
             >
-              <path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z" />
-            </svg>
-          </button>
+              {openSidebar ? (
+                <IoClose color={mobileIconColor} size={26} />
+              ) : (
+                <RxHamburgerMenu color={mobileIconColor} size={24} />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Desktop Navigation with Search */}
@@ -502,26 +615,8 @@ const Nav = () => {
           </div>
 
           {/* Cart Button */}
-          <div className="item-container cursor-pointer flex items-center gap-1">
-            <button
-              onClick={handleCartClick}
-              className={`h-[2.5rem] w-[2.5rem] flex items-center justify-center rounded-full transition-all ease-in-out delay-75 cursor-pointer relative ${cartColorClass}`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="25"
-                height="25"
-                fill="currentColor"
-                viewBox="0 0 256 256"
-              >
-                <path d="M104,216a16,16,0,1,1-16-16A16,16,0,0,1,104,216Zm88-16a16,16,0,1,0,16,16A16,16,0,0,0,192,200ZM239.71,74.14l-25.64,92.28A24.06,24.06,0,0,1,191,184H92.16A24.06,24.06,0,0,1,69,166.42L33.92,40H16a8,8,0,0,1,0-16H40a8,8,0,0,1,7.71,5.86L57.19,64H232a8,8,0,0,1,7.71,10.14ZM221.47,80H61.64l22.81,82.14A8,8,0,0,0,92.16,168H191a8,8,0,0,0,7.71-5.86Z" />
-              </svg>
-              {cartCount > 0 && (
-                <span
-                  className={`absolute top-[7.9px] right-[3.4px] bg-red-500 text-white rounded-full h-[8.5px] w-[8.5px] flex items-center justify-center text-xs`}
-                />
-              )}
-            </button>
+          <div className="item-container cursor-pointer hidden md:flex items-center gap-1">
+            {cartButton}
           </div>
         </div>
       </div>
@@ -824,75 +919,97 @@ const Nav = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Navigation Sidebar - ORIGINAL (unchanged) */}
+      {/* Main Navigation Sidebar */}
       <AnimatePresence>
         {openSidebar && (
           <motion.div
-            className="overlay bg-black/40 md:hidden block z-50 fixed h-screen w-full left-0 top-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            className="overlay md:hidden block z-50 fixed h-screen w-full left-0 top-0"
+            variants={menuOverlayVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            <motion.div
-              className="absolute md:hidden block h-screen pt-[2rem] px-[1.45rem] w-full top-0 left-0 bg-transparent backdrop-blur-xl"
-              variants={sidebarVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-            >
-              <button onClick={() => setOpenSidebar(false)} className="mb-8">
-                <IoClose size={30} color="white" />
-              </button>
-              <div className="nav-item-container mt-[4rem] items-end flex flex-col gap-6">
+            <div className="absolute md:hidden block h-screen pt-[6rem] px-6 w-full top-0 left-0 overflow-y-auto font-now">
+              {/* Account row — greets the user when signed in */}
+              <motion.button
+                className={`flex w-full items-center justify-between py-4 cursor-pointer ${mobileLinkColor}`}
+                variants={menuItemVariants}
+                custom={0}
+                onClick={() => closeSidebarAndGo(user ? "/orders" : "/signin")}
+              >
+                <span className="flex items-center gap-3">
+                  <IoPersonOutline size={22} />
+                  <span
+                    className={
+                      user
+                        ? "text-[1.15rem] font-bold"
+                        : "text-[1.05rem] font-bold uppercase tracking-[0.06em]"
+                    }
+                  >
+                    {user
+                      ? `Welcome, ${user.first_name || "there"}!`
+                      : "Sign In/ Register"}
+                  </span>
+                </span>
+                <IoChevronForward size={16} className="opacity-70" />
+              </motion.button>
+
+              <motion.div
+                className={`border-t mt-5 ${mobileDividerColor}`}
+                variants={menuItemVariants}
+                custom={0}
+              />
+
+              <div className="nav-item-container flex flex-col pt-5">
                 {menuItems.map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className={`text-[1.4rem] font-medium cursor-pointer ${mobileLinkColor}`}
+                  <motion.button
+                    key={item.name}
+                    className={`flex w-full items-center justify-between py-[0.7rem] text-left cursor-pointer ${mobileLinkColor}`}
                     variants={menuItemVariants}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    onClick={() => {
-                      navigate(item?.url);
-                      setOpenSidebar(false);
-                    }}
+                    custom={index + 1}
+                    onClick={() => closeSidebarAndGo(item.url)}
+                  >
+                    <span className="text-[1.05rem] font-bold">
+                      {item.name}
+                    </span>
+                    <IoChevronForward size={16} className="opacity-70" />
+                  </motion.button>
+                ))}
+              </div>
+
+              <motion.div
+                className={`border-t mt-6 ${mobileDividerColor}`}
+                variants={menuItemVariants}
+                custom={menuItems.length + 1}
+              />
+
+              <div className="flex flex-col items-start pl-8 pt-6 pb-10">
+                {secondaryItems.map((item, index) => (
+                  <motion.button
+                    key={item.name}
+                    className={`py-[0.55rem] text-[0.8rem] font-bold uppercase tracking-[0.15em] cursor-pointer ${mobileLinkColor}`}
+                    variants={menuItemVariants}
+                    custom={menuItems.length + 1 + index}
+                    onClick={() => closeSidebarAndGo(item.url)}
                   >
                     {item.name}
-                  </motion.div>
+                  </motion.button>
                 ))}
-                {!user ? (
-                  <motion.div
-                    className={`text-[1.4rem] font-medium cursor-pointer ${mobileLinkColor}`}
+                {user && (
+                  <motion.button
+                    className="py-[0.55rem] text-[0.8rem] font-bold uppercase tracking-[0.15em] text-red-500 cursor-pointer"
                     variants={menuItemVariants}
-                    custom={menuItems.length}
-                    initial="hidden"
-                    animate="visible"
+                    custom={menuItems.length + 1 + secondaryItems.length}
                     onClick={() => {
-                      navigate("/signin");
+                      handleLogout();
                       setOpenSidebar(false);
                     }}
                   >
-                    Sign In
-                  </motion.div>
-                ) : (
-                  <>
-                    <motion.div
-                      className="text-[1.4rem] font-medium text-red-600 cursor-pointer"
-                      variants={menuItemVariants}
-                      custom={menuItems.length + 1}
-                      initial="hidden"
-                      animate="visible"
-                      onClick={() => {
-                        handleLogout();
-                        setOpenSidebar(false);
-                      }}
-                    >
-                      Sign Out
-                    </motion.div>
-                  </>
+                    Sign Out
+                  </motion.button>
                 )}
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

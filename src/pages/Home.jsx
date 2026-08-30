@@ -18,20 +18,28 @@ const Home = () => {
   const slides = useMemo(
     () => [
       {
-        title: "Atelier Made",
-        text: "Discover the New Daily Project Collection",
+        title: "COLETTE.",
+        // Upright caps at normal width/tracking, unlike the slide 2 wordmark.
+        // Uses the display stack so the bold is a real weight, not synthesized.
+        titleClass: "font-asangha font-bold text-3xl",
+        text: "From the studio of the Maison",
+        textClass: "font-now",
         buttonText: "Explore",
         buttonClass:
-          "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
+          "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] font-now hover:bg-white/10 transition-colors",
         mediaType: "image",
         mediaSrc: "/images/hero_2.PNG",
       },
       {
-        title: "Exclusive Designs",
-        text: "Limited edition headwear for the discerning collector. Each piece tells a story.",
-        buttonText: "Discover",
+        title: "DAILYPROJECT™",
+        // Wordmark treatment from the comp: Asangha Expanded at its own spacing
+        titleClass:
+          "font-asangha font-stretch-[125%] font-bold italic text-[26.5px]",
+        text: "For the Gifted & Disturbed",
+        textClass: "font-now",
+        buttonText: "Shop Now",
         buttonClass:
-          "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] hover:bg-white/10 transition-colors",
+          "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] font-now hover:bg-white/10 transition-colors",
         mediaType: "video",
         mediaSrc: "/images/video.mp4",
       },
@@ -141,10 +149,18 @@ const Home = () => {
 
               {/* Text overlay */}
               <div className="text-container absolute inset-0 bg-black/40 h-full w-full flex flex-col items-center justify-center px-4">
-                <h1 className="text-white  md:text-6xl text-3xl font-semibold mb-4 text-center animate-fade-in">
+                <h1
+                  className={`text-white  md:text-6xl font-semibold mb-4 text-center animate-fade-in ${
+                    slide.titleClass || "text-3xl"
+                  }`}
+                >
                   {slide.title}
                 </h1>
-                <p className="block max-w-[400px] text-md font-[300] text-lg mx-auto text-center md:w-[50%] w-full text-white mb-8 animate-fade-in-delayed">
+                <p
+                  className={`block max-w-[400px] text-md font-[300] text-lg mx-auto text-center md:w-[50%] w-full text-white mb-8 animate-fade-in-delayed ${
+                    slide.textClass || ""
+                  }`}
+                >
                   {slide.text}
                 </p>
                 <button
