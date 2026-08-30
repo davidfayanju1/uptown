@@ -87,19 +87,27 @@ const Nav = () => {
     return "/images/logo-black.png";
   };
 
-  // Mobile-specific icon color and logo (includes product detail)
-  const mobileIconColor = mobileIsTransparent ? "#FFFFFF" : "#1F2937";
-  const mobileLogo = mobileIsTransparent
+  // Pages whose own imagery makes the blurred sidebar scrim come out dark
+  const hasDarkBackdrop =
+    ["/", "/registry", "/daily-project"].includes(location.pathname) ||
+    isProductDetailPage;
+
+  // Mobile-specific icon color and logo (includes product detail).
+  // An open sidebar puts the header over the scrim, so it follows the same
+  // contrast decision the menu itself makes.
+  const mobileOverDarkOverlay =
+    mobileIsTransparent || (openSidebar && hasDarkBackdrop);
+  const mobileIconColor = mobileOverDarkOverlay ? "#FFFFFF" : "#1F2937";
+  const mobileLogo = mobileOverDarkOverlay
     ? "/images/logo-white.png"
     : "/images/logo-black.png";
 
   // Cart button color: mobile follows mobileIsTransparent; desktop follows desktopIsTransparent
-  const cartColorClass =
-    mobileIsTransparent && !isTransparentPage
+  const cartColorClass = desktopIsTransparent
+    ? "text-white"
+    : mobileOverDarkOverlay
       ? "text-white md:text-[#1F2937]"
-      : mobileIsTransparent
-        ? "text-white"
-        : "text-[#1F2937]";
+      : "text-[#1F2937]";
 
   const iconColor = getTextColor();
   const logo = getLogo();
@@ -300,7 +308,7 @@ const Nav = () => {
   const menuItems = [
     { name: "Home", url: "/" },
     { name: "Shop Uptown", url: "/product" },
-    { name: "Shop Daily Project", url: "/product?collection=daily-project" },
+    { name: "Shop Daily Project", url: "/daily-project" },
     { name: "Uptown Registre", url: "/registry" },
     {
       name: "Discover the Maison",
@@ -527,11 +535,13 @@ const Nav = () => {
     </button>
   );
 
-  // Mobile sidebar link color — white when transparent (home, registry, product detail)
-  const mobileLinkColor = mobileIsTransparent ? "text-white" : "text-gray-800";
-  const mobileDividerColor = mobileIsTransparent
+  // The sidebar blurs whatever page is behind it, so its contrast is set by that
+  // page's own artwork. Deliberately not keyed to scroll: that was the old bug —
+  // scrolling a dark hero page flipped the menu to black over a still-dark blur.
+  const mobileLinkColor = hasDarkBackdrop ? "text-white" : "text-gray-900";
+  const mobileDividerColor = hasDarkBackdrop
     ? "border-white/30"
-    : "border-gray-400/50";
+    : "border-gray-600/40";
 
   // PrimaryLayout remounts Nav on every route change, which would cut the
   // menu's exit animation short — let it play out before navigating.
