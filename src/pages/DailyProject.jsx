@@ -1,36 +1,35 @@
 // pages/DailyProject.jsx - Shop DAILYPROJECT collection
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
+import api from "../lib/axios";
+import { getProductPrice } from "../utils/currency";
 
-// No backend for this collection yet. Shaped like the products API response so
-// swapping in a fetch later only means replacing this constant.
-const DAILY_PROJECT_PRODUCTS = [
-  {
-    id: "dp-hm",
-    name: "Daily Project H&M",
-    price: "$960",
-    images: ["/images/product5.jpg", "/images/hero5.jpeg"],
-  },
-  {
-    id: "dp-core",
-    name: "Daily Projecr",
-    price: "$1,625",
-    images: ["/images/victory1.jpeg", "/images/victory2.jpeg"],
-  },
-  {
-    id: "dp-cds",
-    name: "C.D.S. crewneck sweater",
-    price: "$1,575",
-    images: ["/images/Reality.PNG", "/images/Reality-2.png", "/images/hero_2.PNG"],
-  },
-  {
-    id: "dp-polo",
-    name: '"Piqures seller" polo shirt',
-    price: "$770",
-    images: ["/images/hero5.jpeg", "/images/product5.jpg"],
-  },
-];
+const PRODUCT_TYPE = "Daily_Project";
+
+// Same shape Product.jsx uses, but the card swipes so it keeps every image
+// rather than just the first.
+const transformProductData = (apiProducts) =>
+  apiProducts.map((product) => {
+    const variants = product.variants || [];
+    const { formatted: price } = getProductPrice(variants);
+
+    // Variant imagery first, falling back to the product's own
+    const images = [
+      ...new Set([
+        ...variants.flatMap((variant) => variant.images || []),
+        ...(product.images || []),
+      ]),
+    ];
+
+    return {
+      id: product.id,
+      name: product.title,
+      price,
+      images: images.length ? images : ["/images/placeholder.png"],
+      available: variants.some((variant) => variant.stock > 0),
+    };
+  });
 
 // Native scroll-snap carousel — gives real touch swipe without a library, and
 // the dots read their state back off the scroll position.
@@ -95,12 +94,41 @@ const ProductImages = ({ product }) => {
 };
 
 const DailyProject = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchDailyProject = async () => {
+      setLoading(true);
+      try {
+        // Filter is a query param, not a body — the backend expects it here
+        const response = await api.get("/v1/products", {
+          params: { product_type: PRODUCT_TYPE },
+        });
+        if (!cancelled && response.data?.status && response.data?.data) {
+          setProducts(transformProductData(response.data.data));
+        }
+      } catch (error) {
+        console.log(error, "fetching daily project products error");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    fetchDailyProject();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <PrimaryLayout>
       <div className="min-h-screen bg-[#282727]">
         <div className="md:mt-[5rem] mt-[4rem] pt-10 pb-16">
           <h1 className="flex items-center gap-3 mb-8 px-4">
-            <span className="text-white text-[1.75rem] font-now font-normal leading-none">
+            <span className="text-white text-[21px] font-now font-normal leading-none">
               Shop
             </span>
             <img
@@ -110,8 +138,27 @@ const DailyProject = () => {
             />
           </h1>
 
+          {loading && (
+            <div className="grid grid-cols-2 gap-x-[0.2rem] gap-y-8 px-[0.2rem]">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="w-full animate-pulse">
+                  <div className="w-full aspect-[3/4] bg-white/10" />
+                  <div className="mt-4 mx-1 h-4 w-3/4 bg-white/10" />
+                  <div className="mt-2 mx-1 h-4 w-1/3 bg-white/10" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && products.length === 0 && (
+            <p className="px-4 py-12 text-center text-white/60 font-now">
+              No pieces in this collection yet.
+            </p>
+          )}
+
+          {!loading && products.length > 0 && (
           <div className="grid grid-cols-2 gap-x-[0.2rem] gap-y-8 px-[0.2rem]">
-            {DAILY_PROJECT_PRODUCTS.map((product) => (
+            {products.map((product) => (
               <Link
                 key={product.id}
                 to={`/product/${product.id}`}
@@ -127,6 +174,7 @@ const DailyProject = () => {
               </Link>
             ))}
           </div>
+          )}
         </div>
       </div>
     </PrimaryLayout>

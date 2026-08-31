@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
@@ -24,6 +24,9 @@ const Signin = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  // Checkout sends users here mid-flow and expects them back
+  const redirectTo = location.state?.from || "/";
   const { setUserData } = useUserStore();
   const { refetchCart } = useCart();
 
@@ -77,7 +80,7 @@ const Signin = () => {
       refetchCart(); // Refetch cart data after login
 
       setTimeout(() => {
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       }, 1500);
     },
     onError: (error) => {
@@ -127,6 +130,7 @@ const Signin = () => {
           Or{" "}
           <Link
             to="/signup"
+            state={{ from: redirectTo }}
             className="font-medium underline text-black hover:text-black transition-colors duration-200"
           >
             create a new account

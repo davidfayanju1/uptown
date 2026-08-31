@@ -20,6 +20,7 @@ import ForgotPassword from "./pages/forgot-password";
 import PaymentCallback from "./pages/PaymentCallback";
 import GuestOrder from "./pages/GuestOrder";
 import DailyProject from "./pages/DailyProject";
+import GiftMessage from "./pages/GiftMessage";
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/registry" element={<Registry />} />
           <Route path="/daily-project" element={<DailyProject />} />
+          <Route path="/gift-message" element={<GiftMessage />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/order/:reference" element={<GuestOrder />} />

@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
-import useUserStore from "../stores/auth-store";
-import { useCart } from "../hooks/useCart";
 
 // Extracted API function
 const registerUser = async (userData) => {
@@ -25,10 +23,10 @@ const Signup = () => {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { setUserData } = useUserStore();
-  const { refetchCart } = useCart();
 
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.from || "/";
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -84,22 +82,25 @@ const Signup = () => {
     mutationFn: registerUser,
     onSuccess: (data) => {
       // Extract user, tokens, and cart from the response
-      const { user, tokens, cart } = data.data;
+      const { user, tokens, cart } = data.data || {};
 
-      // Save to Zustand store with cart data
-      setUserData(user, tokens.access_token, tokens.refresh_token, cart);
+      // Hold the session until the email is verified. Committing it here would
+      // sign the user in with an unverified token, and protected endpoints
+      // (orders, account) answer those with 403.
+      sessionStorage.setItem(
+        "pending_verification",
+        JSON.stringify({ user, tokens, cart }),
+      );
 
-      // Also set authorization header for future API calls
-      api.defaults.headers.common["Authorization"] =
-        `Bearer ${tokens.access_token}`;
-      refetchCart();
+      toast.success("Account created! Enter the code we sent to your email.");
 
-      toast.success("Account created successfully! Redirecting...");
-
-      // Redirect to home or OTP page
+      // `from` rides along so verification lands where signup was headed.
       setTimeout(() => {
-        navigate("/");
-      }, 1500);
+        navigate("/otp", {
+          state: { email: formData.email, from: redirectTo },
+          replace: true,
+        });
+      }, 1200);
     },
     onError: (error) => {
       const errorMessage =
@@ -420,6 +421,7 @@ const Signup = () => {
             <div className="mt-6">
               <Link
                 to="/signin"
+                state={{ from: redirectTo }}
                 className="w-full flex border-solid border-gray-300 border-[1px] justify-center py-3 px-4 text-sm font-normal text-gray-900"
               >
                 Sign in
