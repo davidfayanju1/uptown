@@ -14,6 +14,41 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "Now";
+  src: url("/fonts/Now-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Now";
+  src: url("/fonts/Now-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Now";
+  src: url("/fonts/Now-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Now";
+  src: url("/fonts/Now-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Now";
+  src: url("/fonts/Now-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* Asangha Expanded — display face for the Daily Project wordmark.
    Drop the files into /public/fonts using these names; woff2 is preferred and
