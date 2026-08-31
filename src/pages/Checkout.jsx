@@ -17,6 +17,8 @@ import {
   FiX,
   FiFileText,
   FiTag,
+  FiEdit2,
+  FiPlus,
 } from "react-icons/fi";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
@@ -76,6 +78,18 @@ const Checkout = () => {
   const [isEditingCoupon, setIsEditingCoupon] = useState(false);
   const [couponError, setCouponError] = useState("");
 
+  // Checkout gates on contact first: a guest confirms an email, a signed-in user
+  // is already past it. Only then does the delivery section appear.
+  const [contactConfirmed, setContactConfirmed] = useState(!!user);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [contactError, setContactError] = useState("");
+  // The address form is a distinct step. Signed-in accounts keep a list and pick
+  // one; editingAddressId is null when the form is adding rather than editing.
+  const [showAddressForm, setShowAddressForm] = useState(false);
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+
   const [formData, setFormData] = useState({
     email: user?.email || "",
     firstName: user?.first_name || "",
@@ -84,8 +98,22 @@ const Checkout = () => {
     city: "",
     state: "",
     zipCode: "",
+    phone: "",
     country: "NG",
   });
+
+  // A returning signed-in user skips the contact step
+  useEffect(() => {
+    if (user) {
+      setContactConfirmed(true);
+      setFormData((prev) => ({
+        ...prev,
+        email: prev.email || user.email || "",
+        firstName: prev.firstName || user.first_name || "",
+        lastName: prev.lastName || user.last_name || "",
+      }));
+    }
+  }, [user]);
 
   // Get cart ID from cart items
   const cartId = cartItems[0]?.cart_id || null;
@@ -420,6 +448,115 @@ const Checkout = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const savedAddress =
+    addresses.find((a) => a.id === selectedAddressId) || null;
+
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const handleGuestCheckout = () => {
+    if (!isValidEmail(formData.email)) {
+      setContactError("Please enter a valid email address.");
+      return;
+    }
+    if (!privacyAccepted) {
+      setContactError("Please accept the privacy policy to continue.");
+      return;
+    }
+    setContactError("");
+    setContactConfirmed(true);
+  };
+
+  // Send them to sign in, then straight back here
+  const handleSignInRedirect = () => {
+    navigate("/signin", { state: { from: "/checkout" } });
+  };
+
+  // A guest's address is whatever is in the form; a signed-in user's is saved
+  const addressReady = user
+    ? !!savedAddress
+    : !!formData.firstName &&
+      !!formData.lastName &&
+      !!formData.address &&
+      !!formData.city &&
+      !!formData.state &&
+      !!formData.phone;
+
+  const addressFieldsFilled =
+    !!formData.firstName &&
+    !!formData.lastName &&
+    !!formData.address &&
+    !!formData.city &&
+    !!formData.state &&
+    !!formData.phone;
+
+  const addressFromForm = () => ({
+    firstName: formData.firstName,
+    lastName: formData.lastName,
+    address: formData.address,
+    city: formData.city,
+    state: formData.state,
+    zipCode: formData.zipCode,
+    phone: formData.phone,
+  });
+
+  // Adding starts from a blank form — only the account name carries over
+  const handleAddAddress = () => {
+    setEditingAddressId(null);
+    setFormData((prev) => ({
+      ...prev,
+      firstName: user?.first_name || "",
+      lastName: user?.last_name || "",
+      address: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      phone: "",
+    }));
+    setShowAddressForm(true);
+  };
+
+  const handleEditAddress = (addr) => {
+    setEditingAddressId(addr.id);
+    setFormData((prev) => ({ ...prev, ...addr }));
+    setShowAddressForm(true);
+  };
+
+  const handleSelectAddress = (addr) => {
+    setSelectedAddressId(addr.id);
+    setFormData((prev) => ({ ...prev, ...addr }));
+  };
+
+  const handleSaveAddress = () => {
+    if (!addressFieldsFilled) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    // No endpoint yet for persisting an address to the account
+    if (editingAddressId) {
+      setAddresses((prev) =>
+        prev.map((a) =>
+          a.id === editingAddressId ? { ...a, ...addressFromForm() } : a,
+        ),
+      );
+      setSelectedAddressId(editingAddressId);
+    } else {
+      const entry = { id: `addr-${Date.now()}`, ...addressFromForm() };
+      setAddresses((prev) => [...prev, entry]);
+      setSelectedAddressId(entry.id);
+    }
+    setEditingAddressId(null);
+    setShowAddressForm(false);
+  };
+
+  const handleCancelAddress = () => {
+    // Put the selected address back, discarding whatever the form held
+    if (savedAddress) {
+      setFormData((prev) => ({ ...prev, ...savedAddress }));
+    }
+    setEditingAddressId(null);
+    setShowAddressForm(false);
+  };
+
   const buildQuotePayload = () => ({
     cart_id: cartId,
     contact: {
@@ -432,6 +569,7 @@ const Checkout = () => {
       city: formData.city,
       state: formData.state,
       zip: formData.zipCode,
+      phone: formData.phone,
       country: "NG",
     },
     shipping_option_id: selectedShipping?.id,
@@ -439,6 +577,8 @@ const Checkout = () => {
 
   const canQuote =
     !!cartId &&
+    contactConfirmed &&
+    addressReady &&
     !!selectedShipping &&
     !!formData.email &&
     !!formData.firstName &&
@@ -651,8 +791,145 @@ const Checkout = () => {
 
   const currencySymbol = getCurrencySymbol();
 
+  // Guests fill the address inline; signed-in users get an address book + modal
+  const isGuest = !user;
+
+  const addressFormFields = (
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        First name *
+                      </label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        Last name *
+                      </label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="address"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        Address *
+                      </label>
+                      <input
+                        type="text"
+                        id="address"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Street address"
+                        className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="city"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="state"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        State *
+                      </label>
+                      <div className="relative">
+                        <FiChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        <select
+                          id="state"
+                          name="state"
+                          value={formData.state}
+                          onChange={handleInputChange}
+                          className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none appearance-none transition-colors"
+                        >
+                          <option value="">Select State</option>
+                          {shippingStates.map((state) => (
+                            <option key={state.id} value={state.state}>
+                              {state.state}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="zipCode"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        ZIP code
+                      </label>
+                      <input
+                        type="text"
+                        id="zipCode"
+                        name="zipCode"
+                        value={formData.zipCode}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                      >
+                        Mobile number *
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder="Mobile number"
+                        className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                      />
+                    </div>
+                  </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8 font-now">
       <div className="max-w-6xl mx-auto">
         <button
           onClick={() => navigate(-1)}
@@ -672,170 +949,223 @@ const Checkout = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white shadow-sm p-6 mb-6"
+                className="bg-white shadow-sm mb-6"
               >
-                <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                  <FiUser className="mr-2" />
-                  Contact Information
-                </h2>
-
-                <div className="mb-6">
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Email address *
-                  </label>
-                  <div className="relative">
-                    <FiMail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="pl-10 w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
-                      placeholder="your@email.com"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Shipping Address */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-white shadow-sm p-6 mb-6"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                  <FiMapPin className="mr-2" />
-                  Shipping Address
-                </h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label
-                      htmlFor="firstName"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                  <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                    <FiUser className="mr-2" />
+                    Contact Information
+                  </h2>
+                  {contactConfirmed && !user && (
+                    <button
+                      type="button"
+                      onClick={() => setContactConfirmed(false)}
+                      aria-label="Edit contact information"
+                      className="text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
                     >
-                      First name *
-                    </label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="lastName"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Last name *
-                    </label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
-                    />
-                  </div>
+                      <FiEdit2 size={18} />
+                    </button>
+                  )}
                 </div>
 
-                <div className="mb-4">
-                  <label
-                    htmlFor="address"
-                    className="block text-sm font-medium text-gray-700 mb-1"
-                  >
-                    Address *
-                  </label>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
-                    placeholder="Street address"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label
-                      htmlFor="city"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      id="city"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="state"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      State *
-                    </label>
-                    <div className="relative">
-                      <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                      <select
-                        id="state"
-                        name="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none appearance-none transition-colors"
-                      >
-                        <option value="">Select State</option>
-                        {shippingStates.map((state) => (
-                          <option key={state.id} value={state.state}>
-                            {state.state}
-                          </option>
-                        ))}
-                      </select>
+                <div className="p-6">
+                  {contactConfirmed ? (
+                    <div className="flex items-center gap-3 bg-gray-50 px-4 py-4">
+                      <FiMail className="text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-900 break-all">
+                        {formData.email}
+                      </span>
                     </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="zipCode"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      ZIP code *
-                    </label>
-                    <input
-                      type="text"
-                      id="zipCode"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
-                    />
-                  </div>
+                  ) : (
+                    <>
+                      <p className="text-right text-sm text-gray-700 mb-2">
+                        Required Fields*
+                      </p>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className="w-full border border-gray-300 px-4 py-4 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                        placeholder="Email *"
+                      />
+
+                      <label className="flex items-start gap-3 mt-5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={privacyAccepted}
+                          onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                          className="mt-1 h-5 w-5 accent-gray-900 flex-shrink-0"
+                        />
+                        <span className="text-[10.9px] text-gray-900 leading-snug">
+                          I have read and understood the Privacy Policy, and I
+                          agree to receive marketing communications via email.
+                        </span>
+                      </label>
+
+                      {contactError && (
+                        <p className="mt-3 text-sm text-red-600">
+                          {contactError}
+                        </p>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handleGuestCheckout}
+                        className="w-full bg-black text-white py-4 mt-5 text-[12.5px] hover:bg-gray-800 transition-colors cursor-pointer"
+                      >
+                        Checkout as a Guest
+                      </button>
+
+                      <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                        Please be aware that if the email is associated with an
+                        existing Uptown account, your new order will be attached
+                        to it.
+                      </p>
+
+                      <div className="flex items-center gap-4 my-7">
+                        <span className="h-px flex-1 bg-gray-200" />
+                        <span className="text-gray-400">OR</span>
+                        <span className="h-px flex-1 bg-gray-200" />
+                      </div>
+
+                      <p className="text-[11.3px] text-gray-900">
+                        Sign in or create your Uptown account.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={handleSignInRedirect}
+                        className="w-full bg-black text-white py-4 mt-5 text-[12.5px] hover:bg-gray-800 transition-colors cursor-pointer"
+                      >
+                        Sign In/ Register
+                      </button>
+
+                      <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                        Sign in or create an account to save your details and
+                        easily track your orders.
+                      </p>
+                    </>
+                  )}
                 </div>
               </motion.div>
+
+              {/* Delivery options — only after contact is settled */}
+              {contactConfirmed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="bg-white shadow-sm mb-6"
+                >
+                  <div className="p-6 border-b border-gray-100">
+                    <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                      <FiMapPin className="mr-2" />
+                      Delivery Options
+                    </h2>
+                  </div>
+
+                  <div className="p-6">
+                    {isGuest ? (
+                      /* Guests have no address book — the form is the section */
+                      <>
+                        <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                          <FiMapPin className="mr-2" />
+                          Shipping Address
+                        </h3>
+                        {addressFormFields}
+                      </>
+                    ) : (
+                      <>
+                        <span className="block text-[17px] text-gray-900 mb-4">
+                          Delivery Address
+                        </span>
+
+                        <div className="space-y-3">
+                          {addresses.map((addr) => {
+                            const isSelected = addr.id === selectedAddressId;
+                            return (
+                              <div
+                                key={addr.id}
+                                onClick={() => handleSelectAddress(addr)}
+                                className={`relative border p-5 cursor-pointer transition-colors ${
+                                  isSelected
+                                    ? "border-gray-900"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                <div className="flex gap-4">
+                                  <span
+                                    className={`mt-1 flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                                      isSelected
+                                        ? "border-gray-900"
+                                        : "border-gray-300"
+                                    }`}
+                                  >
+                                    {isSelected && (
+                                      <span className="h-[10px] w-[10px] rounded-full bg-gray-900" />
+                                    )}
+                                  </span>
+
+                                  <div className="flex-1 min-w-0 pr-12">
+                                    <p className="text-[17px] text-gray-900">
+                                      {addr.firstName} {addr.lastName}
+                                    </p>
+                                    <p className="mt-3 text-[15px] text-gray-700">
+                                      {addr.address}
+                                    </p>
+                                    <p className="mt-1 text-[15px] text-gray-700">
+                                      {[addr.city, addr.state, addr.zipCode]
+                                        .filter(Boolean)
+                                        .join(", ")}
+                                    </p>
+                                    <p className="mt-1 text-[15px] text-gray-700">
+                                      {addr.phone}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditAddress(addr);
+                                  }}
+                                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] text-gray-900 underline cursor-pointer"
+                                >
+                                  Edit
+                                </button>
+                              </div>
+                            );
+                          })}
+
+                          <button
+                            type="button"
+                            onClick={handleAddAddress}
+                            className="flex w-full items-center gap-3 border border-gray-200 p-5 text-left hover:border-gray-300 transition-colors cursor-pointer"
+                          >
+                            <FiPlus size={20} className="text-gray-900" />
+                            <span className="text-[17px] text-gray-900">
+                              Add a New Address
+                            </span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
 
               {/* Shipping Options Section */}
-              <div className="bg-white shadow-sm p-6 mb-6">
+              <div
+                className={`bg-white shadow-sm p-6 mb-6 ${
+                  contactConfirmed &&
+                  (user ? !!savedAddress : !!formData.state)
+                    ? ""
+                    : "hidden"
+                }`}
+              >
                 <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
                   <FiTruck className="mr-2" />
                   Shipping Method
@@ -1474,6 +1804,55 @@ const Checkout = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Address modal — signed-in accounts only */}
+      {!isGuest && showAddressForm && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center font-now">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={handleCancelAddress}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white p-6"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center">
+                <FiMapPin className="mr-2" />
+                Shipping Address
+              </h3>
+              <button
+                type="button"
+                onClick={handleCancelAddress}
+                aria-label="Close"
+                className="text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"
+              >
+                <FiX size={22} />
+              </button>
+            </div>
+
+            {addressFormFields}
+
+            <div className="flex gap-4 mt-8">
+              <button
+                type="button"
+                onClick={handleSaveAddress}
+                className="flex-1 border border-gray-900 py-3.5 text-sm font-semibold tracking-wide text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                SAVE
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelAddress}
+                className="flex-1 bg-black py-3.5 text-sm font-semibold tracking-wide text-white hover:bg-gray-800 transition-colors cursor-pointer"
+              >
+                CANCEL
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };

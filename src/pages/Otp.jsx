@@ -3,10 +3,21 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
+import useUserStore from "../stores/auth-store";
+import { useCart } from "../hooks/useCart";
 
-// Extracted API functions
-const verifyOtp = async (otpData) => {
-  const response = await api.post("/v1/auth/verify", otpData);
+const PENDING_KEY = "pending_verification";
+
+// The account isn't signed in yet, so the token from signup is passed
+// explicitly — /v1/auth/verify identifies the account from it.
+const verifyOtp = async ({ token, accessToken }) => {
+  const response = await api.post(
+    "/v1/auth/verify",
+    { token },
+    accessToken
+      ? { headers: { Authorization: `Bearer ${accessToken}` } }
+      : undefined,
+  );
   return response.data;
 };
 
@@ -23,34 +34,60 @@ const Otp = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+  const { setUserData } = useUserStore();
+  const { refetchCart } = useCart();
+  // Where signup was originally headed (e.g. back to checkout)
+  const redirectTo = location.state?.from || "/";
+
+  // Signup parks the session here rather than committing it
+  const pending = React.useMemo(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem(PENDING_KEY)) || null;
+    } catch {
+      return null;
+    }
+  }, []);
   const inputRefs = useRef([]);
 
   // Get email from location state
   useEffect(() => {
-    if (location.state?.email) {
-      setEmail(location.state.email);
+    if (location.state?.email || pending?.user?.email) {
+      setEmail(location.state?.email || pending.user.email);
     } else {
       // Fallback - you might want to redirect to signup if no email
       toast.error("Email not found. Please sign up again.");
       navigate("/signup");
     }
-  }, [location, navigate]);
+  }, [location, navigate, pending]);
 
   // Verify OTP mutation
   const verifyMutation = useMutation({
     mutationFn: verifyOtp,
     onSuccess: (data) => {
       toast.success(data?.message || "Email verified successfully! Welcome!");
-      console.log("OTP verification successful:", data);
 
-      // Store token if provided
-      if (data?.token) {
-        localStorage.setItem("token", data.token);
+      // Verified — now it is safe to commit the session. Prefer tokens from the
+      // verify response, falling back to the ones parked at signup.
+      const tokens = data?.data?.tokens || pending?.tokens;
+      const verifiedUser = data?.data?.user || pending?.user;
+
+      if (tokens?.access_token) {
+        setUserData(
+          verifiedUser,
+          tokens.access_token,
+          tokens.refresh_token,
+          data?.data?.cart || pending?.cart,
+        );
+        api.defaults.headers.common["Authorization"] =
+          `Bearer ${tokens.access_token}`;
+        refetchCart();
       }
 
-      // Redirect to home page after successful verification
+      sessionStorage.removeItem(PENDING_KEY);
+
+      // Continue to wherever signup was headed
       setTimeout(() => {
-        navigate("/");
+        navigate(redirectTo, { replace: true });
       }, 1500);
     },
     onError: (error) => {
@@ -154,11 +191,10 @@ const Otp = () => {
     }
 
     // Prepare payload with token
-    const payload = {
+    verifyMutation.mutate({
       token: otpString,
-    };
-
-    verifyMutation.mutate(payload);
+      accessToken: pending?.tokens?.access_token,
+    });
   };
 
   // Resend OTP
