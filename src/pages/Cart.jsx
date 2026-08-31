@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DataTable from "react-data-table-component";
 import PrimaryLayout from "../layout/PrimaryLayout";
-import { IoCloseOutline } from "react-icons/io5";
+import { IoCloseOutline, IoChevronForward } from "react-icons/io5";
 import { BsTrash } from "react-icons/bs";
 import { useCart } from "../hooks/useCart";
 import { useGatewayBackGuard } from "../hooks/useGatewayBackGuard";
@@ -227,7 +227,7 @@ const Cart = () => {
     return (
       <PrimaryLayout>
         <ImageLoader />
-        <div className="min-h-screen mt-[5rem] bg-gray-50 py-8 flex justify-center items-center">
+        <div className="min-h-screen mt-[5rem] bg-gray-50 py-8 flex justify-center items-center font-now">
           <div className="animate-spin rounded-none h-10 w-10 border-2 border-black border-t-transparent"></div>
         </div>
       </PrimaryLayout>
@@ -237,7 +237,7 @@ const Cart = () => {
   if (error) {
     return (
       <PrimaryLayout>
-        <div className="min-h-screen mt-[5rem] bg-gray-50 text-gray-900 py-8 flex flex-col justify-center items-center px-4">
+        <div className="min-h-screen mt-[5rem] bg-gray-50 text-gray-900 py-8 flex flex-col justify-center items-center px-4 font-now">
           <p className="text-gray-600 mb-4">Failed to load your cart session</p>
           <button
             onClick={() => refetchCart()}
@@ -260,10 +260,10 @@ const Cart = () => {
           }
         `}
       </style>
-      <div className="min-h-screen mt-[5rem] bg-gray-50 text-gray-900 py-8">
+      <div className="min-h-screen mt-[5rem] bg-gray-50 text-gray-900 py-8 pb-28 md:pb-8 font-now">
         <div className="container mx-auto px-4 max-w-6xl">
-          <h1 className="text-3xl font-bold mb-8 text-left text-gray-900">
-            Your Cart
+          <h1 className="text-[20.4px] leading-none md:text-3xl font-normal md:font-bold mb-6 md:mb-8 text-left text-gray-900">
+            My shopping cart
           </h1>
 
           {cartItems.length === 0 ? (
@@ -296,120 +296,146 @@ const Cart = () => {
                   />
                 </div>
 
-                {/* MOBILE ONLY: Simple geometric elements */}
+                {/* MOBILE ONLY: one bordered card per line item */}
                 <div className="md:hidden space-y-4">
-                  <div className="bg-white border border-gray-200 rounded-none p-2">
-                    {cartItems.map((item) => {
-                      const productImage = getProductImage(item);
-                      const isCurrentItemDeleting = deletingItemId === item.id;
+                  {cartItems.map((item) => {
+                    const productImage = getProductImage(item);
+                    const isCurrentItemDeleting = deletingItemId === item.id;
 
-                      return (
-                        <div
-                          key={item.id}
-                          className="flex w-full relative p-2 border-b border-gray-200 last:border-0 py-6"
+                    return (
+                      <div
+                        key={item.id}
+                        className="relative bg-white border border-gray-200 p-5"
+                      >
+                        <button
+                          onClick={() => handleRemoveItem(item.id)}
+                          disabled={isRemovingFromCart}
+                          aria-label="Remove item"
+                          className="absolute right-3 top-3 p-1 text-gray-400 hover:text-gray-900 transition-colors"
                         >
-                          <div className="h-28 w-24 flex-shrink-0 overflow-hidden bg-gray-100 rounded-none border border-gray-200 flex items-center justify-center">
+                          {isCurrentItemDeleting ? (
+                            <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent" />
+                          ) : (
+                            <IoCloseOutline size={24} />
+                          )}
+                        </button>
+
+                        <div className="flex gap-4">
+                          <Link
+                            to={`/product/${item?.product_id}`}
+                            className="h-[7.5rem] w-[6.5rem] flex-shrink-0 overflow-hidden bg-gray-100"
+                          >
                             <img
                               src={productImage}
                               alt={item.product_title}
                               className="h-full w-full object-cover"
                             />
-                          </div>
+                          </Link>
 
-                          <div className="ml-4 flex flex-col justify-between flex-1 pr-6">
-                            <div>
-                              <Link to={`/product/${item?.product_id}`}>
-                                <h3 className="text-sm font-bold text-gray-900 line-clamp-2">
-                                  {item.product_title || "Product Item"}
-                                </h3>
-                              </Link>
-                              <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-                                <div>
-                                  Color:{" "}
-                                  <span className="text-gray-900 font-medium">
-                                    {item.color || "Default"}
-                                  </span>
-                                </div>
-                                <div>
-                                  Size:{" "}
-                                  <span className="text-gray-900 font-medium">
-                                    {item.size || "One Size"}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mt-3 flex flex-col gap-2">
-                              <div className="text-sm font-bold text-gray-900">
-                                {formatPriceFromUnits(
-                                  item.unit_price_snapshot_cents,
-                                  item.currency,
-                                )}
-                              </div>
-
-                              <div className="flex items-center justify-between w-full bg-gray-50 border border-gray-200 h-10 rounded-none px-2">
-                                <button
-                                  onClick={() =>
-                                    handleUpdateQuantity(
-                                      item,
-                                      item.quantity - 1,
-                                    )
-                                  }
-                                  disabled={
-                                    isRemovingFromCart || item.quantity <= 1
-                                  }
-                                  className="text-lg font-medium text-gray-500 hover:text-black transition-colors px-2 disabled:opacity-30 cursor-pointer"
-                                >
-                                  −
-                                </button>
-                                <span className="text-xs font-bold text-gray-900">
-                                  {item.quantity}
+                          <div className="flex-1 min-w-0">
+                            <Link to={`/product/${item?.product_id}`}>
+                              <h3 className="text-[13.1px] uppercase font-extrabold text-gray-900 leading-snug">
+                                {item.product_title || "Product Item"}
+                              </h3>
+                            </Link>
+                            <div className="mt-2 text-[13px] text-gray-500 space-y-0.5">
+                              <div>
+                                Color:{" "}
+                                <span className="text-gray-900 font-semibold">
+                                  {item.color || "Default"}
                                 </span>
-                                <button
-                                  onClick={() =>
-                                    handleUpdateQuantity(
-                                      item,
-                                      item.quantity + 1,
-                                    )
-                                  }
-                                  disabled={isRemovingFromCart}
-                                  className="text-lg font-medium text-gray-500 hover:text-black transition-colors px-2 disabled:opacity-30 cursor-pointer"
-                                >
-                                  +
-                                </button>
+                              </div>
+                              <div>
+                                Size:{" "}
+                                <span className="text-gray-900 font-semibold">
+                                  {item.size || "One Size"}
+                                </span>
                               </div>
                             </div>
-                          </div>
 
-                          <button
-                            onClick={() => handleRemoveItem(item.id)}
-                            disabled={isRemovingFromCart}
-                            className="absolute right-0 top-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
-                          >
-                            {isCurrentItemDeleting ? (
-                              <div className="animate-spin rounded-none h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
-                            ) : (
-                              <IoCloseOutline size={22} />
-                            )}
-                          </button>
+                            <div className="mt-6 flex items-center justify-between border border-gray-200 bg-gray-50 h-11 px-4">
+                              <button
+                                onClick={() =>
+                                  handleUpdateQuantity(item, item.quantity - 1)
+                                }
+                                disabled={
+                                  isRemovingFromCart || item.quantity <= 1
+                                }
+                                aria-label="Decrease quantity"
+                                className="text-xl leading-none text-gray-500 hover:text-black transition-colors px-2 disabled:opacity-30 cursor-pointer"
+                              >
+                                −
+                              </button>
+                              <span className="text-sm font-semibold text-gray-900">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  handleUpdateQuantity(item, item.quantity + 1)
+                                }
+                                disabled={isRemovingFromCart}
+                                aria-label="Increase quantity"
+                                className="text-xl leading-none text-gray-500 hover:text-black transition-colors px-2 disabled:opacity-30 cursor-pointer"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Gifting and packaging — presentational for now, no backend */}
+                <div className="md:hidden mt-10">
+                  <div className="flex items-end justify-between mb-3">
+                    <h2 className="text-[15px] text-gray-900">
+                      Gifting and Packaging
+                    </h2>
+                    <span className="text-[14px] text-gray-400">
+                      Complimentary
+                    </span>
                   </div>
+
+                  <button
+                    onClick={() => navigate("/gift-message")}
+                    className="w-full flex items-center gap-4 bg-white p-4 text-left"
+                  >
+                    <img
+                      src="/images/gifting-packaging.jpg"
+                      alt=""
+                      className="h-[5.5rem] w-[7rem] flex-shrink-0 object-cover"
+                    />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[12px] font-bold text-gray-900">
+                        Include a Gift Message
+                      </span>
+                      <span className="block mt-1 text-[10.7px] text-gray-400">
+                        Add a personal touch to your order.
+                      </span>
+                    </span>
+                    <IoChevronForward
+                      size={20}
+                      className="text-gray-400 flex-shrink-0"
+                    />
+                  </button>
                 </div>
               </div>
 
               {/* STICKY GEOMETRIC ORDER SUMMARY MODULE */}
               <div className="lg:w-1/3 w-full">
                 <div className="bg-white border border-gray-200 rounded-none p-6 sticky top-8">
-                  <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
+                  <h2 className="text-[18.7px] font-bold text-gray-900 mb-5">
                     Order Summary
                   </h2>
 
-                  <div className="space-y-2 border-b border-gray-200 pb-4">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span className="font-bold text-gray-900">
+                  <div className="space-y-2 border-b border-gray-200 pb-5">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-gray-600 text-[16.3px]">
+                        Subtotal
+                      </span>
+                      <span className="font-bold text-gray-900 text-[15.5px]">
                         {formatPriceFromUnits(
                           subtotal,
                           cartItems[0]?.currency || "NGN",
@@ -418,11 +444,11 @@ const Cart = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-between mt-4 mb-6">
-                    <span className="text-lg font-bold text-gray-900">
+                  <div className="flex justify-between items-baseline mt-5 mb-6">
+                    <span className="text-[18.7px] font-bold text-gray-900">
                       Total
                     </span>
-                    <span className="text-xl font-extrabold text-gray-900">
+                    <span className="text-[15.5px] font-bold text-gray-900">
                       {formatPriceFromUnits(
                         total,
                         cartItems[0]?.currency || "NGN",
@@ -434,7 +460,7 @@ const Cart = () => {
                     onClick={() =>
                       navigate("/checkout", { state: { products: cartItems } })
                     }
-                    className="w-full bg-black text-white py-3.5 text-sm font-bold tracking-wide hover:bg-gray-800 transition-all rounded-none shadow-sm cursor-pointer"
+                    className="hidden md:block w-full bg-black text-white py-3.5 text-sm font-bold tracking-wide hover:bg-gray-800 transition-all rounded-none shadow-sm cursor-pointer"
                   >
                     Checkout ·{" "}
                     {formatPriceFromUnits(
@@ -443,7 +469,7 @@ const Cart = () => {
                     )}
                   </button>
 
-                  <div className="mt-4 text-center text-sm text-gray-500">
+                  <div className="hidden md:block mt-4 text-center text-sm text-gray-500">
                     or{" "}
                     <Link
                       to="/product"
@@ -458,6 +484,20 @@ const Cart = () => {
           )}
         </div>
       </div>
+
+      {/* Fixed checkout bar — mobile only; desktop keeps the sticky summary CTA */}
+      {cartItems.length > 0 && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 font-now">
+          <button
+            onClick={() =>
+              navigate("/checkout", { state: { products: cartItems } })
+            }
+            className="w-full bg-white border border-gray-900 py-5 text-center text-[1.05rem] font-bold text-gray-900 cursor-pointer"
+          >
+            Proceed to Checkout
+          </button>
+        </div>
+      )}
     </PrimaryLayout>
   );
 };
