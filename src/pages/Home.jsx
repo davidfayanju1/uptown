@@ -26,6 +26,7 @@ const Home = () => {
         text: "From the studio of the Maison",
         textClass: "font-now text-[18.8px] leading-none mb-[0.4rem]",
         buttonText: "Explore",
+        buttonUrl: "/explore",
         buttonClass:
           "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] font-now hover:bg-white/10 transition-colors",
         mediaType: "image",
@@ -43,6 +44,7 @@ const Home = () => {
         text: "For the Gifted & Disturbed",
         textClass: "font-now text-[18.8px] leading-none mb-[0.4rem]",
         buttonText: "Shop Now",
+        buttonUrl: "/daily-project",
         buttonClass:
           "text-white cursor-pointer w-[10rem] bg-transparent border-1 border-white outline-none px-2 py-3 flex items-center justify-center text-[.9rem] font-now hover:bg-white/10 transition-colors",
         mediaType: "video",
@@ -177,11 +179,7 @@ const Home = () => {
                   {slide.text}
                 </p>
                 <button
-                  onClick={() =>
-                    navigate(
-                      slide.buttonText === "Shop Now" ? "/product" : "/explore",
-                    )
-                  }
+                  onClick={() => navigate(slide.buttonUrl)}
                   className={
                     slide.buttonClass + " animate-fade-in-more-delayed"
                   }
