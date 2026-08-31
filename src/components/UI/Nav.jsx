@@ -313,7 +313,7 @@ const Nav = () => {
     {
       name: "Discover the Maison",
       submenu: [
-        { name: "The Maison Uptown", url: "/maison" },
+        { name: "The Maison Uptown", url: "/about" },
         { name: "Read our poems", url: "/poems" },
         { name: "Artworks", url: "/artworks" },
       ],

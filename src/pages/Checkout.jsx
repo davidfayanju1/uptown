@@ -46,6 +46,21 @@ const resolveAuthorizationUrl = (intent) => {
     : null;
 };
 
+const PAYMENT_GATEWAYS = [
+  {
+    id: "paystack",
+    label: "Paystack",
+    logo: "/images/paystack-mark.png",
+    logoClass: "h-5",
+  },
+  {
+    id: "interswitch",
+    label: "Interswitch",
+    logo: "/images/interswitch-mark.png",
+    logoClass: "h-6",
+  },
+];
+
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -654,9 +669,8 @@ const Checkout = () => {
   };
 
   const handleSelectGateway = async (provider) => {
-    if (isConfirmingPayment) return;
+    if (!provider || isConfirmingPayment) return;
 
-    setSelectedGateway(provider);
     setIsConfirmingPayment(true);
 
     try {
@@ -727,7 +741,6 @@ const Checkout = () => {
           "Failed to proceed to payment. Please try again.",
       );
       setIsConfirmingPayment(false);
-      setSelectedGateway(null);
     }
   };
 
@@ -1757,41 +1770,58 @@ const Checkout = () => {
                 >
                   <FiX size={22} />
                 </button>
-                <span className="flex-1 text-center text-gray-900 font-medium pr-6">
-                  Select Payment Method
+                <span className="flex-1 text-center text-gray-900 text-[13px] pr-6">
+                  How would you like to Pay?
                 </span>
               </div>
 
-              <div className="p-6 space-y-3">
-                <button
-                  onClick={() => handleSelectGateway("paystack")}
-                  disabled={isConfirmingPayment}
-                  className="w-full h-14 bg-gray-900 hover:bg-gray-800 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {selectedGateway === "paystack" ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    <img
-                      src="/images/paystack-logo.png"
-                      alt="Pay with Paystack"
-                      className="h-6 object-contain"
-                    />
-                  )}
-                </button>
+              <div className="p-6 space-y-4">
+                {PAYMENT_GATEWAYS.map((gateway) => {
+                  const isSelected = selectedGateway === gateway.id;
+
+                  return (
+                    <button
+                      key={gateway.id}
+                      type="button"
+                      onClick={() => setSelectedGateway(gateway.id)}
+                      disabled={isConfirmingPayment}
+                      aria-pressed={isSelected}
+                      className={`w-full flex items-center justify-between gap-4 border px-5 py-4 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isSelected
+                          ? "border-gray-900"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
+                    >
+                      <span className="flex items-center gap-3">
+                        <span
+                          className={`h-5 w-5 rounded-full border flex items-center justify-center ${
+                            isSelected ? "border-gray-900" : "border-gray-400"
+                          }`}
+                        >
+                          {isSelected && (
+                            <span className="h-2.5 w-2.5 rounded-full bg-gray-900" />
+                          )}
+                        </span>
+                        <span className="text-gray-900 text-[14.8px]">{gateway.label}</span>
+                      </span>
+                      <img
+                        src={gateway.logo}
+                        alt=""
+                        className={`${gateway.logoClass} object-contain`}
+                      />
+                    </button>
+                  );
+                })}
 
                 <button
-                  onClick={() => handleSelectGateway("interswitch")}
-                  disabled={isConfirmingPayment}
-                  className="w-full h-14 border border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={() => handleSelectGateway(selectedGateway)}
+                  disabled={!selectedGateway || isConfirmingPayment}
+                  className="w-full h-14 bg-gray-900 hover:bg-gray-800 text-white text-[10.1px] uppercase tracking-[0.15em] transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {selectedGateway === "interswitch" ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-900 border-t-transparent"></div>
+                  {isConfirmingPayment ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                   ) : (
-                    <img
-                      src="/images/interswitch-powered.png"
-                      alt="Pay with Interswitch"
-                      className="h-5 object-contain"
-                    />
+                    "Confirm and complete purchase"
                   )}
                 </button>
 
