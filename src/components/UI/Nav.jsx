@@ -87,16 +87,9 @@ const Nav = () => {
     return "/images/logo-black.png";
   };
 
-  // Pages whose own imagery makes the blurred sidebar scrim come out dark
-  const hasDarkBackdrop =
-    ["/", "/registry", "/daily-project"].includes(location.pathname) ||
-    isProductDetailPage;
-
   // Mobile-specific icon color and logo (includes product detail).
-  // An open sidebar puts the header over the scrim, so it follows the same
-  // contrast decision the menu itself makes.
-  const mobileOverDarkOverlay =
-    mobileIsTransparent || (openSidebar && hasDarkBackdrop);
+  // An open sidebar puts the header over the scrim, so it follows the menu.
+  const mobileOverDarkOverlay = mobileIsTransparent || openSidebar;
   const mobileIconColor = mobileOverDarkOverlay ? "#FFFFFF" : "#1F2937";
   const mobileLogo = mobileOverDarkOverlay
     ? "/images/logo-white.png"
@@ -535,13 +528,10 @@ const Nav = () => {
     </button>
   );
 
-  // The sidebar blurs whatever page is behind it, so its contrast is set by that
-  // page's own artwork. Deliberately not keyed to scroll: that was the old bug —
-  // scrolling a dark hero page flipped the menu to black over a still-dark blur.
-  const mobileLinkColor = hasDarkBackdrop ? "text-white" : "text-gray-900";
-  const mobileDividerColor = hasDarkBackdrop
-    ? "border-white/30"
-    : "border-gray-600/40";
+  // The menu reads white on every page — its scrim is dark enough to carry it,
+  // and keying the colour to the page behind it only ever caused flicker.
+  const mobileLinkColor = "text-white";
+  const mobileDividerColor = "border-white/30";
 
   // PrimaryLayout remounts Nav on every route change, which would cut the
   // menu's exit animation short — let it play out before navigating.
