@@ -22,6 +22,7 @@ import GuestOrder from "./pages/GuestOrder";
 import DailyProject from "./pages/DailyProject";
 import GiftMessage from "./pages/GiftMessage";
 import About from "./pages/About";
+import Account from "./pages/Account";
 
 function App() {
   return (
@@ -41,6 +42,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/daily-project" element={<DailyProject />} />
           <Route path="/gift-message" element={<GiftMessage />} />
+          <Route path="/account" element={<Account />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/payment/callback" element={<PaymentCallback />} />
           <Route path="/order/:reference" element={<GuestOrder />} />

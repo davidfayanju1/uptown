@@ -28,6 +28,31 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { applyCouponAPI } from "../services/cartServices";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
+
+// The address book speaks snake_case and calls the street `line1`; the checkout
+// form has its own names. Translate at the boundary so everything downstream —
+// the list, the form, the quote payload — keeps working in form shape.
+const toApiAddress = (form) => ({
+  first_name: form.firstName,
+  last_name: form.lastName,
+  line1: form.address,
+  city: form.city,
+  state: form.state,
+  zip: form.zipCode,
+  phone: form.phone,
+});
+
+const fromApiAddress = (addr) => ({
+  id: addr.id,
+  firstName: addr.first_name || "",
+  lastName: addr.last_name || "",
+  address: addr.line1 || "",
+  city: addr.city || "",
+  state: addr.state || "",
+  zipCode: addr.zip || "",
+  phone: addr.phone || "",
+  isDefault: !!addr.is_default,
+});
 import {
   markGatewayHandoff,
   useGatewayBackGuard,
@@ -104,6 +129,8 @@ const Checkout = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
   const [editingAddressId, setEditingAddressId] = useState(null);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
 
   const [formData, setFormData] = useState({
     email: user?.email || "",
@@ -128,6 +155,44 @@ const Checkout = () => {
         lastName: prev.lastName || user.last_name || "",
       }));
     }
+  }, [user]);
+
+  // A signed-in user's addresses live on the account, so load the book and open
+  // on their default. Guests have no book at all.
+  useEffect(() => {
+    if (!user) {
+      setAddresses([]);
+      setSelectedAddressId(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchAddresses = async () => {
+      setAddressesLoading(true);
+      try {
+        const response = await api.get("/v1/me/addresses");
+        if (cancelled) return;
+
+        const book = (response.data?.data || []).map(fromApiAddress);
+        setAddresses(book);
+
+        const preferred = book.find((a) => a.isDefault) || book[0] || null;
+        if (preferred) {
+          setSelectedAddressId(preferred.id);
+          setFormData((prev) => ({ ...prev, ...preferred }));
+        }
+      } catch (error) {
+        console.log(error, "fetching saved addresses error");
+      } finally {
+        if (!cancelled) setAddressesLoading(false);
+      }
+    };
+
+    fetchAddresses();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   // Get cart ID from cart items
@@ -504,16 +569,6 @@ const Checkout = () => {
     !!formData.state &&
     !!formData.phone;
 
-  const addressFromForm = () => ({
-    firstName: formData.firstName,
-    lastName: formData.lastName,
-    address: formData.address,
-    city: formData.city,
-    state: formData.state,
-    zipCode: formData.zipCode,
-    phone: formData.phone,
-  });
-
   // Adding starts from a blank form — only the account name carries over
   const handleAddAddress = () => {
     setEditingAddressId(null);
@@ -541,26 +596,43 @@ const Checkout = () => {
     setFormData((prev) => ({ ...prev, ...addr }));
   };
 
-  const handleSaveAddress = () => {
+  const handleSaveAddress = async () => {
     if (!addressFieldsFilled) {
       toast.error("Please fill in all required fields");
       return;
     }
-    // No endpoint yet for persisting an address to the account
-    if (editingAddressId) {
+    if (isSavingAddress) return;
+
+    setIsSavingAddress(true);
+    try {
+      const payload = toApiAddress(formData);
+      const response = editingAddressId
+        ? await api.patch(`/v1/me/addresses/${editingAddressId}`, payload)
+        : await api.post("/v1/me/addresses", {
+            ...payload,
+            // The first address an account saves becomes its default
+            is_default: addresses.length === 0,
+          });
+
+      const saved = fromApiAddress(response.data?.data || {});
       setAddresses((prev) =>
-        prev.map((a) =>
-          a.id === editingAddressId ? { ...a, ...addressFromForm() } : a,
-        ),
+        editingAddressId
+          ? prev.map((a) => (a.id === saved.id ? saved : a))
+          : [...prev, saved],
       );
-      setSelectedAddressId(editingAddressId);
-    } else {
-      const entry = { id: `addr-${Date.now()}`, ...addressFromForm() };
-      setAddresses((prev) => [...prev, entry]);
-      setSelectedAddressId(entry.id);
+      setSelectedAddressId(saved.id);
+      setFormData((prev) => ({ ...prev, ...saved }));
+      setEditingAddressId(null);
+      setShowAddressForm(false);
+    } catch (error) {
+      console.log(error, "saving address error");
+      toast.error(
+        error?.response?.data?.message ||
+          "We couldn't save that address. Please try again.",
+      );
+    } finally {
+      setIsSavingAddress(false);
     }
-    setEditingAddressId(null);
-    setShowAddressForm(false);
   };
 
   const handleCancelAddress = () => {
@@ -1096,6 +1168,17 @@ const Checkout = () => {
                         </span>
 
                         <div className="space-y-3">
+                          {addressesLoading && addresses.length === 0 && (
+                            <div className="space-y-3">
+                              {[0, 1].map((i) => (
+                                <div
+                                  key={i}
+                                  className="h-[132px] w-full animate-pulse bg-gray-100"
+                                />
+                              ))}
+                            </div>
+                          )}
+
                           {addresses.map((addr) => {
                             const isSelected = addr.id === selectedAddressId;
                             return (
@@ -1868,9 +1951,10 @@ const Checkout = () => {
               <button
                 type="button"
                 onClick={handleSaveAddress}
-                className="flex-1 border border-gray-900 py-3.5 text-sm font-semibold tracking-wide text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer"
+                disabled={isSavingAddress}
+                className="flex-1 border border-gray-900 py-3.5 text-sm font-semibold tracking-wide text-gray-900 hover:bg-gray-50 transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
               >
-                SAVE
+                {isSavingAddress ? "SAVING…" : "SAVE"}
               </button>
               <button
                 type="button"
