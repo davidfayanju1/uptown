@@ -5,7 +5,7 @@ import PrimaryLayout from "../layout/PrimaryLayout";
 import api from "../lib/axios";
 import { getProductPrice } from "../utils/currency";
 
-const PRODUCT_TYPE = "Daily_Project";
+const STORE = "daily_project";
 
 // Same shape Product.jsx uses, but the card swipes so it keeps every image
 // rather than just the first.
@@ -105,7 +105,7 @@ const DailyProject = () => {
       try {
         // Filter is a query param, not a body — the backend expects it here
         const response = await api.get("/v1/products", {
-          params: { product_type: PRODUCT_TYPE },
+          params: { store: STORE },
         });
         if (!cancelled && response.data?.status && response.data?.data) {
           setProducts(transformProductData(response.data.data));
