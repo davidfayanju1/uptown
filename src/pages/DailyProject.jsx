@@ -3,9 +3,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import api from "../lib/axios";
+import { useCurrency } from "../hooks/useCurrency";
 import { getProductPrice } from "../utils/currency";
 
-const PRODUCT_TYPE = "Daily_Project";
+const STORE = "daily_project";
 
 // Same shape Product.jsx uses, but the card swipes so it keeps every image
 // rather than just the first.
@@ -94,6 +95,7 @@ const ProductImages = ({ product }) => {
 };
 
 const DailyProject = () => {
+  const { currency } = useCurrency();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -105,7 +107,7 @@ const DailyProject = () => {
       try {
         // Filter is a query param, not a body — the backend expects it here
         const response = await api.get("/v1/products", {
-          params: { product_type: PRODUCT_TYPE },
+          params: { store: STORE },
         });
         if (!cancelled && response.data?.status && response.data?.data) {
           setProducts(transformProductData(response.data.data));
@@ -121,7 +123,7 @@ const DailyProject = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currency]);
 
   return (
     <PrimaryLayout>

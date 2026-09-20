@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import api from "../lib/axios";
+import { useCurrency } from "../hooks/useCurrency";
 import { getPriceRange } from "../utils/currency";
 
 const NotFoundPage = () => {
+  const { currency } = useCurrency();
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +56,7 @@ const NotFoundPage = () => {
 
   useEffect(() => {
     fetchSuggestedProducts();
-  }, []);
+  }, [currency]);
 
   return (
     <div className="min-h-screen bg-white">

@@ -28,6 +28,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { applyCouponAPI } from "../services/cartServices";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
+import { useCurrency } from "../hooks/useCurrency";
+import { getCurrencySymbol } from "../utils/currency";
 
 // The address book speaks snake_case and calls the street `line1`; the checkout
 // form has its own names. Translate at the boundary so everything downstream —
@@ -90,6 +92,7 @@ const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { cartItems, cartCoupon, isLoading: cartLoading } = useCart();
+  const { currency } = useCurrency();
   const { user } = useUserStore();
   const queryClient = useQueryClient();
 
@@ -274,6 +277,7 @@ const Checkout = () => {
             id: firstRate.id,
             name: firstRate.name,
             amount: firstRate.amount || firstRate.cost || 0,
+            currency: firstRate.currency,
             eta: firstRate.eta,
           });
           console.log("Auto-selected shipping option:", firstRate);
@@ -327,6 +331,17 @@ const Checkout = () => {
     return 0;
   })();
 
+  // Cart prices arrive in the shopper's currency; once quoted, the quote's wins
+  const currencySymbol = getCurrencySymbol(quoteData?.totals?.currency || currency);
+
+  // /v1/shipping/rates only prices in NGN, so until the quote converts it the
+  // selected rate carries its own currency and stays out of a mixed total.
+  const shippingCurrency =
+    quoteData?.totals?.shipping_cents !== undefined
+      ? quoteData.totals.currency
+      : selectedShipping?.currency;
+  const shippingSymbol = getCurrencySymbol(shippingCurrency || currency);
+
   // totals.discount_cents is what came off the order; the top-level
   // discount_cents is the coupon's face value, which is larger whenever the
   // coupon is worth more than the subtotal it can be spent against.
@@ -346,7 +361,12 @@ const Checkout = () => {
 
   const displayTotal = quoteData?.totals?.grand_total_cents
     ? quoteData.totals.grand_total_cents / 100
-    : Math.max(displaySubtotal + displayShipping - displayDiscount, 0);
+    : Math.max(
+        displaySubtotal +
+          (shippingCurrency === currency ? displayShipping : 0) -
+          displayDiscount,
+        0,
+      );
 
   // Quote mutation - Step 4
   const quoteMutation = useMutation({
@@ -375,6 +395,7 @@ const Checkout = () => {
               id: matchedShipping.id,
               name: matchedShipping.name,
               amount: matchedShipping.amount || matchedShipping.cost || 0,
+              currency: matchedShipping.currency || data.data.totals?.currency,
               eta: matchedShipping.eta,
             });
           }
@@ -660,6 +681,7 @@ const Checkout = () => {
       country: "NG",
     },
     shipping_option_id: selectedShipping?.id,
+    currency,
   });
 
   const canQuote =
@@ -860,21 +882,6 @@ const Checkout = () => {
   const showShippingLoading =
     isFetchingRates && formData.state && totalWeight > 0;
   const showShippingWaiting = !formData.state || totalWeight === 0;
-
-  // Get currency symbol
-  const getCurrencySymbol = () => {
-    const currency = quoteData?.totals?.currency || "NGN";
-    switch (currency) {
-      case "GBP":
-        return "£";
-      case "USD":
-        return "$";
-      default:
-        return "₦";
-    }
-  };
-
-  const currencySymbol = getCurrencySymbol();
 
   // Guests fill the address inline; signed-in users get an address book + modal
   const isGuest = !user;
@@ -1328,6 +1335,7 @@ const Checkout = () => {
                                 id: rate.id,
                                 name: rate.name,
                                 amount: rate.amount || rate.cost || 0,
+                                currency: rate.currency,
                                 eta: rate.eta,
                               })
                             }
@@ -1345,7 +1353,8 @@ const Checkout = () => {
                         </div>
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            ₦{(rate.amount || rate.cost || 0).toLocaleString()}
+                            {getCurrencySymbol(rate.currency)}
+                            {(rate.amount || rate.cost || 0).toLocaleString()}
                           </p>
                           <p className="text-xs text-gray-500">incl. VAT</p>
                         </div>
@@ -1437,7 +1446,7 @@ const Checkout = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">
-                        ₦
+                        {currencySymbol}
                         {(
                           (product.unit_price_snapshot_cents / 100) *
                           product.quantity
@@ -1460,7 +1469,7 @@ const Checkout = () => {
                   <span className="text-gray-600">Shipping</span>
                   <span className="text-gray-900 font-medium">
                     {displayShipping > 0
-                      ? `${currencySymbol}${displayShipping.toLocaleString()}`
+                      ? `${shippingSymbol}${displayShipping.toLocaleString()}`
                       : isFetchingRates
                         ? "Calculating..."
                         : shippingRates.length > 0 && !selectedShipping
@@ -1691,7 +1700,11 @@ const Checkout = () => {
                     </div>
                     <p className="font-semibold text-gray-900">
                       {currencySymbol}
-                      {(selectedShipping?.amount || 0).toLocaleString()}
+                      {(
+                        quoteData.totals?.shipping_cents !== undefined
+                          ? quoteData.totals.shipping_cents / 100
+                          : selectedShipping?.amount || 0
+                      ).toLocaleString()}
                     </p>
                   </div>
                 </div>

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
+import { useCurrency } from "../hooks/useCurrency";
 import {
   GridSkeleton,
   ListSkeleton,
@@ -16,6 +17,7 @@ import {
 
 const Product = () => {
   const viewMode = "grid";
+  const { currency } = useCurrency();
   const [wishlist, setWishlist] = useState({});
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,7 @@ const Product = () => {
 
   useEffect(() => {
     handleFetchProducts();
-  }, []);
+  }, [currency]);
 
   const toggleWishlist = (productId) => {
     setWishlist((prev) => ({
