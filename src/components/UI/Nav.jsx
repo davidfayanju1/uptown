@@ -11,6 +11,7 @@ import {
   IoTimeOutline,
   IoChevronForward,
   IoChevronBack,
+  IoCheckmark,
 } from "react-icons/io5";
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -19,6 +20,9 @@ import api from "../../lib/axios";
 import { useCart } from "../../hooks/useCart";
 import useUserStore from "../../stores/auth-store";
 import { formatCurrency, getPriceRange } from "../../utils/currency";
+import { useCurrency } from "../../hooks/useCurrency";
+import { CURRENCY_OPTIONS } from "../../domain/currency";
+import CurrencyMenu from "../currency/CurrencyMenu";
 
 const Nav = () => {
   const [openSidebar, setOpenSidebar] = useState(false);
@@ -45,6 +49,7 @@ const Nav = () => {
   const desktopSearchRef = useRef(null);
   const desktopSearchInputRef = useRef(null);
   const { user, clearUserData } = useUserStore();
+  const { currency, setCurrency } = useCurrency();
 
   const {
     cartCount,
@@ -118,7 +123,7 @@ const Nav = () => {
     ? "text-[#FFFFFF]"
     : "text-[#1F2937]";
 
-  // Fetch ALL products once on mount
+  // Fetch ALL products on mount, and again whenever the currency changes
   useEffect(() => {
     const fetchAllProducts = async () => {
       try {
@@ -165,7 +170,7 @@ const Nav = () => {
       }
     };
     fetchAllProducts();
-  }, []);
+  }, [currency]);
 
   // Client-side search function
   const searchProductsClient = (query) => {
@@ -329,12 +334,22 @@ const Nav = () => {
     ],
   };
 
+  // Second level reached from the currency row — guests and members alike
+  const currencySubmenu = {
+    name: "Currency",
+    submenu: CURRENCY_OPTIONS.map((option) => ({
+      name: option.label,
+      currency: option.code,
+    })),
+  };
+
   // Mobile sidebar — secondary links below the divider
   const secondaryItems = [
     { name: "Wishlist", url: "/wishlist" },
     { name: "Order Status", url: "/orders" },
     { name: "Help Center", url: "/help" },
     { name: "Returns & Exchanges", url: "/returns" },
+    { name: `Currency · ${currency}`, submenu: currencySubmenu },
   ];
 
   const getAccountLinks = () => {
@@ -540,6 +555,11 @@ const Nav = () => {
     setActiveSubmenu(null);
   };
 
+  const chooseCurrency = (code) => {
+    setCurrency(code);
+    closeSidebar();
+  };
+
   const closeSidebarAndGo = (url) => {
     closeSidebar();
     setTimeout(
@@ -644,8 +664,9 @@ const Nav = () => {
             />
           </div>
 
-          {/* Cart Button */}
-          <div className="item-container cursor-pointer hidden md:flex items-center gap-1">
+          {/* Currency + Cart */}
+          <div className="item-container cursor-pointer hidden md:flex items-center gap-1 shrink-0">
+            <CurrencyMenu className={cartColorClass} />
             {cartButton}
           </div>
         </div>
@@ -887,7 +908,7 @@ const Nav = () => {
                           <p className="text-xs font-semibold text-gray-900">
                             {formatCurrency(
                               item.unit_price_snapshot_cents,
-                              "NGN",
+                              item.currency,
                             )}
                           </p>
                         </div>
@@ -986,12 +1007,17 @@ const Nav = () => {
                     {activeSubmenu.submenu.map((sub, index) => (
                       <motion.button
                         key={sub.name}
-                        className={`w-full py-[0.9rem] text-left text-[1.05rem] font-bold cursor-pointer ${mobileLinkColor}`}
+                        className={`flex w-full items-center justify-between py-[0.9rem] text-left text-[1.05rem] font-bold cursor-pointer ${mobileLinkColor}`}
                         variants={menuItemVariants}
                         custom={index + 1}
-                        onClick={() => closeSidebarAndGo(sub.url)}
+                        onClick={() =>
+                          sub.currency
+                            ? chooseCurrency(sub.currency)
+                            : closeSidebarAndGo(sub.url)
+                        }
                       >
                         {sub.name}
+                        {sub.currency === currency && <IoCheckmark size={18} />}
                       </motion.button>
                     ))}
                   </div>
@@ -1095,7 +1121,11 @@ const Nav = () => {
                     className={`py-[0.55rem] text-[0.8rem] font-bold uppercase tracking-[0.15em] cursor-pointer ${mobileLinkColor}`}
                     variants={menuItemVariants}
                     custom={menuItems.length + 1 + index}
-                    onClick={() => closeSidebarAndGo(item.url)}
+                    onClick={() =>
+                      item.submenu
+                        ? setActiveSubmenu(item.submenu)
+                        : closeSidebarAndGo(item.url)
+                    }
                   >
                     {item.name}
                   </motion.button>

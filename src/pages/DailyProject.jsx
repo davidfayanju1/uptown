@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import api from "../lib/axios";
+import { useCurrency } from "../hooks/useCurrency";
 import { getProductPrice } from "../utils/currency";
 
 const STORE = "daily_project";
@@ -94,6 +95,7 @@ const ProductImages = ({ product }) => {
 };
 
 const DailyProject = () => {
+  const { currency } = useCurrency();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -121,7 +123,7 @@ const DailyProject = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [currency]);
 
   return (
     <PrimaryLayout>

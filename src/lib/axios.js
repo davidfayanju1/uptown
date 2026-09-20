@@ -2,10 +2,20 @@
 "use client";
 import axios from "axios";
 import useUserStore from "../stores/auth-store";
+import useCurrencyStore from "../stores/currency-store";
 
 const API_BASE_URL = "https://uptown-api-00m6.onrender.com";
 
 const REFRESH_URL = "/v1/auth/refresh";
+
+// The endpoints that return prices FX-converted into `?currency=`. Everything
+// else is priced in NGN regardless, so the param would only be noise there.
+const CURRENCY_AWARE_ENDPOINTS = [/^\/v1\/products(\/[^/?]+)?$/, /^\/v1\/cart$/];
+
+const isCurrencyAware = (url = "") => {
+  const path = url.split("?")[0];
+  return CURRENCY_AWARE_ENDPOINTS.some((pattern) => pattern.test(path));
+};
 
 // The store is the source of truth; localStorage is only a legacy fallback for
 // flows that wrote the token directly (e.g. OTP verification).
@@ -58,6 +68,14 @@ api.interceptors.request.use(
     // Attach session ID to request headers if available
     if (sessionId) {
       config.headers["x-session-id"] = sessionId;
+    }
+
+    // Ask for prices in the shopper's chosen currency
+    if (config.method === "get" && isCurrencyAware(config.url)) {
+      config.params = {
+        ...config.params,
+        currency: useCurrencyStore.getState().currency,
+      };
     }
 
     return config;

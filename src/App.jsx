@@ -23,34 +23,51 @@ import DailyProject from "./pages/DailyProject";
 import GiftMessage from "./pages/GiftMessage";
 import About from "./pages/About";
 import Account from "./pages/Account";
+import CurrencyGate from "./components/currency/CurrencyGate";
+import useCurrencyStore from "./stores/currency-store";
 
 function App() {
+  // The welcome screen stands in for the whole app until a currency is chosen
+  const hasConfirmedCurrency = useCurrencyStore((state) => state.hasConfirmed);
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <ScrollToTop />
         <Toaster richColors closeButton className="p-2" expand />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/product" element={<Product />} />
-          <Route path="/signin" element={<Signin />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/registry" element={<Registry />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/daily-project" element={<DailyProject />} />
-          <Route path="/gift-message" element={<GiftMessage />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/payment/callback" element={<PaymentCallback />} />
-          <Route path="/order/:reference" element={<GuestOrder />} />
-          <Route path="/otp" element={<Otp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/*" element={<NotFoundPage />} />
-        </Routes>
+        {!hasConfirmedCurrency ? (
+          <CurrencyGate />
+        ) : (
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/product" element={<Product />} />
+            <Route path="/signin" element={<Signin />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/registry" element={<Registry />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/daily-project" element={<DailyProject />} />
+            <Route path="/gift-message" element={<GiftMessage />} />
+            <Route path="/account" element={<Account />} />
+            <Route
+              path="/address-book"
+              element={<Account initialSection="address-book" />}
+            />
+            <Route
+              path="/certificates"
+              element={<Account initialSection="certificate" />}
+            />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/payment/callback" element={<PaymentCallback />} />
+            <Route path="/order/:reference" element={<GuestOrder />} />
+            <Route path="/otp" element={<Otp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/*" element={<NotFoundPage />} />
+          </Routes>
+        )}
       </Router>
     </QueryClientProvider>
   );

@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import PrimaryLayout from "../layout/PrimaryLayout";
 import api from "../lib/axios";
 import useUserStore from "../stores/auth-store";
+import { useCurrency } from "../hooks/useCurrency";
+import CurrencySelect from "../components/currency/CurrencySelect";
 import { formatDate, formatMoney, formatStatus } from "../utils/orders";
 
 const SUPPORT_EMAIL = "thenonamestudios@gmail.com";
@@ -483,12 +485,41 @@ const AddressBook = () => {
   );
 };
 
+// The currency is a device preference, not part of the profile the API holds,
+// so there is nothing to save server-side — the change applies as it's made.
+const CurrencyPreference = () => {
+  const { currency, setCurrency } = useCurrency();
+
+  const handleChange = (code) => {
+    if (code === currency) return;
+    setCurrency(code);
+    toast.success(`Prices are now shown in ${code}.`);
+  };
+
+  return (
+    <div>
+      <p className="text-[12.5px] text-[#8C8C86] leading-relaxed">
+        Prices across the store are shown, and your orders charged, in the
+        currency you choose.
+      </p>
+      <CurrencySelect
+        value={currency}
+        onChange={handleChange}
+        variant="dark"
+        className="mt-4"
+      />
+    </div>
+  );
+};
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
-const Account = () => {
+// `initialSection` lets a deep link such as /address-book land with that
+// section already expanded.
+const Account = ({ initialSection = null }) => {
   const navigate = useNavigate();
   const { user, isAuthenticated, clearUserData } = useUserStore();
-  const [openSection, setOpenSection] = useState(null);
+  const [openSection, setOpenSection] = useState(initialSection);
 
   const handleSignOut = () => {
     clearUserData();
@@ -504,6 +535,7 @@ const Account = () => {
       panel: <ProfileInformation user={user} />,
     },
     { id: "address-book", label: "Address Book", panel: <AddressBook /> },
+    { id: "currency", label: "Currency", panel: <CurrencyPreference /> },
     {
       id: "certificate",
       label: "Certificate",
