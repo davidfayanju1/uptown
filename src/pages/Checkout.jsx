@@ -73,7 +73,9 @@ const resolveAuthorizationUrl = (intent) => {
     : null;
 };
 
-const PAYMENT_GATEWAYS = [
+// NGN orders pick between the local gateways; anything quoted in USD or GBP
+// is charged through Flutterwave, which is the only one that takes them.
+const NGN_PAYMENT_GATEWAYS = [
   {
     id: "paystack",
     label: "Paystack",
@@ -87,6 +89,20 @@ const PAYMENT_GATEWAYS = [
     logoClass: "h-6",
   },
 ];
+
+const FOREIGN_PAYMENT_GATEWAYS = [
+  {
+    id: "flutterwave",
+    label: "Flutterwave",
+    logo: "/images/flutterwave.png",
+    logoClass: "h-6",
+  },
+];
+
+const getPaymentGateways = (currency) =>
+  currency && currency !== "NGN"
+    ? FOREIGN_PAYMENT_GATEWAYS
+    : NGN_PAYMENT_GATEWAYS;
 
 const Checkout = () => {
   const location = useLocation();
@@ -333,6 +349,9 @@ const Checkout = () => {
 
   // Cart prices arrive in the shopper's currency; once quoted, the quote's wins
   const currencySymbol = getCurrencySymbol(quoteData?.totals?.currency || currency);
+  const paymentGateways = getPaymentGateways(
+    quoteData?.totals?.currency || currency,
+  );
 
   // /v1/shipping/rates only prices in NGN, so until the quote converts it the
   // selected rate carries its own currency and stays out of a mixed total.
@@ -749,6 +768,8 @@ const Checkout = () => {
       return;
     }
 
+    // Nothing to choose between when the currency allows a single gateway
+    if (paymentGateways.length === 1) setSelectedGateway(paymentGateways[0].id);
     setShowPaymentSheet(true);
   };
 
@@ -804,6 +825,19 @@ const Checkout = () => {
         closePaymentUi();
         markGatewayHandoff();
         window.location.href = authorizationUrl;
+        return;
+      }
+
+      // Flutterwave comes back on the confirm response as a plain link, so
+      // there's no second intent call the way Paystack needs.
+      if (order?.payment_link) {
+        sessionStorage.setItem(
+          "last-txn-ref",
+          order.reference || order.payment_id || "",
+        );
+        closePaymentUi();
+        markGatewayHandoff();
+        window.location.href = order.payment_link;
         return;
       }
 
@@ -1872,7 +1906,7 @@ const Checkout = () => {
               </div>
 
               <div className="p-6 space-y-4">
-                {PAYMENT_GATEWAYS.map((gateway) => {
+                {paymentGateways.map((gateway) => {
                   const isSelected = selectedGateway === gateway.id;
 
                   return (

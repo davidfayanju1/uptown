@@ -24,6 +24,7 @@ import GiftMessage from "./pages/GiftMessage";
 import About from "./pages/About";
 import Account from "./pages/Account";
 import CurrencyGate from "./components/currency/CurrencyGate";
+import GatewayReturnRedirect from "./components/checkout/GatewayReturnRedirect";
 import useCurrencyStore from "./stores/currency-store";
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <ScrollToTop />
+        <GatewayReturnRedirect />
         <Toaster richColors closeButton className="p-2" expand />
         {!hasConfirmedCurrency ? (
           <CurrencyGate />

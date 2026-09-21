@@ -69,17 +69,23 @@ const PaymentCallback = () => {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useUserStore();
 
-  // Interswitch returns `txnref`; Paystack sends `trxref` and `reference`.
+  // Interswitch returns `txnref`; Paystack sends `trxref` and `reference`;
+  // Flutterwave sends `tx_ref`.
   const reference =
     searchParams.get("txnref") ||
     searchParams.get("trxref") ||
-    searchParams.get("reference");
+    searchParams.get("reference") ||
+    searchParams.get("tx_ref");
 
   // Interswitch signals the outcome with `resp` — "00" is the only approved
-  // code. Anything else means no money moved, but the backend stays the
-  // authority on that, so this only softens the copy.
+  // code — and Flutterwave with a `status` word. Anything else means no money
+  // moved, but the backend stays the authority on that, so this only softens
+  // the copy.
   const gatewayCode = searchParams.get("resp") || searchParams.get("respcode");
-  const gatewayDidNotApprove = !!gatewayCode && gatewayCode !== "00";
+  const gatewayStatus = (searchParams.get("status") || "").toLowerCase();
+  const gatewayDidNotApprove =
+    (!!gatewayCode && gatewayCode !== "00") ||
+    ["cancelled", "canceled", "failed"].includes(gatewayStatus);
 
   const [status, setStatus] = useState(reference ? "verifying" : "missing");
   const [details, setDetails] = useState(null);
