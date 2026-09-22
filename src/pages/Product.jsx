@@ -121,7 +121,7 @@ const Product = () => {
                       )}
                     </div>
                     <div className="mt-4">
-                      <h3 className="text-[14px] uppercase truncate font-semibold text-gray-900">
+                      <h3 className="text-[0.875rem] uppercase truncate font-semibold text-gray-900">
                         {product.name}
                       </h3>
                       <p className="mt-1 text-sm text-gray-700">

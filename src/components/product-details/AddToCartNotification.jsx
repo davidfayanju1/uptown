@@ -29,7 +29,7 @@ const AddToCartNotification = ({
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
                 >
-                  <IoCheckmarkCircle className="text-white" size={28} />
+                  <IoCheckmarkCircle className="text-white" size="1.75rem" />
                 </motion.div>
                 <div>
                   <h3 className="text-white font-semibold text-base">
@@ -44,7 +44,7 @@ const AddToCartNotification = ({
                 onClick={onClose}
                 className="text-white hover:text-emerald-100 transition-colors"
               >
-                <IoClose size={22} />
+                <IoClose size="1.375rem" />
               </button>
             </div>
           </div>

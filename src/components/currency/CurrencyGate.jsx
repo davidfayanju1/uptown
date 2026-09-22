@@ -25,8 +25,8 @@ const CurrencyGate = () => {
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="relative w-full max-w-md mx-auto"
       >
-        <h1 className="text-[20px] text-center">Welcome to Uptown</h1>
-        <p className="text-[11px] text-center text-white/90 leading-relaxed mt-6 mx-auto max-w-[320px]">
+        <h1 className="text-[1.25rem] text-center">Welcome to Uptown</h1>
+        <p className="text-[0.6875rem] text-center text-white/90 leading-relaxed mt-6 mx-auto max-w-[320px]">
           Please confirm your shipping location to continue to our online
           store.
         </p>
@@ -40,7 +40,7 @@ const CurrencyGate = () => {
         <button
           type="button"
           onClick={() => setCurrency(choice)}
-          className="w-full mt-6 py-[15px] bg-white text-[#1C1C1A] text-[11px] font-semibold uppercase tracking-[0.08em] hover:bg-[#F7F5F2] transition-colors"
+          className="w-full mt-6 py-[0.9375rem] bg-white text-[#1C1C1A] text-[0.6875rem] font-semibold uppercase tracking-[0.08em] hover:bg-[#F7F5F2] transition-colors"
         >
           Confirm shipping location
         </button>

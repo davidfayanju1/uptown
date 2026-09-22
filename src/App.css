@@ -99,6 +99,27 @@
   --font-asangha: "Asangha Expanded", "Archivo", "Now", "Poppins", sans-serif;
 }
 
+/* The design is proportioned for a 430px phone. Rather than repeat every size
+   at a second breakpoint, the root font size tracks the viewport below that
+   width, so every rem-based size — Tailwind's spacing scale included — scales
+   together and the proportions hold on a smaller handset. It reaches 16px at
+   430px and stays there, leaving tablet and desktop exactly as they were; the
+   13px floor keeps body copy legible on a 320px SE. */
+html {
+  font-size: clamp(13px, 3.73vw, 16px);
+}
+
+/* iOS Safari zooms the page whenever a focused field's text is under 16px, so
+   form controls sit out the fluid scale below Pro Max width. The !important is
+   deliberate: it has to beat the type-size utility on the field itself. */
+@media (max-width: 429.98px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: max(1rem, 16px) !important;
+  }
+}
+
 body {
   font-family: "Poppins", sans-serif;
   font-weight: 400;

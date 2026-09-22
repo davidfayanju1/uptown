@@ -47,7 +47,7 @@ const AnimatedCheckmarkToast = ({
             {/* Animated Checkmark */}
             <div className="flex-shrink-0">
               <AnimatedCheckmark
-                size={40}
+                size="2.5rem"
                 color="#10B981"
                 strokeWidth={3}
                 onAnimationComplete={handleCheckmarkComplete}

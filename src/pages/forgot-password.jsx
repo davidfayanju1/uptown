@@ -226,7 +226,7 @@ const ForgotPassword = () => {
             >
               <form className="space-y-6" onSubmit={handleSendCode}>
                 <div>
-                  <label htmlFor="email" className="block text-[11px] font-[300] text-gray-700">
+                  <label htmlFor="email" className="block text-[0.6875rem] font-[300] text-gray-700">
                     Email address
                   </label>
                   <div className="mt-1">
@@ -244,7 +244,7 @@ const ForgotPassword = () => {
                       className={fieldClass(!!emailError)}
                     />
                     {emailError && (
-                      <p className="mt-1 text-[11px] text-red-600">{emailError}</p>
+                      <p className="mt-1 text-[0.6875rem] text-red-600">{emailError}</p>
                     )}
                   </div>
                 </div>
@@ -288,7 +288,7 @@ const ForgotPassword = () => {
             >
               <form className="space-y-6" onSubmit={handleVerifyOtp}>
                 <div>
-                  <label className="block text-[11px] font-[300] text-gray-700 mb-3">
+                  <label className="block text-[0.6875rem] font-[300] text-gray-700 mb-3">
                     Verification code
                   </label>
                   <div className="flex justify-center gap-2">
@@ -311,12 +311,12 @@ const ForgotPassword = () => {
                     ))}
                   </div>
                   {otpError && (
-                    <p className="mt-2 text-[11px] text-red-600 text-center">{otpError}</p>
+                    <p className="mt-2 text-[0.6875rem] text-red-600 text-center">{otpError}</p>
                   )}
                   <p className="mt-4 text-center text-sm text-gray-600">
                     Didn't receive it?{" "}
                     {resendCooldown > 0 ? (
-                      <span className="text-gray-400 text-[11px]">
+                      <span className="text-gray-400 text-[0.6875rem]">
                         Resend in {resendCooldown}s
                       </span>
                     ) : (
@@ -324,7 +324,7 @@ const ForgotPassword = () => {
                         type="button"
                         onClick={handleResend}
                         disabled={sendCodeMutation.isPending}
-                        className="text-black text-[11px] underline hover:no-underline transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="text-black text-[0.6875rem] underline hover:no-underline transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {sendCodeMutation.isPending ? "Sending..." : "Resend code"}
                       </button>
@@ -370,7 +370,7 @@ const ForgotPassword = () => {
                 <div>
                   <label
                     htmlFor="new-password"
-                    className="block text-[11px] font-[300] text-gray-700"
+                    className="block text-[0.6875rem] font-[300] text-gray-700"
                   >
                     New password
                   </label>
@@ -393,7 +393,7 @@ const ForgotPassword = () => {
                       onClick={() => setShowPassword((v) => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
                     >
-                      <small className="underline text-[11px] text-gray-500">
+                      <small className="underline text-[0.6875rem] text-gray-500">
                         {showPassword ? "Hide" : "Show"}
                       </small>
                     </button>
@@ -403,7 +403,7 @@ const ForgotPassword = () => {
                 <div>
                   <label
                     htmlFor="confirm-password"
-                    className="block text-[11px] font-[300] text-gray-700"
+                    className="block text-[0.6875rem] font-[300] text-gray-700"
                   >
                     Confirm new password
                   </label>
@@ -426,13 +426,13 @@ const ForgotPassword = () => {
                       onClick={() => setShowConfirmPassword((v) => !v)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 focus:outline-none"
                     >
-                      <small className="underline text-[11px] text-gray-500">
+                      <small className="underline text-[0.6875rem] text-gray-500">
                         {showConfirmPassword ? "Hide" : "Show"}
                       </small>
                     </button>
                   </div>
                   {passwordError && (
-                    <p className="mt-1 text-[11px] text-red-600">{passwordError}</p>
+                    <p className="mt-1 text-[0.6875rem] text-red-600">{passwordError}</p>
                   )}
                 </div>
 
@@ -457,7 +457,7 @@ const ForgotPassword = () => {
                           setConfirmPassword("");
                           setTimeout(() => inputRefs.current[0]?.focus(), 100);
                         }}
-                        className="mt-2 text-[11px] underline hover:no-underline transition-all"
+                        className="mt-2 text-[0.6875rem] underline hover:no-underline transition-all"
                       >
                         ← Go back and enter a new code
                       </button>
@@ -467,7 +467,7 @@ const ForgotPassword = () => {
                         type="button"
                         onClick={() => resetMutation.mutate({ token: otp.join(""), password })}
                         disabled={resetMutation.isPending}
-                        className="mt-2 text-[11px] underline hover:no-underline transition-all disabled:opacity-50"
+                        className="mt-2 text-[0.6875rem] underline hover:no-underline transition-all disabled:opacity-50"
                       >
                         Try again
                       </button>

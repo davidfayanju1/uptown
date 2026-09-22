@@ -126,7 +126,7 @@ const Carousel = ({ slides }) => {
         className="flex w-full snap-x snap-mandatory overflow-x-auto no-scrollbar"
       >
         {slides.map((slide) => (
-          <div key={slide.src} className="w-[86%] flex-shrink-0 snap-start pr-[2px]">
+          <div key={slide.src} className="w-[86%] flex-shrink-0 snap-start pr-[0.125rem]">
             <img
               src={slide.src}
               alt={slide.alt}
@@ -147,11 +147,11 @@ const Carousel = ({ slides }) => {
             className={
               i === active
                 ? "grid h-4 w-4 place-items-center rounded-full border border-black"
-                : "h-[7px] w-[7px] rounded-full bg-black/25 hover:bg-black/45"
+                : "h-[0.4375rem] w-[0.4375rem] rounded-full bg-black/25 hover:bg-black/45"
             }
           >
             {i === active && (
-              <span className="block h-[7px] w-[7px] rounded-full bg-black" />
+              <span className="block h-[0.4375rem] w-[0.4375rem] rounded-full bg-black" />
             )}
           </button>
         ))}
@@ -238,7 +238,7 @@ const About = () => {
             narrowSrc="/images/about/worth-keeping-portrait.jpg"
             alt="A man in tailoring stepping out of a doorway"
           >
-            <p className="w-full text-center font-now text-[12.2px] leading-[1.95] text-[#222]">
+            <p className="w-full text-center font-now text-[0.7625rem] leading-[1.95] text-[#222]">
               We believe a product’s true life begins the moment it leaves
               the box.
               <br />

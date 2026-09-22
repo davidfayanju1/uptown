@@ -137,7 +137,7 @@ const Registry = () => {
           className="absolute top-6 left-6 z-20 text-white bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all"
           aria-label="Go back"
         >
-          <FiArrowLeft size={20} />
+          <FiArrowLeft size="1.25rem" />
         </motion.button>
 
         {/* Video Controls */}
@@ -147,14 +147,14 @@ const Registry = () => {
             className="text-white bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all"
             aria-label={isPlaying ? "Pause video" : "Play video"}
           >
-            {isPlaying ? <FiPause size={20} /> : <FiPlay size={20} />}
+            {isPlaying ? <FiPause size="1.25rem" /> : <FiPlay size="1.25rem" />}
           </button>
           <button
             onClick={toggleMute}
             className="text-white bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all"
             aria-label={isMuted ? "Unmute video" : "Mute video"}
           >
-            {isMuted ? <FiVolumeX size={20} /> : <FiVolume2 size={20} />}
+            {isMuted ? <FiVolumeX size="1.25rem" /> : <FiVolume2 size="1.25rem" />}
           </button>
         </div>
 
@@ -220,7 +220,7 @@ const Registry = () => {
                         className="p-1 text-gray-500 hover:text-gray-700 mr-1"
                         aria-label="Clear serial number"
                       >
-                        <FiX size={18} />
+                        <FiX size="1.125rem" />
                       </motion.button>
                     )}
                     <motion.button
@@ -244,10 +244,10 @@ const Registry = () => {
                             ease: "linear",
                           }}
                         >
-                          <FiSearch size={18} />
+                          <FiSearch size="1.125rem" />
                         </motion.div>
                       ) : (
-                        <FiArrowRight size={18} />
+                        <FiArrowRight size="1.125rem" />
                       )}
                     </motion.button>
                   </div>

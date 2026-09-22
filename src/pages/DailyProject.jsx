@@ -130,7 +130,7 @@ const DailyProject = () => {
       <div className="min-h-screen bg-[#282727]">
         <div className="md:mt-[5rem] mt-[4rem] pt-10 pb-16">
           <h1 className="flex items-center gap-3 mb-8 px-4">
-            <span className="text-white text-[21px] font-now font-normal leading-none">
+            <span className="text-white text-[1.3125rem] font-now font-normal leading-none">
               Shop
             </span>
             <img
@@ -167,10 +167,10 @@ const DailyProject = () => {
                 className="group block w-full"
               >
                 <ProductImages product={product} />
-                <h3 className="mt-4 px-1 text-[15px] text-white font-now">
+                <h3 className="mt-4 px-1 text-[0.9375rem] text-white font-now">
                   {product.name}
                 </h3>
-                <p className="mt-2 px-1 text-[15px] text-white font-now">
+                <p className="mt-2 px-1 text-[0.9375rem] text-white font-now">
                   {product.price}
                 </p>
               </Link>

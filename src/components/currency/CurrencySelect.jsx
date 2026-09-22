@@ -55,7 +55,7 @@ const CurrencySelect = ({
         onClick={() => setOpen((current) => !current)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={`relative w-full border px-12 py-4 text-[12px] font-medium uppercase tracking-[0.08em] text-center transition-colors ${styles.trigger}`}
+        className={`relative w-full border px-12 py-4 text-[0.75rem] font-medium uppercase tracking-[0.08em] text-center transition-colors ${styles.trigger}`}
       >
         {selected.label}
         <motion.span
@@ -63,7 +63,7 @@ const CurrencySelect = ({
           transition={{ duration: 0.2 }}
           className="absolute right-5 top-1/2 -translate-y-1/2 flex"
         >
-          <IoCaretDown size={14} />
+          <IoCaretDown size="0.875rem" />
         </motion.span>
       </button>
 
@@ -88,7 +88,7 @@ const CurrencySelect = ({
                   <button
                     type="button"
                     onClick={() => choose(option.code)}
-                    className={`w-full px-5 py-4 text-[12px] uppercase tracking-[0.08em] text-center transition-colors hover:bg-[#F7F5F2] ${
+                    className={`w-full px-5 py-4 text-[0.75rem] uppercase tracking-[0.08em] text-center transition-colors hover:bg-[#F7F5F2] ${
                       isSelected ? "bg-[#F7F5F2] font-medium" : ""
                     }`}
                   >

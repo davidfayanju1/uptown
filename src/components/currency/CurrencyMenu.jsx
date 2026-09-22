@@ -49,7 +49,7 @@ const CurrencyMenu = ({ className = "" }) => {
           transition={{ duration: 0.2 }}
           className="flex"
         >
-          <IoCaretDown size={10} />
+          <IoCaretDown size="0.625rem" />
         </motion.span>
       </button>
 
@@ -70,12 +70,12 @@ const CurrencyMenu = ({ className = "" }) => {
                   <button
                     type="button"
                     onClick={() => choose(option.code)}
-                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-[11px] uppercase tracking-[0.08em] text-left transition-colors hover:bg-[#F7F5F2] ${
+                    className={`w-full flex items-center justify-between gap-3 px-4 py-3 text-[0.6875rem] uppercase tracking-[0.08em] text-left transition-colors hover:bg-[#F7F5F2] ${
                       isSelected ? "bg-[#F7F5F2] font-medium" : ""
                     }`}
                   >
                     {option.label}
-                    {isSelected && <IoCheckmark size={14} />}
+                    {isSelected && <IoCheckmark size="0.875rem" />}
                   </button>
                 </li>
               );
