@@ -11,27 +11,29 @@ const SizeSelector = ({
   if (sizes[0] === "" || sizes.length === 0) return null;
 
   return (
-    <div className="mt-10">
-      <h2 className="text-sm font-medium text-gray-900">Size</h2>
-      <div className="grid grid-cols-5 gap-3 mt-2">
+    <div className="mt-[1.5rem]">
+      <h2 className="font-now text-[0.9375rem] font-bold text-gray-900">Size</h2>
+      <div className="flex flex-wrap mt-[0.75rem]">
         {sizes.map((size) => {
           const isAvailable = isSizeAvailable(size);
           const isSelected = selectedSize === size;
           const combinationUnavailable =
             selectedColor && !isVariantAvailable(selectedColor, size);
+          const disabled = !isAvailable || combinationUnavailable;
+
           return (
             <button
               key={size}
-              className={`border py-3 px-4 text-sm font-normal transition-all ${
+              aria-pressed={isSelected}
+              className={`min-w-[4.25rem] py-[0.9375rem] px-[1.25rem] font-now text-[0.9375rem] transition-all ${
                 isSelected
-                  ? "border-black bg-transparent text-black"
-                  : !isAvailable || combinationUnavailable
-                    ? "border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50"
-                    : "border-gray-200 hover:border-gray-400"
+                  ? "border-2 border-black bg-white text-gray-900 relative z-10"
+                  : disabled
+                    ? "border border-transparent bg-[#f2f2f2] text-gray-300 cursor-not-allowed"
+                    : "border border-transparent bg-[#f2f2f2] text-gray-700 hover:bg-[#e8e8e8]"
               }`}
-              onClick={() =>
-                isAvailable && !combinationUnavailable && onSelect(size)
-              }
+              onClick={() => !disabled && onSelect(size)}
+              disabled={disabled}
             >
               {size}
             </button>
