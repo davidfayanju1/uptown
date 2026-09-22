@@ -1,18 +1,52 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import StickyAddToCart from "./StickyAddToCart";
+import ProductAccordion from "./ProductAccordion";
 
 // Shown until the products API returns a per-product fit note. Delete this and
 // the `??` fallback below once `modelFit` is populated server-side.
 const MODEL_FIT_PLACEHOLDER = "Shira is 172cm and 57Kg wearing Size M";
+
+const SUPPORT_EMAIL = "thenonamestudios@gmail.com";
+
+// The catalogue carries no fit or care fields, so these two read the same on
+// every piece until the API supplies them.
+const SIZE_AND_FIT_GUIDE = (
+  <>
+    <p>
+      Our pieces are cut to an oversized, relaxed fit. If you prefer a closer
+      cut, we recommend sizing down.
+    </p>
+    <p>
+      The model pictured wears the size noted above. Measurements are taken flat
+      and may vary slightly between pieces.
+    </p>
+    <p>
+      Unsure of your size? Message us before ordering and we will help you
+      choose.
+    </p>
+  </>
+);
+
+const CARE_GUIDE = (
+  <>
+    <p>
+      Machine wash cold on a gentle cycle with like colours. Do not bleach.
+    </p>
+    <p>
+      Tumble dry low or hang to dry. Wash printed and embroidered pieces inside
+      out to protect the finish.
+    </p>
+    <p>Warm iron on the reverse, avoiding any print or embroidery.</p>
+  </>
+);
 
 const ProductInfo = ({
   product,
   currentPrice,
   selectedColor,
   selectedSize,
-  selectedVariant,
   uniqueColors,
   uniqueSizes,
   isColorAvailable,
@@ -29,7 +63,6 @@ const ProductInfo = ({
   const modelFitNote =
     product.modelFit ?? product.fitNote ?? MODEL_FIT_PLACEHOLDER;
 
-  const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const addToCartRef = useRef(null);
 
@@ -37,7 +70,7 @@ const ProductInfo = ({
     const handleScroll = () => {
       if (addToCartRef.current) {
         const rect = addToCartRef.current.getBoundingClientRect();
-        setIsSticky(rect.bottom > window.innerHeight);
+        setIsSticky(rect.bottom < 0);
       }
     };
     window.addEventListener("scroll", handleScroll);
@@ -49,60 +82,44 @@ const ProductInfo = ({
     };
   }, []);
 
+  const sections = [
+    { id: "fit", title: "Size & Fit Guide", content: SIZE_AND_FIT_GUIDE },
+    {
+      id: "details",
+      title: "Details",
+      content: product.details?.length ? (
+        <div dangerouslySetInnerHTML={{ __html: product.details }} />
+      ) : null,
+    },
+    { id: "description", title: "Description", content: product.description },
+    { id: "care", title: "Care", content: CARE_GUIDE },
+  ];
+
   return (
     <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-now text-[17px] md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
+        <h1 className="font-now text-[1.0625rem] md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
           {product.name}
         </h1>
-        <p className="font-now text-[17px] md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
+        <p className="font-now text-[1.0625rem] md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
           {currentPrice}
         </p>
       </div>
 
       {modelFitNote && (
-        <p className="font-now text-[15px] text-[#8f7355] mt-1">
+        <p className="font-now text-[0.9375rem] text-[#8f7355] mt-[0.625rem]">
           {modelFitNote}
         </p>
       )}
 
-      {selectedVariant && (
-        <p className="text-sm font-medium uppercase tracking-wide text-[#B2A68B] mt-1">
-          SKU: {selectedVariant.sku}
-        </p>
-      )}
-
-      <div className="md:mt-6 mt-3">
-        <h2 className="text-sm font-[500] text-gray-900">Description</h2>
-        <p className="text-[0.8125rem] md:w-[90%] text-justify text-gray-500">
-          {product.description}
-        </p>
-      </div>
-
-      <ColorSelector
-        colors={uniqueColors}
-        selectedColor={selectedColor}
-        isColorAvailable={isColorAvailable}
-        onSelect={onColorSelect}
-      />
-
-      <SizeSelector
-        sizes={uniqueSizes}
-        selectedSize={selectedSize}
-        selectedColor={selectedColor}
-        isSizeAvailable={isSizeAvailable}
-        isVariantAvailable={isVariantAvailable}
-        onSelect={onSizeSelect}
-      />
-
-      <div ref={addToCartRef}>
+      <div ref={addToCartRef} className="mt-[1.5rem]">
         <button
           onClick={onAddToCart}
           disabled={isAddingToCart || !hasAnyAvailableVariant}
-          className={`mt-10 md:w-[90%] w-full py-4 px-8 flex items-center justify-center font-now text-[15px] font-bold uppercase tracking-wider border transition-all ${
+          className={`w-full py-[1.25rem] px-8 flex items-center justify-center font-now text-[0.9375rem] font-bold uppercase tracking-[0.06em] transition-all ${
             !isAddingToCart && hasAnyAvailableVariant
-              ? "border-gray-800 text-gray-900 hover:bg-black hover:text-white"
-              : "border-gray-300 text-gray-400 cursor-not-allowed"
+              ? "bg-black text-white hover:bg-gray-800"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
           {isAddingToCart ? (
@@ -137,29 +154,42 @@ const ProductInfo = ({
         </button>
       </div>
 
+      <p className="mt-[1.25rem] text-center font-now text-[0.9375rem] text-gray-500">
+        Have a question about this piece?{" "}
+        <a
+          href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+            `Question about ${product.name}`,
+          )}`}
+          className="underline underline-offset-2 hover:text-gray-900 transition-colors"
+        >
+          Message us
+        </a>
+        .
+      </p>
+
+      <ColorSelector
+        colors={uniqueColors}
+        selectedColor={selectedColor}
+        isColorAvailable={isColorAvailable}
+        onSelect={onColorSelect}
+      />
+
+      <SizeSelector
+        sizes={uniqueSizes}
+        selectedSize={selectedSize}
+        selectedColor={selectedColor}
+        isSizeAvailable={isSizeAvailable}
+        isVariantAvailable={isVariantAvailable}
+        onSelect={onSizeSelect}
+      />
+
+      <ProductAccordion sections={sections} />
+
       <StickyAddToCart
         visible={isSticky && hasAnyAvailableVariant}
         isAddingToCart={isAddingToCart}
         onAddToCart={onAddToCart}
       />
-
-      {product.details && product.details.length > 0 && (
-        <div className="mt-10">
-          <h2 className="text-sm font-medium text-gray-900">Details</h2>
-          <div
-            className={`md:mt-4 mt-1 text-[0.8125rem] text-gray-500 leading-relaxed text-justify [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 overflow-hidden transition-all duration-300 ${
-              detailsExpanded ? "max-h-[1000px]" : "max-h-[110px]"
-            }`}
-            dangerouslySetInnerHTML={{ __html: product.details }}
-          />
-          <button
-            onClick={() => setDetailsExpanded((prev) => !prev)}
-            className="mt-2 text-[0.8125rem] text-gray-900 underline hover:no-underline transition-all"
-          >
-            {detailsExpanded ? "See Less" : "See More"}
-          </button>
-        </div>
-      )}
     </div>
   );
 };

@@ -17,6 +17,19 @@ import VariantSelectionPopup from "../components/product-details/VariantSelectio
 import SimilarProducts from "../components/product-details/SimilarProducts";
 import ProductPolicies from "../components/product-details/ProductPolicies";
 
+// Sizes come back in no particular order, and sorting them as words puts L
+// before M before S. Anything unrecognised keeps alphabetical order at the end.
+const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+
+const compareSizes = (a, b) => {
+  const ai = SIZE_ORDER.indexOf(a.trim().toUpperCase());
+  const bi = SIZE_ORDER.indexOf(b.trim().toUpperCase());
+  if (ai !== -1 && bi !== -1) return ai - bi;
+  if (ai !== -1) return -1;
+  if (bi !== -1) return 1;
+  return a.localeCompare(b, undefined, { numeric: true });
+};
+
 const ProductDetails = () => {
   const { id } = useParams();
   const [selectedColor, setSelectedColor] = useState(null);
@@ -95,11 +108,17 @@ const ProductDetails = () => {
   }, [allProductsResponse, product?.id]);
 
   const uniqueColors = variants.length
-    ? [...new Map(variants.map((v) => [v.color.trim(), v.color.trim()])).values()]
+    ? [
+        ...new Map(
+          variants.map((v) => [v.color.trim(), v.color.trim()]),
+        ).values(),
+      ].filter(Boolean)
     : [];
 
   const uniqueSizes = variants.length
-    ? [...new Map(variants.map((v) => [v.size, v.size])).values()].sort()
+    ? [...new Map(variants.map((v) => [v.size, v.size])).values()]
+        .filter(Boolean)
+        .sort(compareSizes)
     : [];
 
   const isColorAvailable = (color) =>
