@@ -34,7 +34,7 @@ const POLICIES = [
         <img
           src="/images/interswitch-powered.png"
           alt="Powered by Interswitch"
-          className="mt-8 mx-auto h-auto w-[220px] max-w-full object-contain"
+          className="mt-8 mx-auto h-auto w-[13.75rem] max-w-full object-contain"
         />
       </>
     ),
@@ -149,15 +149,15 @@ const ProductPolicies = () => {
               className="group w-full flex items-center gap-4 pt-6 pb-3 text-left"
             >
               <span className="flex-1">
-                <span className="block text-[14px] font-bold tracking-tight text-gray-900">
+                <span className="block text-[0.875rem] font-bold tracking-tight text-gray-900">
                   {policy.title}
                 </span>
-                <span className="mt-1 block font-now font-normal text-[12px] leading-relaxed text-gray-500">
+                <span className="mt-1 block font-now font-normal text-[0.75rem] leading-relaxed text-gray-500">
                   {policy.preview}
                 </span>
               </span>
               <IoChevronForward
-                size={20}
+                size="1.25rem"
                 className="flex-shrink-0 text-gray-500 transition-transform group-hover:translate-x-0.5"
               />
             </button>
@@ -184,13 +184,13 @@ const ProductPolicies = () => {
                 aria-label="Close"
                 className="text-gray-900 hover:opacity-60 transition-opacity"
               >
-                <IoClose size={28} />
+                <IoClose size="1.75rem" />
               </button>
               <h2 className="flex-1 pr-10 text-center text-base font-bold tracking-tight text-gray-900">
                 {active.panelTitle}
               </h2>
             </div>
-            <div className="px-4 sm:px-6 lg:px-8 pb-10 max-w-3xl mx-auto text-[14px] leading-relaxed text-gray-700 [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-2 [&_li]:mb-1">
+            <div className="px-4 sm:px-6 lg:px-8 pb-10 max-w-3xl mx-auto text-[0.875rem] leading-relaxed text-gray-700 [&>p]:mb-2 [&>ul]:list-disc [&>ul]:pl-6 [&>ul]:mb-2 [&_li]:mb-1">
               {active.content}
             </div>
           </div>

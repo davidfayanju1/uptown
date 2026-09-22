@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
+  AnimatePresence,
   motion,
   useMotionValue,
   useTransform,
@@ -14,7 +15,12 @@ const ProductImageGallery = ({
   onSlideChange,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
+
+  // Set on drag start, cleared on pointer down, so a swipe never registers as
+  // a tap that opens the viewer.
+  const draggedRef = useRef(false);
 
   const sliderRef = useRef(null);
   const thumbnailContainerRef = useRef(null);
@@ -58,6 +64,34 @@ const ProductImageGallery = ({
     const controls = animate(x, -(currentSlideIndex * containerWidth), SPRING);
     return controls.stop;
   }, [currentSlideIndex, containerWidth]);
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKey = (e) => {
+      if (e.key === "Escape") setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", handleKey);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKey);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFullscreen]);
+
+  const openFullscreenAt = (index) => {
+    if (index !== currentSlideIndex) onSlideChange(index);
+    setIsFullscreen(true);
+  };
+
+  const stepFullscreen = (delta) => {
+    if (images.length <= 1) return;
+    const next = Math.max(
+      0,
+      Math.min(currentSlideIndex + delta, images.length - 1),
+    );
+    if (next !== currentSlideIndex) onSlideChange(next);
+  };
 
   const snapTo = (index) => {
     const clamped = Math.max(0, Math.min(index, images.length - 1));
@@ -103,14 +137,23 @@ const ProductImageGallery = ({
           }}
           dragElastic={0.08}
           dragMomentum={false}
-          onDragStart={() => setIsDragging(true)}
+          onPointerDown={() => {
+            draggedRef.current = false;
+          }}
+          onDragStart={() => {
+            setIsDragging(true);
+            draggedRef.current = true;
+          }}
           onDragEnd={handleDragEnd}
         >
           {images.map((img, index) => (
             <div
               key={`${img}-${index}`}
-              className="h-full flex-shrink-0"
+              className="h-full flex-shrink-0 cursor-zoom-in"
               style={{ width: `${100 / images.length}%` }}
+              onClick={() => {
+                if (!draggedRef.current) openFullscreenAt(index);
+              }}
             >
               <img
                 src={img}
@@ -127,7 +170,7 @@ const ProductImageGallery = ({
 
         {/* Progress bar — follows x with zero re-renders */}
         {images.length > 1 && (
-          <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/25 z-20">
+          <div className="absolute bottom-0 left-0 right-0 h-[0.1875rem] bg-white/25 z-20">
             <motion.div className="h-full bg-black" style={{ width: progressPercent }} />
           </div>
         )}
@@ -145,7 +188,7 @@ const ProductImageGallery = ({
                   key={`${img}-${index}`}
                   type="button"
                   onClick={() => snapTo(index)}
-                  className={`relative h-[72px] w-[72px] flex-shrink-0 snap-start overflow-hidden rounded-2xl transition-all duration-200 ${
+                  className={`relative h-[4.5rem] w-[4.5rem] flex-shrink-0 snap-start overflow-hidden rounded-2xl transition-all duration-200 ${
                     currentSlideIndex === index ? "" : "opacity-90"
                   }`}
                 >
@@ -168,7 +211,8 @@ const ProductImageGallery = ({
         {images.map((img, index) => (
           <div
             key={`${img}-${index}`}
-            className="w-full h-screen overflow-hidden bg-gray-100"
+            className="w-full h-screen overflow-hidden bg-gray-100 cursor-zoom-in"
+            onClick={() => openFullscreenAt(index)}
           >
             <img
               src={img}
@@ -179,6 +223,76 @@ const ProductImageGallery = ({
           </div>
         ))}
       </div>
+
+      {/* Fullscreen viewer */}
+      <AnimatePresence>
+        {isFullscreen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex flex-col bg-white"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(false)}
+              aria-label="Close image viewer"
+              className="absolute right-3 top-3 z-10 p-3 text-black"
+            >
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+
+            <div className="flex flex-1 items-center justify-center overflow-hidden">
+              <motion.img
+                key={`${images[currentSlideIndex]}-${currentSlideIndex}`}
+                src={images[currentSlideIndex]}
+                alt={`${productName} view ${currentSlideIndex + 1}`}
+                className="max-h-full max-w-full select-none object-contain"
+                draggable={false}
+                drag={images.length > 1 ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.18}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -80 || info.velocity.x < -400) {
+                    stepFullscreen(1);
+                  } else if (info.offset.x > 80 || info.velocity.x > 400) {
+                    stepFullscreen(-1);
+                  }
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.15 }}
+              />
+            </div>
+
+            {images.length > 1 && (
+              <div className="flex justify-center pb-6">
+                <div className="relative h-[0.125rem] w-56 bg-black/15">
+                  <motion.div
+                    className="absolute top-0 h-full bg-black"
+                    style={{ width: `${100 / images.length}%` }}
+                    animate={{
+                      left: `${(currentSlideIndex * 100) / images.length}%`,
+                    }}
+                    transition={SPRING}
+                  />
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -166,7 +166,7 @@ const Signup = () => {
         <h2 className="md:mt-6 text-center text-3xl font-normal text-gray-900">
           Create Your Account
         </h2>
-        <p className="mt-2 text-center text-[12px] text-gray-600">
+        <p className="mt-2 text-center text-[0.75rem] text-gray-600">
           Join us for exclusive products, offers and events
         </p>
       </div>
@@ -178,7 +178,7 @@ const Signup = () => {
               <div>
                 <label
                   htmlFor="firstName"
-                  className="block text-[11px] font-[300] text-gray-700"
+                  className="block text-[0.6875rem] font-[300] text-gray-700"
                 >
                   First name
                 </label>
@@ -197,7 +197,7 @@ const Signup = () => {
                     } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                   />
                   {errors.firstName && (
-                    <p className="text-[11px] text-red-600">
+                    <p className="text-[0.6875rem] text-red-600">
                       {errors.firstName}
                     </p>
                   )}
@@ -207,7 +207,7 @@ const Signup = () => {
               <div>
                 <label
                   htmlFor="lastName"
-                  className="block text-[11px] font-[300] text-gray-700"
+                  className="block text-[0.6875rem] font-[300] text-gray-700"
                 >
                   Last name
                 </label>
@@ -226,7 +226,7 @@ const Signup = () => {
                     } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                   />
                   {errors.lastName && (
-                    <p className="text-[11px] text-red-600">
+                    <p className="text-[0.6875rem] text-red-600">
                       {errors.lastName}
                     </p>
                   )}
@@ -237,7 +237,7 @@ const Signup = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-[11px] font-[300] text-gray-700"
+                className="block text-[0.6875rem] font-[300] text-gray-700"
               >
                 Email address
               </label>
@@ -256,7 +256,7 @@ const Signup = () => {
                   } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 {errors.email && (
-                  <p className="text-[11px] text-red-600">{errors.email}</p>
+                  <p className="text-[0.6875rem] text-red-600">{errors.email}</p>
                 )}
               </div>
             </div>
@@ -264,7 +264,7 @@ const Signup = () => {
             <div>
               <label
                 htmlFor="password"
-                className="block text-[11px] font-[300] text-gray-700"
+                className="block text-[0.6875rem] font-[300] text-gray-700"
               >
                 Password
               </label>
@@ -289,17 +289,17 @@ const Signup = () => {
                   disabled={signupMutation.isPending}
                 >
                   {showPassword ? (
-                    <small className="underline text-[11px] text-gray-500">
+                    <small className="underline text-[0.6875rem] text-gray-500">
                       Hide
                     </small>
                   ) : (
-                    <small className="underline text-[11px] text-gray-500">
+                    <small className="underline text-[0.6875rem] text-gray-500">
                       Show
                     </small>
                   )}
                 </button>
                 {errors.password && (
-                  <p className="text-[11px] text-red-600">{errors.password}</p>
+                  <p className="text-[0.6875rem] text-red-600">{errors.password}</p>
                 )}
               </div>
             </div>
@@ -307,7 +307,7 @@ const Signup = () => {
             <div>
               <label
                 htmlFor="confirmPassword"
-                className="block text-[11px] font-[300] text-gray-700"
+                className="block text-[0.6875rem] font-[300] text-gray-700"
               >
                 Confirm Password
               </label>
@@ -334,11 +334,11 @@ const Signup = () => {
                   disabled={signupMutation.isPending}
                 >
                   {showConfirmPassword ? (
-                    <small className="underline text-[11px] text-gray-500">
+                    <small className="underline text-[0.6875rem] text-gray-500">
                       Hide
                     </small>
                   ) : (
-                    <small className="underline text-[11px] text-gray-500">
+                    <small className="underline text-[0.6875rem] text-gray-500">
                       Show
                     </small>
                   )}
@@ -363,7 +363,7 @@ const Signup = () => {
               />
               <label
                 htmlFor="newsletter"
-                className="ml-1 block text-[11px] text-gray-400"
+                className="ml-1 block text-[0.6875rem] text-gray-400"
               >
                 Sign up for exclusive offers, new product launches and more
               </label>
@@ -412,7 +412,7 @@ const Signup = () => {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center">
-                <span className="px-2 text-[12px] bg-white text-gray-500">
+                <span className="px-2 text-[0.75rem] bg-white text-gray-500">
                   Already have an account?
                 </span>
               </div>

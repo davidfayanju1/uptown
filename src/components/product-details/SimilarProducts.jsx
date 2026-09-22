@@ -44,7 +44,7 @@ const SimilarProducts = ({ items }) => {
       </h2>
 
       {/* Scroll progress indicator */}
-      <div className="relative mt-3 h-[2px] w-full bg-gray-200">
+      <div className="relative mt-3 h-[0.125rem] w-full bg-gray-200">
         <div
           className="absolute top-0 h-full bg-black transition-all duration-150"
           style={{ width: `${thumb.width}%`, left: `${thumb.left}%` }}
@@ -97,7 +97,7 @@ const SimilarProducts = ({ items }) => {
           aria-label="Previous"
           className="hover:text-black transition-colors"
         >
-          <IoChevronBack size={18} />
+          <IoChevronBack size="1.125rem" />
         </button>
         <button
           type="button"
@@ -105,7 +105,7 @@ const SimilarProducts = ({ items }) => {
           aria-label="Next"
           className="hover:text-black transition-colors"
         >
-          <IoChevronForward size={18} />
+          <IoChevronForward size="1.125rem" />
         </button>
       </div>
     </div>

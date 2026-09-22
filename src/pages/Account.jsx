@@ -30,7 +30,7 @@ const fetchAddresses = async () => {
 };
 
 const Empty = ({ children }) => (
-  <p className="text-[12.5px] text-[#8C8C86] leading-relaxed">{children}</p>
+  <p className="text-[0.78125rem] text-[#8C8C86] leading-relaxed">{children}</p>
 );
 
 const PanelSpinner = () => (
@@ -60,14 +60,14 @@ const OrderHistory = () => {
         return (
           <div key={order.id} className="flex justify-between gap-4 py-3">
             <div>
-              <span className="block font-mono text-[12.5px] text-[#1C1C1A]">
+              <span className="block font-mono text-[0.78125rem] text-[#1C1C1A]">
                 {order.id.slice(-8).toUpperCase()}
               </span>
-              <span className="block text-[11.5px] text-[#8C8C86] mt-0.5">
+              <span className="block text-[0.71875rem] text-[#8C8C86] mt-0.5">
                 {formatDate(order.created_at)} · {formatStatus(order.status)}
               </span>
             </div>
-            <span className="text-[12.5px] text-[#1C1C1A] whitespace-nowrap">
+            <span className="text-[0.78125rem] text-[#1C1C1A] whitespace-nowrap">
               {formatMoney(snap.grand_total_cents, snap.currency || order.currency)}
             </span>
           </div>
@@ -76,7 +76,7 @@ const OrderHistory = () => {
 
       <Link
         to="/orders"
-        className="block pt-3 text-[11.5px] uppercase tracking-[0.12em] text-[#1C1C1A] underline underline-offset-4"
+        className="block pt-3 text-[0.71875rem] uppercase tracking-[0.12em] text-[#1C1C1A] underline underline-offset-4"
       >
         View all orders
       </Link>
@@ -98,10 +98,10 @@ const formatBirthday = (value) => {
 
 const ProfileField = ({ label, value }) => (
   <div>
-    <span className="block text-[14px] uppercase tracking-[0.12em] text-[#1C1C1A]">
+    <span className="block text-[0.875rem] uppercase tracking-[0.12em] text-[#1C1C1A]">
       {label}
     </span>
-    <span className="block text-[14px] text-[#6B6B64] mt-1.5 break-words">
+    <span className="block text-[0.875rem] text-[#6B6B64] mt-1.5 break-words">
       {value || "—"}
     </span>
   </div>
@@ -136,7 +136,7 @@ const ProfileEditModal = ({ user, onClose }) => {
 
   const field = (name, label, extra = {}) => (
     <div>
-      <label htmlFor={name} className="block text-[12px] uppercase tracking-[0.12em] text-[#6B6B64] mb-2">
+      <label htmlFor={name} className="block text-[0.75rem] uppercase tracking-[0.12em] text-[#6B6B64] mb-2">
         {label}
       </label>
       <input
@@ -144,7 +144,7 @@ const ProfileEditModal = ({ user, onClose }) => {
         name={name}
         value={form[name]}
         onChange={setField}
-        className="w-full border border-[#E5E2DC] px-4 py-3 text-[14px] outline-none focus:border-[#1C1C1A] transition-colors"
+        className="w-full border border-[#E5E2DC] px-4 py-3 text-[0.875rem] outline-none focus:border-[#1C1C1A] transition-colors"
         {...extra}
       />
     </div>
@@ -159,11 +159,11 @@ const ProfileEditModal = ({ user, onClose }) => {
         className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white p-6"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-[14px] uppercase tracking-[0.14em] text-[#1C1C1A]">
+          <h3 className="text-[0.875rem] uppercase tracking-[0.14em] text-[#1C1C1A]">
             Profile information
           </h3>
           <button type="button" onClick={onClose} aria-label="Close" className="text-[#8C8C86] hover:text-[#1C1C1A] transition-colors">
-            <FiX size={22} />
+            <FiX size="1.375rem" />
           </button>
         </div>
 
@@ -180,14 +180,14 @@ const ProfileEditModal = ({ user, onClose }) => {
             type="button"
             onClick={() => save.mutate()}
             disabled={save.isPending}
-            className="flex-1 border border-[#1C1C1A] py-3.5 text-[12px] uppercase tracking-[0.14em] text-[#1C1C1A] hover:bg-[#F7F5F2] transition-colors disabled:opacity-60"
+            className="flex-1 border border-[#1C1C1A] py-3.5 text-[0.75rem] uppercase tracking-[0.14em] text-[#1C1C1A] hover:bg-[#F7F5F2] transition-colors disabled:opacity-60"
           >
             {save.isPending ? "Saving…" : "Save"}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-[#1C1C1A] py-3.5 text-[12px] uppercase tracking-[0.14em] text-white hover:bg-[#333330] transition-colors"
+            className="flex-1 bg-[#1C1C1A] py-3.5 text-[0.75rem] uppercase tracking-[0.14em] text-white hover:bg-[#333330] transition-colors"
           >
             Cancel
           </button>
@@ -207,7 +207,7 @@ const ProfileInformation = ({ user }) => {
         aria-label="Edit profile information"
         className="absolute right-0 top-2 h-11 w-11 rounded-full bg-[#F2F0EC] hover:bg-[#E9E6E1] transition-colors flex items-center justify-center text-[#4A4A45]"
       >
-        <FiEdit2 size={18} />
+        <FiEdit2 size="1.125rem" />
       </button>
 
       <div className="space-y-6 pr-14">
@@ -249,13 +249,13 @@ const formatAddressLine = (address) =>
     .join(", ");
 
 const DefaultMarker = ({ filled, children }) => (
-  <span className="flex items-center gap-3 text-[14px] text-[#1C1C1A]">
+  <span className="flex items-center gap-3 text-[0.875rem] text-[#1C1C1A]">
     <span
-      className={`h-[18px] w-[18px] shrink-0 rounded-full border-[1.5px] flex items-center justify-center ${
+      className={`h-[1.125rem] w-[1.125rem] shrink-0 rounded-full border-[1.5px] flex items-center justify-center ${
         filled ? "border-[#1C1C1A]" : "border-[#C7C4BD]"
       }`}
     >
-      {filled && <span className="h-[6px] w-[6px] rounded-full bg-[#1C1C1A]" />}
+      {filled && <span className="h-[0.375rem] w-[0.375rem] rounded-full bg-[#1C1C1A]" />}
     </span>
     {children}
   </span>
@@ -327,7 +327,7 @@ const AddressFormModal = ({ address, isFirst, onClose }) => {
 
   const field = (name, label, extra = {}) => (
     <div>
-      <label htmlFor={name} className="block text-[12px] uppercase tracking-[0.12em] text-[#6B6B64] mb-2">
+      <label htmlFor={name} className="block text-[0.75rem] uppercase tracking-[0.12em] text-[#6B6B64] mb-2">
         {label}
       </label>
       <input
@@ -335,7 +335,7 @@ const AddressFormModal = ({ address, isFirst, onClose }) => {
         name={name}
         value={form[name]}
         onChange={setField}
-        className="w-full border border-[#E5E2DC] px-4 py-3 text-[14px] outline-none focus:border-[#1C1C1A] transition-colors"
+        className="w-full border border-[#E5E2DC] px-4 py-3 text-[0.875rem] outline-none focus:border-[#1C1C1A] transition-colors"
         {...extra}
       />
     </div>
@@ -350,11 +350,11 @@ const AddressFormModal = ({ address, isFirst, onClose }) => {
         className="relative w-full sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white p-6"
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-[14px] uppercase tracking-[0.14em] text-[#1C1C1A]">
+          <h3 className="text-[0.875rem] uppercase tracking-[0.14em] text-[#1C1C1A]">
             {address ? "Edit address" : "Add an address"}
           </h3>
           <button type="button" onClick={onClose} aria-label="Close" className="text-[#8C8C86] hover:text-[#1C1C1A] transition-colors">
-            <FiX size={22} />
+            <FiX size="1.375rem" />
           </button>
         </div>
 
@@ -365,7 +365,7 @@ const AddressFormModal = ({ address, isFirst, onClose }) => {
           {field("city", "City *")}
 
           <div>
-            <label htmlFor="state" className="block text-[12px] uppercase tracking-[0.12em] text-[#6B6B64] mb-2">
+            <label htmlFor="state" className="block text-[0.75rem] uppercase tracking-[0.12em] text-[#6B6B64] mb-2">
               State *
             </label>
             <div className="relative">
@@ -375,7 +375,7 @@ const AddressFormModal = ({ address, isFirst, onClose }) => {
                 name="state"
                 value={form.state}
                 onChange={setField}
-                className="w-full border border-[#E5E2DC] px-4 py-3 text-[14px] outline-none appearance-none focus:border-[#1C1C1A] transition-colors"
+                className="w-full border border-[#E5E2DC] px-4 py-3 text-[0.875rem] outline-none appearance-none focus:border-[#1C1C1A] transition-colors"
               >
                 <option value="">Select State</option>
                 {shippingStates.map((state) => (
@@ -396,14 +396,14 @@ const AddressFormModal = ({ address, isFirst, onClose }) => {
             type="button"
             onClick={() => (isComplete ? save.mutate() : toast.error("Please fill in all required fields"))}
             disabled={save.isPending}
-            className="flex-1 border border-[#1C1C1A] py-3.5 text-[12px] uppercase tracking-[0.14em] text-[#1C1C1A] hover:bg-[#F7F5F2] transition-colors disabled:opacity-60"
+            className="flex-1 border border-[#1C1C1A] py-3.5 text-[0.75rem] uppercase tracking-[0.14em] text-[#1C1C1A] hover:bg-[#F7F5F2] transition-colors disabled:opacity-60"
           >
             {save.isPending ? "Saving…" : "Save"}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 bg-[#1C1C1A] py-3.5 text-[12px] uppercase tracking-[0.14em] text-white hover:bg-[#333330] transition-colors"
+            className="flex-1 bg-[#1C1C1A] py-3.5 text-[0.75rem] uppercase tracking-[0.14em] text-white hover:bg-[#333330] transition-colors"
           >
             Cancel
           </button>
@@ -431,7 +431,7 @@ const AddressBook = () => {
         {addresses?.length ? (
           addresses.map((address) => (
             <div key={address.id} className="border border-[#E5E2DC] px-6 py-7">
-              <p className="text-[14px] text-[#1C1C1A] leading-[1.9]">
+              <p className="text-[0.875rem] text-[#1C1C1A] leading-[1.9]">
                 {[address.title, address.first_name, address.last_name]
                   .filter(Boolean)
                   .join(" ")}
@@ -456,7 +456,7 @@ const AddressBook = () => {
 
               <button
                 onClick={() => setEditing(address)}
-                className="mt-5 text-[13px] text-[#1C1C1A] underline underline-offset-4"
+                className="mt-5 text-[0.8125rem] text-[#1C1C1A] underline underline-offset-4"
               >
                 Edit
               </button>
@@ -469,7 +469,7 @@ const AddressBook = () => {
 
       <button
         onClick={() => setEditing("new")}
-        className="w-full mt-6 border border-[#1C1C1A] py-4 text-[13px] uppercase tracking-[0.12em] text-[#1C1C1A] hover:bg-[#F7F5F2] transition-colors"
+        className="w-full mt-6 border border-[#1C1C1A] py-4 text-[0.8125rem] uppercase tracking-[0.12em] text-[#1C1C1A] hover:bg-[#F7F5F2] transition-colors"
       >
         Add an address
       </button>
@@ -498,7 +498,7 @@ const CurrencyPreference = () => {
 
   return (
     <div>
-      <p className="text-[12.5px] text-[#8C8C86] leading-relaxed">
+      <p className="text-[0.78125rem] text-[#8C8C86] leading-relaxed">
         Prices across the store are shown, and your orders charged, in the
         currency you choose.
       </p>
@@ -561,15 +561,15 @@ const Account = ({ initialSection = null }) => {
       <PrimaryLayout>
         <div className="min-h-screen pt-[7rem] px-5 bg-[#F7F5F2] font-now">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-[25.6px] uppercase tracking-[0.02em] text-[#1C1C1A]">
+            <h1 className="text-[1.6rem] uppercase tracking-[0.02em] text-[#1C1C1A]">
               My Account
             </h1>
-            <p className="text-[12.5px] text-[#8C8C86] mt-3">
+            <p className="text-[0.78125rem] text-[#8C8C86] mt-3">
               Sign in to see your orders, addresses and saved pieces.
             </p>
             <Link
               to="/signin"
-              className="inline-block mt-6 px-8 py-3 bg-[#1C1C1A] text-white text-[10.5px] uppercase tracking-[0.15em]"
+              className="inline-block mt-6 px-8 py-3 bg-[#1C1C1A] text-white text-[0.65625rem] uppercase tracking-[0.15em]"
             >
               Sign in
             </Link>
@@ -584,12 +584,12 @@ const Account = ({ initialSection = null }) => {
       <div className="min-h-screen pt-[6.5rem] pb-12 bg-[#F7F5F2] font-now">
         <div className="max-w-2xl mx-auto px-5">
           <div className="flex items-end justify-between gap-4">
-            <h1 className="text-[25.6px] uppercase tracking-[0.02em] text-[#1C1C1A] leading-none">
+            <h1 className="text-[1.6rem] uppercase tracking-[0.02em] text-[#1C1C1A] leading-none">
               My Account
             </h1>
             <button
               onClick={handleSignOut}
-              className="text-[12.9px] uppercase tracking-[0.06em] text-[#1C1C1A] underline underline-offset-[6px] hover:text-[#6B6B64] transition-colors"
+              className="text-[0.80625rem] uppercase tracking-[0.06em] text-[#1C1C1A] underline underline-offset-[6px] hover:text-[#6B6B64] transition-colors"
             >
               Sign-out
             </button>
@@ -606,7 +606,7 @@ const Account = ({ initialSection = null }) => {
                     aria-expanded={isOpen}
                     className="w-full flex items-center justify-between gap-4 px-5 py-6 text-left"
                   >
-                    <span className="text-[14px] uppercase tracking-[0.14em] text-[#1C1C1A]">
+                    <span className="text-[0.875rem] uppercase tracking-[0.14em] text-[#1C1C1A]">
                       {section.label}
                     </span>
                     <motion.span
@@ -614,7 +614,7 @@ const Account = ({ initialSection = null }) => {
                       transition={{ duration: 0.25 }}
                       className="text-[#1C1C1A] shrink-0"
                     >
-                      <IoChevronDown size={20} />
+                      <IoChevronDown size="1.25rem" />
                     </motion.span>
                   </button>
 
@@ -639,21 +639,21 @@ const Account = ({ initialSection = null }) => {
           </div>
 
           <div className="mt-10 pt-8 border-t border-[#E5E2DC]">
-            <h2 className="text-[13.8px] uppercase tracking-[0.16em] text-[#1C1C1A] font-medium">
+            <h2 className="text-[0.8625rem] uppercase tracking-[0.16em] text-[#1C1C1A] font-medium">
               Customer Service
             </h2>
-            <p className="text-[12.2px] text-[#4A4A45] mt-3">
+            <p className="text-[0.7625rem] text-[#4A4A45] mt-3">
               Monday to Saturday 10am - 9pm WAT :
             </p>
             <a
               href={`tel:${SUPPORT_PHONE}`}
-              className="block text-[12.2px] text-[#1C1C1A] mt-2"
+              className="block text-[0.7625rem] text-[#1C1C1A] mt-2"
             >
               +234 703 325 6031
             </a>
             <a
               href={`mailto:${SUPPORT_EMAIL}`}
-              className="inline-block text-[9.9px] text-[#1C1C1A] underline underline-offset-4 mt-5"
+              className="inline-block text-[0.61875rem] text-[#1C1C1A] underline underline-offset-4 mt-5"
             >
               Email us
             </a>

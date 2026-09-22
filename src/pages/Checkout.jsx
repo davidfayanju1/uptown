@@ -925,7 +925,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="firstName"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         First name *
                       </label>
@@ -942,7 +942,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="lastName"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         Last name *
                       </label>
@@ -959,7 +959,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="address"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         Address *
                       </label>
@@ -977,7 +977,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="city"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         City *
                       </label>
@@ -994,7 +994,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="state"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         State *
                       </label>
@@ -1020,7 +1020,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="zipCode"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         ZIP code
                       </label>
@@ -1037,7 +1037,7 @@ const Checkout = () => {
                     <div>
                       <label
                         htmlFor="phone"
-                        className="block text-[15px] font-semibold text-gray-900 mb-2"
+                        className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
                         Mobile number *
                       </label>
@@ -1089,7 +1089,7 @@ const Checkout = () => {
                       aria-label="Edit contact information"
                       className="text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
                     >
-                      <FiEdit2 size={18} />
+                      <FiEdit2 size="1.125rem" />
                     </button>
                   )}
                 </div>
@@ -1124,7 +1124,7 @@ const Checkout = () => {
                           onChange={(e) => setPrivacyAccepted(e.target.checked)}
                           className="mt-1 h-5 w-5 accent-gray-900 flex-shrink-0"
                         />
-                        <span className="text-[10.9px] text-gray-900 leading-snug">
+                        <span className="text-[0.68125rem] text-gray-900 leading-snug">
                           I have read and understood the Privacy Policy, and I
                           agree to receive marketing communications via email.
                         </span>
@@ -1139,12 +1139,12 @@ const Checkout = () => {
                       <button
                         type="button"
                         onClick={handleGuestCheckout}
-                        className="w-full bg-black text-white py-4 mt-5 text-[12.5px] hover:bg-gray-800 transition-colors cursor-pointer"
+                        className="w-full bg-black text-white py-4 mt-5 text-[0.78125rem] hover:bg-gray-800 transition-colors cursor-pointer"
                       >
                         Checkout as a Guest
                       </button>
 
-                      <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                      <p className="mt-4 text-[0.6875rem] text-gray-400 leading-relaxed">
                         Please be aware that if the email is associated with an
                         existing Uptown account, your new order will be attached
                         to it.
@@ -1156,19 +1156,19 @@ const Checkout = () => {
                         <span className="h-px flex-1 bg-gray-200" />
                       </div>
 
-                      <p className="text-[11.3px] text-gray-900">
+                      <p className="text-[0.70625rem] text-gray-900">
                         Sign in or create your Uptown account.
                       </p>
 
                       <button
                         type="button"
                         onClick={handleSignInRedirect}
-                        className="w-full bg-black text-white py-4 mt-5 text-[12.5px] hover:bg-gray-800 transition-colors cursor-pointer"
+                        className="w-full bg-black text-white py-4 mt-5 text-[0.78125rem] hover:bg-gray-800 transition-colors cursor-pointer"
                       >
                         Sign In/ Register
                       </button>
 
-                      <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
+                      <p className="mt-4 text-[0.6875rem] text-gray-400 leading-relaxed">
                         Sign in or create an account to save your details and
                         easily track your orders.
                       </p>
@@ -1204,7 +1204,7 @@ const Checkout = () => {
                       </>
                     ) : (
                       <>
-                        <span className="block text-[17px] text-gray-900 mb-4">
+                        <span className="block text-[1.0625rem] text-gray-900 mb-4">
                           Delivery Address
                         </span>
 
@@ -1214,7 +1214,7 @@ const Checkout = () => {
                               {[0, 1].map((i) => (
                                 <div
                                   key={i}
-                                  className="h-[132px] w-full animate-pulse bg-gray-100"
+                                  className="h-[8.25rem] w-full animate-pulse bg-gray-100"
                                 />
                               ))}
                             </div>
@@ -1234,30 +1234,30 @@ const Checkout = () => {
                               >
                                 <div className="flex gap-4">
                                   <span
-                                    className={`mt-1 flex h-[22px] w-[22px] flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                                    className={`mt-1 flex h-[1.375rem] w-[1.375rem] flex-shrink-0 items-center justify-center rounded-full border-2 ${
                                       isSelected
                                         ? "border-gray-900"
                                         : "border-gray-300"
                                     }`}
                                   >
                                     {isSelected && (
-                                      <span className="h-[10px] w-[10px] rounded-full bg-gray-900" />
+                                      <span className="h-[0.625rem] w-[0.625rem] rounded-full bg-gray-900" />
                                     )}
                                   </span>
 
                                   <div className="flex-1 min-w-0 pr-12">
-                                    <p className="text-[17px] text-gray-900">
+                                    <p className="text-[1.0625rem] text-gray-900">
                                       {addr.firstName} {addr.lastName}
                                     </p>
-                                    <p className="mt-3 text-[15px] text-gray-700">
+                                    <p className="mt-3 text-[0.9375rem] text-gray-700">
                                       {addr.address}
                                     </p>
-                                    <p className="mt-1 text-[15px] text-gray-700">
+                                    <p className="mt-1 text-[0.9375rem] text-gray-700">
                                       {[addr.city, addr.state, addr.zipCode]
                                         .filter(Boolean)
                                         .join(", ")}
                                     </p>
-                                    <p className="mt-1 text-[15px] text-gray-700">
+                                    <p className="mt-1 text-[0.9375rem] text-gray-700">
                                       {addr.phone}
                                     </p>
                                   </div>
@@ -1269,7 +1269,7 @@ const Checkout = () => {
                                     e.stopPropagation();
                                     handleEditAddress(addr);
                                   }}
-                                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[15px] text-gray-900 underline cursor-pointer"
+                                  className="absolute right-5 top-1/2 -translate-y-1/2 text-[0.9375rem] text-gray-900 underline cursor-pointer"
                                 >
                                   Edit
                                 </button>
@@ -1282,8 +1282,8 @@ const Checkout = () => {
                             onClick={handleAddAddress}
                             className="flex w-full items-center gap-3 border border-gray-200 p-5 text-left hover:border-gray-300 transition-colors cursor-pointer"
                           >
-                            <FiPlus size={20} className="text-gray-900" />
-                            <span className="text-[17px] text-gray-900">
+                            <FiPlus size="1.25rem" className="text-gray-900" />
+                            <span className="text-[1.0625rem] text-gray-900">
                               Add a New Address
                             </span>
                           </button>
@@ -1674,7 +1674,7 @@ const Checkout = () => {
                   className="text-gray-400 hover:text-gray-600 transition-colors"
                   disabled={isConfirmingPayment}
                 >
-                  <FiX size={24} />
+                  <FiX size="1.5rem" />
                 </button>
               </div>
 
@@ -1898,9 +1898,9 @@ const Checkout = () => {
                   className="text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50"
                   aria-label="Close payment options"
                 >
-                  <FiX size={22} />
+                  <FiX size="1.375rem" />
                 </button>
-                <span className="flex-1 text-center text-gray-900 text-[13px] pr-6">
+                <span className="flex-1 text-center text-gray-900 text-[0.8125rem] pr-6">
                   How would you like to Pay?
                 </span>
               </div>
@@ -1932,7 +1932,7 @@ const Checkout = () => {
                             <span className="h-2.5 w-2.5 rounded-full bg-gray-900" />
                           )}
                         </span>
-                        <span className="text-gray-900 text-[14.8px]">{gateway.label}</span>
+                        <span className="text-gray-900 text-[0.925rem]">{gateway.label}</span>
                       </span>
                       <img
                         src={gateway.logo}
@@ -1946,7 +1946,7 @@ const Checkout = () => {
                 <button
                   onClick={() => handleSelectGateway(selectedGateway)}
                   disabled={!selectedGateway || isConfirmingPayment}
-                  className="w-full h-14 bg-gray-900 hover:bg-gray-800 text-white text-[10.1px] uppercase tracking-[0.15em] transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full h-14 bg-gray-900 hover:bg-gray-800 text-white text-[0.63125rem] uppercase tracking-[0.15em] transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isConfirmingPayment ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
@@ -1988,7 +1988,7 @@ const Checkout = () => {
                 aria-label="Close"
                 className="text-gray-400 hover:text-gray-900 transition-colors cursor-pointer"
               >
-                <FiX size={22} />
+                <FiX size="1.375rem" />
               </button>
             </div>
 

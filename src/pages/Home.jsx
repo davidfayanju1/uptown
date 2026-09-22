@@ -22,9 +22,9 @@ const Home = () => {
         // Upright caps at normal width/tracking, unlike the slide 2 wordmark.
         // Uses the display stack so the bold is a real weight, not synthesized.
         titleClass:
-          "font-asangha font-bold text-[30.8px] leading-none mb-[0.1rem]",
+          "font-asangha font-bold text-[1.925rem] leading-none mb-[0.1rem]",
         text: "From the studio of the Maison",
-        textClass: "font-now text-[18.8px] leading-none mb-[0.4rem]",
+        textClass: "font-now text-[1.175rem] leading-none mb-[0.4rem]",
         buttonText: "Explore",
         buttonUrl: "/explore",
         buttonClass:
@@ -42,7 +42,7 @@ const Home = () => {
         // 1rem here reads as roughly double slide 1's gap, not half of it.
         titleClass: "leading-none mb-[1rem]",
         text: "For the Gifted & Disturbed",
-        textClass: "font-now text-[18.8px] leading-none mb-[0.4rem]",
+        textClass: "font-now text-[1.175rem] leading-none mb-[0.4rem]",
         buttonText: "Shop Now",
         buttonUrl: "/daily-project",
         buttonClass:

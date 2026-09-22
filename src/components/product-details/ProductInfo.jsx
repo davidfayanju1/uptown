@@ -3,6 +3,10 @@ import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import StickyAddToCart from "./StickyAddToCart";
 
+// Shown until the products API returns a per-product fit note. Delete this and
+// the `??` fallback below once `modelFit` is populated server-side.
+const MODEL_FIT_PLACEHOLDER = "Shira is 172cm and 57Kg wearing Size M";
+
 const ProductInfo = ({
   product,
   currentPrice,
@@ -22,6 +26,9 @@ const ProductInfo = ({
   onSizeSelect,
   onAddToCart,
 }) => {
+  const modelFitNote =
+    product.modelFit ?? product.fitNote ?? MODEL_FIT_PLACEHOLDER;
+
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const addToCartRef = useRef(null);
@@ -45,13 +52,20 @@ const ProductInfo = ({
   return (
     <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="font-['Montserrat'] text-[14.4px] sm:text-base md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
+        <h1 className="font-now text-[17px] md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
           {product.name}
         </h1>
-        <p className="text-[17.3px] sm:text-base md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
+        <p className="font-now text-[17px] md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
           {currentPrice}
         </p>
       </div>
+
+      {modelFitNote && (
+        <p className="font-now text-[15px] text-[#8f7355] mt-1">
+          {modelFitNote}
+        </p>
+      )}
+
       {selectedVariant && (
         <p className="text-sm font-medium uppercase tracking-wide text-[#B2A68B] mt-1">
           SKU: {selectedVariant.sku}
@@ -60,7 +74,7 @@ const ProductInfo = ({
 
       <div className="md:mt-6 mt-3">
         <h2 className="text-sm font-[500] text-gray-900">Description</h2>
-        <p className="text-[13px] md:w-[90%] text-justify text-gray-500">
+        <p className="text-[0.8125rem] md:w-[90%] text-justify text-gray-500">
           {product.description}
         </p>
       </div>
@@ -85,7 +99,7 @@ const ProductInfo = ({
         <button
           onClick={onAddToCart}
           disabled={isAddingToCart || !hasAnyAvailableVariant}
-          className={`mt-10 md:w-[90%] w-full py-4 px-8 flex items-center justify-center text-sm font-bold uppercase tracking-wider border transition-all ${
+          className={`mt-10 md:w-[90%] w-full py-4 px-8 flex items-center justify-center font-now text-[15px] font-bold uppercase tracking-wider border transition-all ${
             !isAddingToCart && hasAnyAvailableVariant
               ? "border-gray-800 text-gray-900 hover:bg-black hover:text-white"
               : "border-gray-300 text-gray-400 cursor-not-allowed"
@@ -133,14 +147,14 @@ const ProductInfo = ({
         <div className="mt-10">
           <h2 className="text-sm font-medium text-gray-900">Details</h2>
           <div
-            className={`md:mt-4 mt-1 text-[13px] text-gray-500 leading-relaxed text-justify [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 overflow-hidden transition-all duration-300 ${
+            className={`md:mt-4 mt-1 text-[0.8125rem] text-gray-500 leading-relaxed text-justify [&_ul]:list-disc [&_ul]:pl-4 [&_li]:mb-1 overflow-hidden transition-all duration-300 ${
               detailsExpanded ? "max-h-[1000px]" : "max-h-[110px]"
             }`}
             dangerouslySetInnerHTML={{ __html: product.details }}
           />
           <button
             onClick={() => setDetailsExpanded((prev) => !prev)}
-            className="mt-2 text-[13px] text-gray-900 underline hover:no-underline transition-all"
+            className="mt-2 text-[0.8125rem] text-gray-900 underline hover:no-underline transition-all"
           >
             {detailsExpanded ? "See Less" : "See More"}
           </button>

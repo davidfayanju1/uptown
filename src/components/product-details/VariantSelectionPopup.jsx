@@ -47,7 +47,7 @@ const VariantSelectionPopup = ({
                 onClick={onClose}
                 className="text-gray-500 hover:text-black transition-colors"
               >
-                <IoClose size={22} />
+                <IoClose size="1.375rem" />
               </button>
             </div>
 

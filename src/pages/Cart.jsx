@@ -146,7 +146,7 @@ const Cart = () => {
               {isCurrentItemDeleting ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-red-500 border-t-transparent"></div>
               ) : (
-                <BsTrash color="red" size={18} />
+                <BsTrash color="red" size="1.125rem" />
               )}
             </button>
           </div>
@@ -262,7 +262,7 @@ const Cart = () => {
       </style>
       <div className="min-h-screen mt-[5rem] bg-gray-50 text-gray-900 py-8 pb-28 md:pb-8 font-now">
         <div className="container mx-auto px-4 max-w-6xl">
-          <h1 className="text-[20.4px] leading-none md:text-3xl font-normal md:font-bold mb-6 md:mb-8 text-left text-gray-900">
+          <h1 className="text-[1.275rem] leading-none md:text-3xl font-normal md:font-bold mb-6 md:mb-8 text-left text-gray-900">
             My shopping cart
           </h1>
 
@@ -316,7 +316,7 @@ const Cart = () => {
                           {isCurrentItemDeleting ? (
                             <div className="animate-spin h-4 w-4 border-2 border-gray-400 border-t-transparent" />
                           ) : (
-                            <IoCloseOutline size={24} />
+                            <IoCloseOutline size="1.5rem" />
                           )}
                         </button>
 
@@ -334,11 +334,11 @@ const Cart = () => {
 
                           <div className="flex-1 min-w-0">
                             <Link to={`/product/${item?.product_id}`}>
-                              <h3 className="text-[13.1px] uppercase font-extrabold text-gray-900 leading-snug">
+                              <h3 className="text-[0.81875rem] uppercase font-extrabold text-gray-900 leading-snug">
                                 {item.product_title || "Product Item"}
                               </h3>
                             </Link>
-                            <div className="mt-2 text-[13px] text-gray-500 space-y-0.5">
+                            <div className="mt-2 text-[0.8125rem] text-gray-500 space-y-0.5">
                               <div>
                                 Color:{" "}
                                 <span className="text-gray-900 font-semibold">
@@ -390,10 +390,10 @@ const Cart = () => {
                 {/* Gifting and packaging — presentational for now, no backend */}
                 <div className="md:hidden mt-10">
                   <div className="flex items-end justify-between mb-3">
-                    <h2 className="text-[15px] text-gray-900">
+                    <h2 className="text-[0.9375rem] text-gray-900">
                       Gifting and Packaging
                     </h2>
-                    <span className="text-[14px] text-gray-400">
+                    <span className="text-[0.875rem] text-gray-400">
                       Complimentary
                     </span>
                   </div>
@@ -408,15 +408,15 @@ const Cart = () => {
                       className="h-[5.5rem] w-[7rem] flex-shrink-0 object-cover"
                     />
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[12px] font-bold text-gray-900">
+                      <span className="block text-[0.75rem] font-bold text-gray-900">
                         Include a Gift Message
                       </span>
-                      <span className="block mt-1 text-[10.7px] text-gray-400">
+                      <span className="block mt-1 text-[0.66875rem] text-gray-400">
                         Add a personal touch to your order.
                       </span>
                     </span>
                     <IoChevronForward
-                      size={20}
+                      size="1.25rem"
                       className="text-gray-400 flex-shrink-0"
                     />
                   </button>
@@ -426,16 +426,16 @@ const Cart = () => {
               {/* STICKY GEOMETRIC ORDER SUMMARY MODULE */}
               <div className="lg:w-1/3 w-full">
                 <div className="bg-white border border-gray-200 rounded-none p-6 sticky top-8">
-                  <h2 className="text-[18.7px] font-bold text-gray-900 mb-5">
+                  <h2 className="text-[1.16875rem] font-bold text-gray-900 mb-5">
                     Order Summary
                   </h2>
 
                   <div className="space-y-2 border-b border-gray-200 pb-5">
                     <div className="flex justify-between items-baseline">
-                      <span className="text-gray-600 text-[16.3px]">
+                      <span className="text-gray-600 text-[1.01875rem]">
                         Subtotal
                       </span>
-                      <span className="font-bold text-gray-900 text-[15.5px]">
+                      <span className="font-bold text-gray-900 text-[0.96875rem]">
                         {formatPriceFromUnits(
                           subtotal,
                           cartItems[0]?.currency || "NGN",
@@ -445,10 +445,10 @@ const Cart = () => {
                   </div>
 
                   <div className="flex justify-between items-baseline mt-5 mb-6">
-                    <span className="text-[18.7px] font-bold text-gray-900">
+                    <span className="text-[1.16875rem] font-bold text-gray-900">
                       Total
                     </span>
-                    <span className="text-[15.5px] font-bold text-gray-900">
+                    <span className="text-[0.96875rem] font-bold text-gray-900">
                       {formatPriceFromUnits(
                         total,
                         cartItems[0]?.currency || "NGN",

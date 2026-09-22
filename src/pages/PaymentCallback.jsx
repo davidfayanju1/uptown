@@ -232,7 +232,7 @@ const PaymentCallback = () => {
 
         {status === "success" && (
           <div className="px-6 sm:px-8 py-10 text-center">
-            <AnimatedCheckmark size={72} color="#3B5C2E" strokeWidth={5} />
+            <AnimatedCheckmark size="4.5rem" color="#3B5C2E" strokeWidth={5} />
 
             <h1 className="text-2xl font-light tracking-wide text-[#1C1C1A] mt-6">
               Payment successful

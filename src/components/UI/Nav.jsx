@@ -358,22 +358,22 @@ const Nav = () => {
         {
           name: "My Orders",
           url: "/orders",
-          icon: <IoBagHandleOutline size={20} />,
+          icon: <IoBagHandleOutline size="1.25rem" />,
         },
         {
           name: "Wishlist",
           url: "/wishlist",
-          icon: <IoHeartOutline size={20} />,
+          icon: <IoHeartOutline size="1.25rem" />,
         },
         {
           name: "Account",
           url: "/account",
-          icon: <IoPersonOutline size={20} />,
+          icon: <IoPersonOutline size="1.25rem" />,
         },
         {
           name: "Sign Out",
           url: "#",
-          icon: <IoLogOutOutline size={20} color="black" />,
+          icon: <IoLogOutOutline size="1.25rem" color="black" />,
           isLogout: true,
         },
       ];
@@ -382,17 +382,17 @@ const Nav = () => {
         {
           name: "Sign In",
           url: "/signin",
-          icon: <IoPersonOutline size={20} />,
+          icon: <IoPersonOutline size="1.25rem" />,
         },
         // {
         //   name: "My Orders",
         //   url: "/orders",
-        //   icon: <IoBagHandleOutline size={20} />,
+        //   icon: <IoBagHandleOutline size="1.25rem" />,
         // },
         {
           name: "Wishlist",
           url: "/wishlist",
-          icon: <IoHeartOutline size={20} />,
+          icon: <IoHeartOutline size="1.25rem" />,
         },
       ];
     }
@@ -528,8 +528,8 @@ const Nav = () => {
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="25"
-        height="25"
+        width="1.5625rem"
+        height="1.5625rem"
         fill="currentColor"
         viewBox="0 0 256 256"
       >
@@ -537,7 +537,7 @@ const Nav = () => {
       </svg>
       {cartCount > 0 && (
         <span
-          className={`absolute top-[7.9px] right-[3.4px] bg-red-500 text-white rounded-full h-[8.5px] w-[8.5px] flex items-center justify-center text-xs`}
+          className={`absolute top-[0.49375rem] right-[0.2125rem] bg-red-500 text-white rounded-full h-[0.53125rem] w-[0.53125rem] flex items-center justify-center text-xs`}
         />
       )}
     </button>
@@ -610,8 +610,8 @@ const Nav = () => {
             <button onClick={() => setOpenSearch(true)} aria-label="Search">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
+                width="1.5rem"
+                height="1.5rem"
                 fill={mobileIconColor}
                 viewBox="0 0 256 256"
               >
@@ -624,9 +624,9 @@ const Nav = () => {
               aria-label={openSidebar ? "Close menu" : "Menu"}
             >
               {openSidebar ? (
-                <IoClose color={mobileIconColor} size={26} />
+                <IoClose color={mobileIconColor} size="1.625rem" />
               ) : (
-                <RxHamburgerMenu color={mobileIconColor} size={24} />
+                <RxHamburgerMenu color={mobileIconColor} size="1.5rem" />
               )}
             </button>
           </div>
@@ -646,8 +646,8 @@ const Nav = () => {
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="18"
-                height="18"
+                width="1.125rem"
+                height="1.125rem"
                 fill={iconColor}
                 viewBox="0 0 256 256"
               >
@@ -698,7 +698,7 @@ const Nav = () => {
                   type="submit"
                   className="absolute right-0 top-1/2 transform -translate-y-1/2"
                 >
-                  <IoSearch size={22} color="#9ca3af" />
+                  <IoSearch size="1.375rem" color="#9ca3af" />
                 </button>
               </form>
 
@@ -711,7 +711,7 @@ const Nav = () => {
               {!searchLoading && searchResults.length > 0 && (
                 <div className="mb-8">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider">
+                    <h3 className="text-[0.625rem] font-semibold text-gray-400 tracking-wider">
                       SEARCH RESULTS ({searchResults.length})
                     </h3>
                     <button
@@ -720,7 +720,7 @@ const Nav = () => {
                           `/product?search=${encodeURIComponent(searchQuery)}`,
                         )
                       }
-                      className="text-[10px] text-gray-400 hover:text-black transition-colors"
+                      className="text-[0.625rem] text-gray-400 hover:text-black transition-colors"
                     >
                       VIEW ALL
                     </button>
@@ -739,10 +739,10 @@ const Nav = () => {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         </div>
-                        <h4 className="text-[12px] font-medium text-gray-800 uppercase tracking-wide mb-1 line-clamp-2">
+                        <h4 className="text-[0.75rem] font-medium text-gray-800 uppercase tracking-wide mb-1 line-clamp-2">
                           {product.name}
                         </h4>
-                        <p className="text-[12px] text-gray-500">
+                        <p className="text-[0.75rem] text-gray-500">
                           {product.price}
                         </p>
                       </div>
@@ -753,7 +753,7 @@ const Nav = () => {
 
               {!searchQuery && suggestedProducts.length > 0 && (
                 <div className="mb-8">
-                  <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider mb-4">
+                  <h3 className="text-[0.625rem] font-semibold text-gray-400 tracking-wider mb-4">
                     YOU MAY ALSO LIKE
                   </h3>
                   <div className="grid grid-cols-3 gap-6">
@@ -770,10 +770,10 @@ const Nav = () => {
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
                         </div>
-                        <h4 className="text-[12px] font-medium text-gray-800 uppercase tracking-wide mb-1 line-clamp-2">
+                        <h4 className="text-[0.75rem] font-medium text-gray-800 uppercase tracking-wide mb-1 line-clamp-2">
                           {product.name}
                         </h4>
-                        <p className="text-[12px] text-gray-500">
+                        <p className="text-[0.75rem] text-gray-500">
                           {product.price}
                         </p>
                       </div>
@@ -785,12 +785,12 @@ const Nav = () => {
               {!searchQuery && searchHistory.length > 0 && (
                 <div className="pt-4 border-t border-gray-100">
                   <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-[10px] font-semibold text-gray-400 tracking-wider">
+                    <h3 className="text-[0.625rem] font-semibold text-gray-400 tracking-wider">
                       RECENT SEARCHES
                     </h3>
                     <button
                       onClick={clearSearchHistory}
-                      className="text-[10px] text-gray-400 hover:text-black transition-colors"
+                      className="text-[0.625rem] text-gray-400 hover:text-black transition-colors"
                     >
                       CLEAR ALL
                     </button>
@@ -802,7 +802,7 @@ const Nav = () => {
                         onClick={() => handleHistoryClick(item)}
                         className="px-3 py-1.5 bg-gray-50 text-gray-600 text-xs hover:bg-gray-100 transition-colors flex items-center gap-2"
                       >
-                        <IoTimeOutline size={12} />
+                        <IoTimeOutline size="0.75rem" />
                         {item}
                       </button>
                     ))}
@@ -835,7 +835,7 @@ const Nav = () => {
                   onClick={() => setShowCartDropdown(false)}
                   className="text-gray-500 hover:text-gray-700"
                 >
-                  <IoClose size={20} />
+                  <IoClose size="1.25rem" />
                 </button>
               </div>
 
@@ -851,7 +851,7 @@ const Nav = () => {
                     alt=""
                     className="h-30 mx-auto"
                   />
-                  <p className="text-gray-600 text-[12px] mb-4">
+                  <p className="text-gray-600 text-[0.75rem] mb-4">
                     Your cart is empty
                   </p>
                   <button
@@ -859,7 +859,7 @@ const Nav = () => {
                       navigate("/product");
                       setShowCartDropdown(false);
                     }}
-                    className="bg-black text-white text-[12px] py-2 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
+                    className="bg-black text-white text-[0.75rem] py-2 px-4 text-sm font-medium hover:bg-gray-800 transition-colors"
                   >
                     Continue Shopping
                   </button>
@@ -920,7 +920,7 @@ const Nav = () => {
                           {deletingItemId === item.id ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-red-500 border-t-transparent"></div>
                           ) : (
-                            <BsTrash color="#000000" size={14} />
+                            <BsTrash color="#000000" size="0.875rem" />
                           )}
                         </button>
                       </div>
@@ -991,8 +991,8 @@ const Nav = () => {
                     onClick={() => setActiveSubmenu(null)}
                     aria-label="Back to menu"
                   >
-                    <IoChevronBack size={18} className="opacity-70" />
-                    <span className="flex-1 text-center text-[1.05rem] font-bold uppercase tracking-[0.04em] pr-[18px]">
+                    <IoChevronBack size="1.125rem" className="opacity-70" />
+                    <span className="flex-1 text-center text-[1.05rem] font-bold uppercase tracking-[0.04em] pr-[1.125rem]">
                       {activeSubmenu.name}
                     </span>
                   </motion.button>
@@ -1017,7 +1017,7 @@ const Nav = () => {
                         }
                       >
                         {sub.name}
-                        {sub.currency === currency && <IoCheckmark size={18} />}
+                        {sub.currency === currency && <IoCheckmark size="1.125rem" />}
                       </motion.button>
                     ))}
                   </div>
@@ -1065,7 +1065,7 @@ const Nav = () => {
                 }
               >
                 <span className="flex items-center gap-3">
-                  <IoPersonOutline size={22} />
+                  <IoPersonOutline size="1.375rem" />
                   <span
                     className={
                       user
@@ -1078,7 +1078,7 @@ const Nav = () => {
                       : "Sign In/ Register"}
                   </span>
                 </span>
-                <IoChevronForward size={16} className="opacity-70" />
+                <IoChevronForward size="1rem" className="opacity-70" />
               </motion.button>
 
               <motion.div
@@ -1103,7 +1103,7 @@ const Nav = () => {
                     <span className="text-[1.05rem] font-bold">
                       {item.name}
                     </span>
-                    <IoChevronForward size={16} className="opacity-70" />
+                    <IoChevronForward size="1rem" className="opacity-70" />
                   </motion.button>
                 ))}
               </div>
@@ -1157,7 +1157,7 @@ const Nav = () => {
               <div className="flex justify-between items-center mb-8">
                 <h2 className="text-xl font-semibold text-white">Search</h2>
                 <button onClick={() => setOpenSearch(false)}>
-                  <IoClose size={30} color="white" />
+                  <IoClose size="1.875rem" color="white" />
                 </button>
               </div>
 
@@ -1174,7 +1174,7 @@ const Nav = () => {
                   type="submit"
                   className="absolute right-0 top-1/2 transform -translate-y-1/2"
                 >
-                  <IoSearch size={24} color="white" />
+                  <IoSearch size="1.5rem" color="white" />
                 </button>
               </form>
 

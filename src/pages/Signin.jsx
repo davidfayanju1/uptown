@@ -149,7 +149,7 @@ const Signin = () => {
             <div>
               <label
                 htmlFor="email"
-                className="block text-[11px] font-[300] text-gray-700"
+                className="block text-[0.6875rem] font-[300] text-gray-700"
               >
                 Email address
               </label>
@@ -168,7 +168,7 @@ const Signin = () => {
                   } shadow-sm placeholder-gray-400 focus:outline-none focus:ring-black focus:border-black transition duration-150 ease-in-out disabled:bg-gray-100 disabled:cursor-not-allowed`}
                 />
                 {errors.email && (
-                  <p className="text-[11px] text-red-600">{errors.email}</p>
+                  <p className="text-[0.6875rem] text-red-600">{errors.email}</p>
                 )}
               </div>
             </div>
@@ -176,7 +176,7 @@ const Signin = () => {
             <div>
               <label
                 htmlFor="password"
-                className="block text-[11px] font-[300] text-gray-700"
+                className="block text-[0.6875rem] font-[300] text-gray-700"
               >
                 Password
               </label>
@@ -201,17 +201,17 @@ const Signin = () => {
                   disabled={loginMutation.isPending}
                 >
                   {showPassword ? (
-                    <small className="underline text-[11px] text-gray-500">
+                    <small className="underline text-[0.6875rem] text-gray-500">
                       Hide
                     </small>
                   ) : (
-                    <small className="underline text-[11px] text-gray-500">
+                    <small className="underline text-[0.6875rem] text-gray-500">
                       Show
                     </small>
                   )}
                 </button>
                 {errors.password && (
-                  <p className="text-[11px] text-red-600">{errors.password}</p>
+                  <p className="text-[0.6875rem] text-red-600">{errors.password}</p>
                 )}
               </div>
             </div>
@@ -229,13 +229,13 @@ const Signin = () => {
                 />
                 <label
                   htmlFor="rememberMe"
-                  className="ml-2 block text-[11px] text-gray-900"
+                  className="ml-2 block text-[0.6875rem] text-gray-900"
                 >
                   Remember me
                 </label>
               </div>
 
-              <div className="text-[11px]">
+              <div className="text-[0.6875rem]">
                 <Link
                   to="/forgot-password"
                   className="font-medium underline text-black hover:text-gray-800 transition-colors duration-200"
