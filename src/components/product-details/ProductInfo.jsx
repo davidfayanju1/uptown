@@ -3,6 +3,8 @@ import ColorSelector from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import StickyAddToCart from "./StickyAddToCart";
 import ProductAccordion from "./ProductAccordion";
+import SizeGuideModal from "./SizeGuideModal";
+import { IoBookmark, IoBookmarkOutline } from "react-icons/io5";
 
 // Shown until the products API returns a per-product fit note. Delete this and
 // the `??` fallback below once `modelFit` is populated server-side.
@@ -10,24 +12,31 @@ const MODEL_FIT_PLACEHOLDER = "Shira is 172cm and 57Kg wearing Size M";
 
 const SUPPORT_EMAIL = "thenonamestudios@gmail.com";
 
-// The catalogue carries no fit or care fields, so these two read the same on
-// every piece until the API supplies them.
-const SIZE_AND_FIT_GUIDE = (
-  <>
-    <p>
-      Our pieces are cut to an oversized, relaxed fit. If you prefer a closer
-      cut, we recommend sizing down.
-    </p>
-    <p>
-      The model pictured wears the size noted above. Measurements are taken flat
-      and may vary slightly between pieces.
-    </p>
-    <p>
-      Unsure of your size? Message us before ordering and we will help you
-      choose.
-    </p>
-  </>
-);
+// Saved pieces live in the browser until a wishlist API exists. Swap the two
+// helpers below for API calls and the button keeps working unchanged.
+const WISHLIST_STORAGE_KEY = "uptown:wishlist";
+
+const readWishlist = () => {
+  try {
+    const stored = JSON.parse(localStorage.getItem(WISHLIST_STORAGE_KEY));
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeWishlist = (ids) => {
+  try {
+    localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(ids));
+  } catch {
+    // Private browsing or blocked storage — the toggle still updates visually.
+  }
+};
+
+// The catalogue carries no fit or care fields, so these read the same on every
+// piece until the API supplies them.
+const FIT_NOTE =
+  "Slightly cropped boxy shape, it\u2019s recommended you get your actual size.";
 
 const CARE_GUIDE = (
   <>
@@ -63,27 +72,47 @@ const ProductInfo = ({
   const modelFitNote =
     product.modelFit ?? product.fitNote ?? MODEL_FIT_PLACEHOLDER;
 
-  const [isSticky, setIsSticky] = useState(false);
-  const addToCartRef = useRef(null);
+  const productId = product.id ?? product._id;
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (addToCartRef.current) {
-        const rect = addToCartRef.current.getBoundingClientRect();
-        setIsSticky(rect.bottom < 0);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleScroll);
-    handleScroll();
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
+    setIsSaved(productId ? readWishlist().includes(productId) : false);
+  }, [productId]);
+
+  const toggleSaved = () => {
+    if (!productId) return;
+    const next = !isSaved;
+    const remaining = readWishlist().filter((id) => id !== productId);
+    writeWishlist(next ? [...remaining, productId] : remaining);
+    setIsSaved(next);
+  };
+
+  const [isSticky, setIsSticky] = useState(false);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const addToCartRef = useRef(null);
+
+  // Pin the bar whenever the inline button is off-screen — including on first
+  // paint, before any scrolling. An observer (rather than a scroll listener)
+  // also re-fires when images finish loading and shift the layout, which is
+  // what left the bar stuck hidden on browsers that never emitted a scroll.
+  useEffect(() => {
+    const target = addToCartRef.current;
+    if (!target || typeof IntersectionObserver === "undefined") return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsSticky(!entry.isIntersecting),
+      { threshold: 0 },
+    );
+    observer.observe(target);
+    return () => observer.disconnect();
   }, []);
 
   const sections = [
-    { id: "fit", title: "Size & Fit Guide", content: SIZE_AND_FIT_GUIDE },
+    {
+      id: "fit",
+      title: "Size & Fit Guide",
+      onOpen: () => setShowSizeGuide(true),
+    },
     {
       id: "details",
       title: "Details",
@@ -101,22 +130,40 @@ const ProductInfo = ({
         <h1 className="font-now text-[1.0625rem] md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
           {product.name}
         </h1>
-        <p className="font-now text-[1.0625rem] md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
+        <p className="font-now text-[1.3125rem] lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
           {currentPrice}
         </p>
       </div>
 
-      {modelFitNote && (
-        <p className="font-now text-[0.9375rem] text-[#8f7355] mt-[0.625rem]">
-          {modelFitNote}
-        </p>
-      )}
+      <div className="flex items-center justify-between gap-4 mt-[0.625rem]">
+        {modelFitNote ? (
+          <p className="font-now text-[0.6875rem] text-[#8f7355]">
+            {modelFitNote}
+          </p>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        <button
+          type="button"
+          onClick={toggleSaved}
+          aria-pressed={isSaved}
+          aria-label={isSaved ? "Remove from wishlist" : "Save for later"}
+          title={isSaved ? "Remove from wishlist" : "Save for later"}
+          className="shrink-0 -mr-1 p-1 text-gray-900 transition-colors hover:text-[#8f7355]"
+        >
+          {isSaved ? (
+            <IoBookmark className="h-5 w-5" />
+          ) : (
+            <IoBookmarkOutline className="h-5 w-5" />
+          )}
+        </button>
+      </div>
 
       <div ref={addToCartRef} className="mt-[1.5rem]">
         <button
           onClick={onAddToCart}
           disabled={isAddingToCart || !hasAnyAvailableVariant}
-          className={`w-full py-[1.25rem] px-8 flex items-center justify-center font-now text-[0.9375rem] font-bold uppercase tracking-[0.06em] transition-all ${
+          className={`w-full py-[1.25rem] px-8 flex items-center justify-center font-now text-[0.9125rem] font-bold uppercase tracking-[0.06em] transition-all ${
             !isAddingToCart && hasAnyAvailableVariant
               ? "bg-black text-white hover:bg-gray-800"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
@@ -190,6 +237,16 @@ const ProductInfo = ({
         isAddingToCart={isAddingToCart}
         onAddToCart={onAddToCart}
       />
+
+      {showSizeGuide && (
+        <SizeGuideModal
+          onClose={() => setShowSizeGuide(false)}
+          modelFitNote={modelFitNote}
+          fitNote={FIT_NOTE}
+          measurements={product.measurements}
+          diagramImage={product.measurementImage}
+        />
+      )}
     </div>
   );
 };

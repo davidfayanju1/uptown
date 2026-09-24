@@ -1,24 +1,29 @@
 import React, { useState } from "react";
 
 // The stacked grey rows under the size picker. Only one section is open at a
-// time, and its body sits directly beneath its own row.
+// time, and its body sits directly beneath its own row. A section carrying
+// `onOpen` instead of `content` hands off to a modal rather than expanding.
 const ProductAccordion = ({ sections }) => {
   const [openId, setOpenId] = useState(null);
-  const visible = sections.filter((section) => section.content);
+  const visible = sections.filter((section) => section.content || section.onOpen);
 
   if (visible.length === 0) return null;
 
   return (
     <div className="mt-[1.75rem] space-y-[0.5rem]">
       {visible.map((section) => {
-        const isOpen = openId === section.id;
+        const isOpen = !section.onOpen && openId === section.id;
 
         return (
           <div key={section.id}>
             <button
               type="button"
-              onClick={() => setOpenId(isOpen ? null : section.id)}
-              aria-expanded={isOpen}
+              onClick={() =>
+                section.onOpen
+                  ? section.onOpen()
+                  : setOpenId(isOpen ? null : section.id)
+              }
+              aria-expanded={section.onOpen ? undefined : isOpen}
               className="w-full flex items-center justify-between gap-4 bg-[#f2f2f2] px-[1.25rem] py-[1.5rem] text-left transition-colors hover:bg-[#ececec]"
             >
               <span className="font-now text-[0.8125rem] uppercase tracking-[0.02em] text-gray-900">
