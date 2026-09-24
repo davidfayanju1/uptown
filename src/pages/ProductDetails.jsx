@@ -77,7 +77,10 @@ const ProductDetails = () => {
   }, [showSuccessNotification]);
 
   const productData = response?.data?.product;
-  const variants = response?.data?.variants || [];
+  const variants = useMemo(
+    () => response?.data?.variants || [],
+    [response],
+  );
 
   const product = productData
     ? {
@@ -120,6 +123,18 @@ const ProductDetails = () => {
         .filter(Boolean)
         .sort(compareSizes)
     : [];
+
+  // A single colourway is not a choice, so make it on the shopper's behalf and
+  // leave them only the sizes to pick. Two or more, and they choose.
+  const soleColor = uniqueColors.length === 1 ? uniqueColors[0] : null;
+
+  useEffect(() => {
+    if (!soleColor) return;
+    const inStock = variants.some(
+      (v) => v.color.trim() === soleColor && v.stock > 0,
+    );
+    if (inStock) setSelectedColor(soleColor);
+  }, [soleColor, variants]);
 
   const isColorAvailable = (color) =>
     variants.some((v) => v.color === color && v.stock > 0);
