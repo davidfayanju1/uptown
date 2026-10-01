@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SizeGuideModal from "./SizeGuideModal";
 import { normalizeSizeGuide } from "../../utils/sizeGuide";
@@ -67,6 +67,28 @@ describe("SizeGuideModal", () => {
     expect(
       screen.getByText("Shiva is 180cm wearing size M"),
     ).toBeInTheDocument();
+  });
+
+  it("shows a no-image placeholder when the product has no diagram", () => {
+    renderModal({ diagramImage: "" });
+
+    expect(
+      screen.queryByAltText("Where each garment measurement is taken"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No image")).toBeInTheDocument();
+  });
+
+  it("falls back to the placeholder when the diagram fails to load", () => {
+    renderModal();
+
+    fireEvent.error(
+      screen.getByAltText("Where each garment measurement is taken"),
+    );
+
+    expect(
+      screen.queryByAltText("Where each garment measurement is taken"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("No image")).toBeInTheDocument();
   });
 
   it("hides the fit section when the product has no fit description", () => {

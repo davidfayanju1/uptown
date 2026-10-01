@@ -2,9 +2,6 @@ import React, { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { convertMeasurement } from "../../utils/sizeGuide";
 
-// Stands in until a product carries its own measurement diagram.
-const PLACEHOLDER_DIAGRAM = "/images/Reality.PNG";
-
 const SizeGuideModal = ({
   onClose,
   modelFitNote,
@@ -14,6 +11,8 @@ const SizeGuideModal = ({
 }) => {
   const { unit: baseUnit, columns, rows } = sizeGuide;
   const [unit, setUnit] = useState(baseUnit);
+  const [failedImage, setFailedImage] = useState(null);
+  const showDiagram = diagramImage && failedImage !== diagramImage;
 
   useEffect(() => {
     const onKeyDown = (e) => e.key === "Escape" && onClose();
@@ -85,11 +84,18 @@ const SizeGuideModal = ({
             Garment Measurement
           </h3>
 
-          <img
-            src={diagramImage || PLACEHOLDER_DIAGRAM}
-            alt="Where each garment measurement is taken"
-            className="mt-[1rem] mx-auto max-h-[15rem] w-auto max-w-full object-contain"
-          />
+          {showDiagram ? (
+            <img
+              src={diagramImage}
+              alt="Where each garment measurement is taken"
+              onError={() => setFailedImage(diagramImage)}
+              className="mt-[1rem] mx-auto max-h-[15rem] w-auto max-w-full object-contain"
+            />
+          ) : (
+            <div className="mt-[1rem] flex h-[10rem] items-center justify-center rounded-[0.5rem] bg-[#f2f2f2] text-[0.6875rem] text-gray-500">
+              No image
+            </div>
+          )}
 
           <div className="mt-[1.5rem] overflow-x-auto">
             <table className="w-full border-collapse text-[0.6875rem]">
