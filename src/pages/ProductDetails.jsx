@@ -88,6 +88,7 @@ const ProductDetails = () => {
         name: productData.title,
         description: productData.description,
         details: productData.details || [],
+        sizeGuide: productData.size_guide,
         variants,
         category: productData.category,
       }

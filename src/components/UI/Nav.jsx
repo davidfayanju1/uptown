@@ -16,7 +16,7 @@ import {
 import { RxHamburgerMenu } from "react-icons/rx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { BsTrash } from "react-icons/bs";
-import api from "../../lib/axios";
+import api, { logoutUser } from "../../lib/axios";
 import { useCart } from "../../hooks/useCart";
 import useUserStore from "../../stores/auth-store";
 import { formatCurrency, getPriceRange } from "../../utils/currency";
@@ -48,7 +48,7 @@ const Nav = () => {
   const dropdownRef = useRef(null);
   const desktopSearchRef = useRef(null);
   const desktopSearchInputRef = useRef(null);
-  const { user, clearUserData } = useUserStore();
+  const { user } = useUserStore();
   const { currency, setCurrency } = useCurrency();
 
   const {
@@ -400,9 +400,8 @@ const Nav = () => {
 
   const accountLinks = getAccountLinks();
 
-  const handleLogout = async (e) => {
-    clearUserData();
-    delete api.defaults.headers.common["Authorization"];
+  const handleLogout = () => {
+    logoutUser();
   };
 
   const getProductImage = (item) => {
