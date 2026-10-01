@@ -1,32 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
+import { convertMeasurement } from "../../utils/sizeGuide";
 
-// Stands in until the API returns a per-product measurement diagram.
+// Stands in until a product carries its own measurement diagram.
 const PLACEHOLDER_DIAGRAM = "/images/Reality.PNG";
-
-const SIZE_ROWS = ["XS", "S", "M", "L", "XL", "XXL"];
-
-const COLUMNS = [
-  { key: "chest", label: "Chest (A)" },
-  { key: "length", label: "Total Length (B)" },
-  { key: "sleeve", label: "Sleeve (C)" },
-  { key: "shoulder", label: "Shoulder" },
-];
-
-// Measurements arrive in centimetres; inches are derived for display only.
-const toDisplay = (value, unit) => {
-  if (typeof value !== "number") return value || "";
-  return unit === "in" ? (value / 2.54).toFixed(1) : String(value);
-};
 
 const SizeGuideModal = ({
   onClose,
   modelFitNote,
   fitNote,
-  measurements = {},
+  sizeGuide,
   diagramImage,
 }) => {
-  const [unit, setUnit] = useState("cm");
+  const { unit: baseUnit, columns, rows } = sizeGuide;
+  const [unit, setUnit] = useState(baseUnit);
 
   useEffect(() => {
     const onKeyDown = (e) => e.key === "Escape" && onClose();
@@ -104,47 +91,53 @@ const SizeGuideModal = ({
             className="mt-[1rem] mx-auto max-h-[15rem] w-auto max-w-full object-contain"
           />
 
-          <table className="mt-[1.5rem] w-full border-collapse text-[0.6875rem]">
-            <thead>
-              <tr>
-                <th className="border border-gray-300 px-[0.5rem] py-[0.625rem] font-bold text-gray-900">
-                  Size
-                </th>
-                {COLUMNS.map((column) => (
-                  <th
-                    key={column.key}
-                    className="border border-gray-300 px-[0.5rem] py-[0.625rem] font-bold text-gray-900"
-                  >
-                    {column.label}
+          <div className="mt-[1.5rem] overflow-x-auto">
+            <table className="w-full border-collapse text-[0.6875rem]">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-[0.5rem] py-[0.625rem] font-bold text-gray-900">
+                    Size
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {SIZE_ROWS.map((size) => (
-                <tr key={size}>
-                  <th className="border border-gray-300 px-[0.5rem] py-[0.5rem] font-bold text-gray-900">
-                    {size}
-                  </th>
-                  {COLUMNS.map((column) => (
-                    <td
-                      key={column.key}
-                      className="border border-gray-300 px-[0.5rem] py-[0.5rem] text-center text-gray-700"
+                  {columns.map((column) => (
+                    <th
+                      key={column}
+                      className="border border-gray-300 px-[0.5rem] py-[0.625rem] font-bold text-gray-900"
                     >
-                      {toDisplay(measurements[size]?.[column.key], unit)}
-                    </td>
+                      {column}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.label}>
+                    <th className="border border-gray-300 px-[0.5rem] py-[0.5rem] font-bold text-gray-900">
+                      {row.label}
+                    </th>
+                    {columns.map((column) => (
+                      <td
+                        key={column}
+                        className="border border-gray-300 px-[0.5rem] py-[0.5rem] text-center text-gray-700"
+                      >
+                        {convertMeasurement(row.values[column], baseUnit, unit)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <h3 className="mt-[2rem] text-[0.95rem] font-bold text-gray-900">
-            Fit &amp; Silhouette
-          </h3>
-          <p className="mt-[0.5rem] text-[0.79375rem] leading-[1.7] text-justify text-gray-500">
-            {fitNote}
-          </p>
+          {fitNote && (
+            <>
+              <h3 className="mt-[2rem] text-[0.95rem] font-bold text-gray-900">
+                Fit &amp; Silhouette
+              </h3>
+              <p className="mt-[0.5rem] text-[0.79375rem] leading-[1.7] text-justify text-gray-500">
+                {fitNote}
+              </p>
+            </>
+          )}
 
           <p className="mt-[1.75rem] text-[0.95rem] font-bold text-gray-900 underline underline-offset-4">
             Still not sure about your fit &amp; sizing? Try out our size

@@ -5,9 +5,9 @@ import StickyAddToCart from "./StickyAddToCart";
 import ProductAccordion from "./ProductAccordion";
 import SizeGuideModal from "./SizeGuideModal";
 import { IoBookmark, IoBookmarkOutline } from "react-icons/io5";
+import { normalizeSizeGuide } from "../../utils/sizeGuide";
 
-// Shown until the products API returns a per-product fit note. Delete this and
-// the `??` fallback below once `modelFit` is populated server-side.
+// Shown until a product carries its own size guide.
 const MODEL_FIT_PLACEHOLDER = "Shira is 172cm and 57Kg wearing Size M";
 
 const SUPPORT_EMAIL = "thenonamestudios@gmail.com";
@@ -33,9 +33,7 @@ const writeWishlist = (ids) => {
   }
 };
 
-// The catalogue carries no fit or care fields, so these read the same on every
-// piece until the API supplies them.
-const FIT_NOTE =
+const FIT_NOTE_PLACEHOLDER =
   "Slightly cropped boxy shape, it\u2019s recommended you get your actual size.";
 
 const CARE_GUIDE = (
@@ -69,8 +67,9 @@ const ProductInfo = ({
   onSizeSelect,
   onAddToCart,
 }) => {
-  const modelFitNote =
-    product.modelFit ?? product.fitNote ?? MODEL_FIT_PLACEHOLDER;
+  const sizeGuide = normalizeSizeGuide(product.sizeGuide);
+  const modelFitNote = sizeGuide.modelInfo || MODEL_FIT_PLACEHOLDER;
+  const fitNote = sizeGuide.fitDescription || FIT_NOTE_PLACEHOLDER;
 
   const productId = product.id ?? product._id;
   const [isSaved, setIsSaved] = useState(false);
@@ -242,9 +241,9 @@ const ProductInfo = ({
         <SizeGuideModal
           onClose={() => setShowSizeGuide(false)}
           modelFitNote={modelFitNote}
-          fitNote={FIT_NOTE}
-          measurements={product.measurements}
-          diagramImage={product.measurementImage}
+          fitNote={fitNote}
+          sizeGuide={sizeGuide}
+          diagramImage={sizeGuide.diagramImage}
         />
       )}
     </div>
