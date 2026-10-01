@@ -9,7 +9,7 @@ import { FiChevronDown, FiEdit2, FiX } from "react-icons/fi";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import PrimaryLayout from "../layout/PrimaryLayout";
-import api from "../lib/axios";
+import api, { logoutUser } from "../lib/axios";
 import useUserStore from "../stores/auth-store";
 import { useCurrency } from "../hooks/useCurrency";
 import CurrencySelect from "../components/currency/CurrencySelect";
@@ -518,12 +518,11 @@ const CurrencyPreference = () => {
 // section already expanded.
 const Account = ({ initialSection = null }) => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, clearUserData } = useUserStore();
+  const { user, isAuthenticated } = useUserStore();
   const [openSection, setOpenSection] = useState(initialSection);
 
   const handleSignOut = () => {
-    clearUserData();
-    delete api.defaults.headers.common["Authorization"];
+    logoutUser();
     navigate("/");
   };
 

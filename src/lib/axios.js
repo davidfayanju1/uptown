@@ -3,6 +3,7 @@
 import axios from "axios";
 import useUserStore from "../stores/auth-store";
 import useCurrencyStore from "../stores/currency-store";
+import { queryClient } from "./query-client";
 
 const API_BASE_URL = "https://uptown-api-00m6.onrender.com";
 
@@ -37,7 +38,16 @@ let sessionId = null;
 
 let isLoggingOut = false;
 
-const logoutUser = () => {
+// The cached queries that belong to the shopper rather than to the catalogue.
+// Keys match by prefix, so ["me"] also covers ["me", "addresses"].
+const USER_SCOPED_QUERY_KEYS = [["cart"], ["me"], ["orders"], ["order"]];
+
+// Every way out of a session — the menu, the account screen, an expired
+// refresh token — goes through here. The shopper's cached queries and the
+// session id have to go with the token: the cart stays fresh for five minutes,
+// so whoever signs in next on this browser would otherwise be handed the
+// previous shopper's cart, coupon included.
+export const logoutUser = () => {
   if (isLoggingOut) return;
   isLoggingOut = true;
 
@@ -45,6 +55,10 @@ const logoutUser = () => {
   useUserStore.getState().clearUserData();
   localStorage.removeItem("refresh_token");
   delete api.defaults.headers.common["Authorization"];
+  clearSessionId();
+  for (const queryKey of USER_SCOPED_QUERY_KEYS) {
+    queryClient.removeQueries({ queryKey });
+  }
 
   // Reset flag after a delay
   setTimeout(() => {
