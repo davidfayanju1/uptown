@@ -333,11 +333,23 @@ const Cart = () => {
                           </Link>
 
                           <div className="flex-1 min-w-0">
-                            <Link to={`/product/${item?.product_id}`}>
-                              <h3 className="text-[0.81875rem] uppercase font-extrabold text-gray-900 leading-snug">
-                                {item.product_title || "Product Item"}
-                              </h3>
-                            </Link>
+                            {/* pr-7 keeps the price clear of the remove button */}
+                            <div className="flex items-baseline justify-between gap-3 pr-7">
+                              <Link
+                                to={`/product/${item?.product_id}`}
+                                className="min-w-0"
+                              >
+                                <h3 className="text-[0.81875rem] uppercase font-extrabold text-gray-900 leading-snug">
+                                  {item.product_title || "Product Item"}
+                                </h3>
+                              </Link>
+                              <p className="shrink-0 text-[0.8125rem] font-bold text-gray-900">
+                                {formatPriceFromUnits(
+                                  item.unit_price_snapshot_cents,
+                                  item.currency,
+                                )}
+                              </p>
+                            </div>
                             <div className="mt-2 text-[0.8125rem] text-gray-500 space-y-0.5">
                               <div>
                                 Color:{" "}
@@ -380,6 +392,21 @@ const Cart = () => {
                                 +
                               </button>
                             </div>
+
+                            {item.quantity > 1 && (
+                              <div className="mt-3 flex items-baseline justify-between">
+                                <span className="text-[0.75rem] text-gray-500">
+                                  Line total
+                                </span>
+                                <span className="text-[0.8125rem] font-bold text-gray-900">
+                                  {formatPriceFromUnits(
+                                    item.unit_price_snapshot_cents *
+                                      item.quantity,
+                                    item.currency,
+                                  )}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -492,7 +519,7 @@ const Cart = () => {
             onClick={() =>
               navigate("/checkout", { state: { products: cartItems } })
             }
-            className="w-full bg-white border border-gray-900 py-5 text-center text-[1.05rem] font-bold text-gray-900 cursor-pointer"
+            className="w-full bg-black border border-gray-900 py-5 text-center text-[1.05rem] font-bold text-white cursor-pointer"
           >
             Proceed to Checkout
           </button>

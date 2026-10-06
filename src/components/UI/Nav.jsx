@@ -400,9 +400,6 @@ const Nav = () => {
 
   const accountLinks = getAccountLinks();
 
-  const handleLogout = () => {
-    logoutUser();
-  };
 
   const getProductImage = (item) => {
     if (item.variant_images && item.variant_images.length > 0)
@@ -565,6 +562,14 @@ const Nav = () => {
       () => navigate(url),
       (MENU_ROW_EXIT_DURATION + MENU_EXIT_DURATION) * 1000,
     );
+  };
+
+  // Signing out drops the shopper's cached cart, so leave the page they were
+  // on — it may well be the cart or their account — and land them on home.
+  const handleLogout = () => {
+    logoutUser();
+    setShowCartDropdown(false);
+    closeSidebarAndGo("/");
   };
 
   return (
@@ -952,7 +957,7 @@ const Nav = () => {
                     onClick={(e) => {
                       e.stopPropagation();
                       if (link.isLogout) {
-                        handleLogout(e);
+                        handleLogout();
                       } else {
                         navigate(link.url);
                         setShowCartDropdown(false);
@@ -1038,7 +1043,6 @@ const Nav = () => {
                           onClick={() => {
                             if (sub.isLogout) {
                               handleLogout();
-                              closeSidebar();
                             } else {
                               closeSidebarAndGo(sub.url);
                             }
