@@ -26,6 +26,8 @@ import api from "../lib/axios";
 import EmptyCart from "../components/checkout/EmptyCart";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { applyCouponAPI } from "../services/cartServices";
+import { notifyCartChanged } from "../lib/cart-sync";
+import { buildQuotePayload as buildCheckoutQuotePayload } from "../utils/checkout";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
 import { useCurrency } from "../hooks/useCurrency";
@@ -107,7 +109,9 @@ const getPaymentGateways = (currency) =>
 const Checkout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { cartItems, cartCoupon, isLoading: cartLoading } = useCart();
+  const { cartItems, cartCoupon, isLoading: cartLoading } = useCart({
+    poll: true,
+  });
   const { currency } = useCurrency();
   const { user } = useUserStore();
   const queryClient = useQueryClient();
@@ -213,9 +217,6 @@ const Checkout = () => {
       cancelled = true;
     };
   }, [user]);
-
-  // Get cart ID from cart items
-  const cartId = cartItems[0]?.cart_id || null;
 
   // Calculate total weight from cart items
   useEffect(() => {
@@ -455,6 +456,7 @@ const Checkout = () => {
         // The token belongs to totals that predate the discount
         setCheckoutToken(null);
         queryClient.invalidateQueries({ queryKey: ["cart"] });
+        notifyCartChanged();
         toast.success(data.message || "Promo code applied");
 
         // apply-coupon returns no amounts, so the discount only becomes
@@ -684,27 +686,10 @@ const Checkout = () => {
     setShowAddressForm(false);
   };
 
-  const buildQuotePayload = () => ({
-    cart_id: cartId,
-    contact: {
-      email: formData.email,
-    },
-    shipping_address: {
-      first_name: formData.firstName,
-      last_name: formData.lastName,
-      line1: formData.address,
-      city: formData.city,
-      state: formData.state,
-      zip: formData.zipCode,
-      phone: formData.phone,
-      country: "NG",
-    },
-    shipping_option_id: selectedShipping?.id,
-    currency,
-  });
+  const buildQuotePayload = () =>
+    buildCheckoutQuotePayload(formData, selectedShipping?.id, currency);
 
   const canQuote =
-    !!cartId &&
     contactConfirmed &&
     addressReady &&
     !!selectedShipping &&
@@ -731,11 +716,6 @@ const Checkout = () => {
       !formData.zipCode
     ) {
       toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (!cartId) {
-      toast.error("Cart not found");
       return;
     }
 

@@ -88,3 +88,77 @@ describe("logoutUser", () => {
     expect(useUserStore.getState().isAuthenticated).toBe(false);
   });
 });
+
+describe("api client", () => {
+  const conflict = (config) =>
+    Promise.reject(
+      Object.assign(new Error("Request failed with status code 409"), {
+        config,
+        response: {
+          status: 409,
+          data: {
+            message: "cart_stale_refresh_required",
+            errors: { active_cart_id: "u", requested_cart_id: "gB" },
+          },
+        },
+      }),
+    );
+  const ok = (config) =>
+    Promise.resolve({ data: { status: true }, status: 200, headers: {}, config });
+
+  let originalAdapter;
+  beforeEach(() => {
+    originalAdapter = api.defaults.adapter;
+  });
+  afterEach(() => {
+    api.defaults.adapter = originalAdapter;
+  });
+
+  it("sends cookies so the server can find the session's cart", () => {
+    expect(api.defaults.withCredentials).toBe(true);
+  });
+
+  it("retries a stale-cart quote once without the cart id", async () => {
+    const adapter = vi.fn().mockImplementationOnce(conflict).mockImplementation(ok);
+    api.defaults.adapter = adapter;
+
+    const response = await api.post("/v1/checkout/quote", {
+      cart_id: "gB",
+      contact: { email: "buyer@example.com" },
+    });
+
+    expect(response.data).toEqual({ status: true });
+    expect(adapter).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(adapter.mock.calls[1][0].data)).toEqual({
+      contact: { email: "buyer@example.com" },
+    });
+    expect(queryClient.getQueryState(["cart"]).isInvalidated).toBe(true);
+  });
+
+  it("gives up after one retry rather than looping", async () => {
+    const adapter = vi.fn().mockImplementation(conflict);
+    api.defaults.adapter = adapter;
+
+    await expect(
+      api.post("/v1/checkout/quote", { cart_id: "gB" }),
+    ).rejects.toMatchObject({ response: { status: 409 } });
+    expect(adapter).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves other conflicts to the caller", async () => {
+    const adapter = vi.fn().mockImplementation((config) =>
+      Promise.reject(
+        Object.assign(new Error("conflict"), {
+          config,
+          response: { status: 409, data: { message: "insufficient_stock" } },
+        }),
+      ),
+    );
+    api.defaults.adapter = adapter;
+
+    await expect(api.post("/v1/cart/items", {})).rejects.toMatchObject({
+      response: { data: { message: "insufficient_stock" } },
+    });
+    expect(adapter).toHaveBeenCalledTimes(1);
+  });
+});

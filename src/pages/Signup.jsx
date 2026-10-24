@@ -81,15 +81,14 @@ const Signup = () => {
   const signupMutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
-      // Extract user, tokens, and cart from the response
-      const { user, tokens, cart } = data.data || {};
+      const { user, tokens } = data.data || {};
 
       // Hold the session until the email is verified. Committing it here would
       // sign the user in with an unverified token, and protected endpoints
       // (orders, account) answer those with 403.
       sessionStorage.setItem(
         "pending_verification",
-        JSON.stringify({ user, tokens, cart }),
+        JSON.stringify({ user, tokens }),
       );
 
       toast.success("Account created! Enter the code we sent to your email.");

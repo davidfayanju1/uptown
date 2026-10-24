@@ -10,7 +10,6 @@ const useUserStore = create(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      cartData: null, // Add cart data to store
 
       // Actions - pure state updates only
       setUser: (user) => set({ user }),
@@ -24,11 +23,8 @@ const useUserStore = create(
 
       setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 
-      // Set cart data
-      setCartData: (cartData) => set({ cartData }),
-
       // Set all user data at once (for login/signup success)
-      setUserData: (user, accessToken, refreshToken, cartData = null) => {
+      setUserData: (user, accessToken, refreshToken) => {
         if (accessToken) {
           localStorage.setItem("token", accessToken);
         }
@@ -37,7 +33,6 @@ const useUserStore = create(
           accessToken,
           refreshToken,
           isAuthenticated: true,
-          cartData,
         });
       },
 
@@ -49,7 +44,6 @@ const useUserStore = create(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
-          cartData: null,
         });
       },
 
@@ -78,7 +72,6 @@ const useUserStore = create(
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
-        cartData: state.cartData,
       }),
     },
   ),
