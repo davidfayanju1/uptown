@@ -5,6 +5,7 @@ import api from "../lib/axios";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
 import { useCart } from "../hooks/useCart";
+import { notifyCartChanged } from "../lib/cart-sync";
 
 const PENDING_KEY = "pending_verification";
 
@@ -76,11 +77,11 @@ const Otp = () => {
           verifiedUser,
           tokens.access_token,
           tokens.refresh_token,
-          data?.data?.cart || pending?.cart,
         );
         api.defaults.headers.common["Authorization"] =
           `Bearer ${tokens.access_token}`;
         refetchCart();
+        notifyCartChanged();
       }
 
       sessionStorage.removeItem(PENDING_KEY);

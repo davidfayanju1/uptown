@@ -4,6 +4,7 @@ import axios from "axios";
 import useUserStore from "../stores/auth-store";
 import useCurrencyStore from "../stores/currency-store";
 import { queryClient } from "./query-client";
+import { notifyCartChanged } from "./cart-sync";
 
 const API_BASE_URL = "https://uptown-api-00m6.onrender.com";
 
@@ -26,8 +27,11 @@ const getAccessToken = () =>
 const getRefreshToken = () =>
   useUserStore.getState().refreshToken || localStorage.getItem("refresh_token");
 
+// The backend resolves the shopper's cart from the `uptown_session` cookie, so
+// it has to travel with every request.
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -59,6 +63,7 @@ export const logoutUser = () => {
   for (const queryKey of USER_SCOPED_QUERY_KEYS) {
     queryClient.removeQueries({ queryKey });
   }
+  notifyCartChanged();
 
   // Reset flag after a delay
   setTimeout(() => {
@@ -117,6 +122,27 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isRefreshCall = originalRequest?.url?.includes(REFRESH_URL);
+
+    // The cart this request named has since been merged into another (a
+    // sign-in elsewhere, say). Drop the stale id and retry once — the server
+    // falls back to the shopper's active cart.
+    if (
+      error.response?.status === 409 &&
+      error.response.data?.message === "cart_stale_refresh_required" &&
+      originalRequest &&
+      !originalRequest._cartRetry
+    ) {
+      originalRequest._cartRetry = true;
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+
+      const body =
+        typeof originalRequest.data === "string"
+          ? JSON.parse(originalRequest.data || "{}")
+          : { ...originalRequest.data };
+      delete body.cart_id;
+      originalRequest.data = body;
+      return api(originalRequest);
+    }
 
     // Handle token expiration (401). Never try to refresh the refresh call
     // itself — that recurses until the stack blows.

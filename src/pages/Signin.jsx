@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import { useCart } from "../hooks/useCart";
+import { notifyCartChanged } from "../lib/cart-sync";
 
 // Extracted API function
 const loginUser = async (userData) => {
@@ -64,13 +65,13 @@ const Signin = () => {
   const loginMutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
-      // Extract user, tokens, and cart from the response
-      const { user, tokens, cart } = data.data;
+      // The response carries a cart too, but GET /v1/cart is the only source
+      // trusted for it — the same cart can change in another browser.
+      const { user, tokens } = data.data;
 
       console.log(data, "Login response data");
 
-      // Save to Zustand store with cart data
-      setUserData(user, tokens.access_token, tokens.refresh_token, cart);
+      setUserData(user, tokens.access_token, tokens.refresh_token);
 
       // Also set authorization header for future API calls
       api.defaults.headers.common["Authorization"] =
@@ -78,6 +79,7 @@ const Signin = () => {
 
       toast.success("Login successful! Redirecting...");
       refetchCart(); // Refetch cart data after login
+      notifyCartChanged();
 
       setTimeout(() => {
         navigate(redirectTo, { replace: true });

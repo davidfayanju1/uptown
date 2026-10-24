@@ -7,12 +7,14 @@ import {
   updateCartItemAPI,
   removeCartItemAPI,
 } from "../services/cartServices";
+import { notifyCartChanged } from "../lib/cart-sync";
 
 type CartItem = { id: string; quantity: number; [key: string]: any };
 type CartData = { items?: CartItem[]; [key: string]: any };
 
 const CART_KEY = ["cart"];
 const UPDATE_ITEM_KEY = ["cart", "updateItem"];
+const CART_POLL_INTERVAL = 30_000;
 
 // Turn an API failure into something worth showing the shopper
 const getCartErrorMessage = (error: any) => {
@@ -25,10 +27,13 @@ const getCartErrorMessage = (error: any) => {
   return message || "Couldn't update your cart. Please try again.";
 };
 
-export const useCart = () => {
+// `poll` is for the cart and checkout pages, where a change made in another
+// browser has to show up without the shopper reloading.
+export const useCart = ({ poll = false }: { poll?: boolean } = {}) => {
   const queryClient = useQueryClient();
 
-  // Get cart data
+  // The server holds one cart per shopper, shared by every browser they use,
+  // so the cached copy is never trusted to still be current.
   const {
     data: cartData,
     isLoading,
@@ -36,6 +41,10 @@ export const useCart = () => {
   } = useQuery({
     queryKey: ["cart"],
     queryFn: fetchCart,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    refetchInterval: poll ? CART_POLL_INTERVAL : false,
   });
 
   // Add to cart mutation
@@ -49,6 +58,7 @@ export const useCart = () => {
     }) => addToCartAPI(variantId, quantity),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      notifyCartChanged();
     },
   });
 
@@ -92,6 +102,7 @@ export const useCart = () => {
     onSettled: () => {
       if (queryClient.isMutating({ mutationKey: UPDATE_ITEM_KEY }) === 1) {
         queryClient.invalidateQueries({ queryKey: CART_KEY });
+        notifyCartChanged();
       }
     },
   });
@@ -102,6 +113,7 @@ export const useCart = () => {
       mutationFn: ({ itemId }: { itemId: string }) => removeCartItemAPI(itemId),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["cart"] });
+        notifyCartChanged();
       },
     },
   );

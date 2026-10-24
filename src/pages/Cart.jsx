@@ -28,7 +28,7 @@ const Cart = () => {
     updateCartItem,
     removeCartItem,
     isRemovingFromCart,
-  } = useCart();
+  } = useCart({ poll: true });
 
   const activeCurrencySymbol =
     cartItems.length > 0 ? getCurrencySymbol(cartItems[0].currency) : "₦";

@@ -9,6 +9,7 @@ import AnimatedCheckmark from "../components/UI/AnimatedCheckmark";
 import useUserStore from "../stores/auth-store";
 import { formatPriceFromCents } from "../utils/currency";
 import api from "../lib/axios";
+import { notifyCartChanged } from "../lib/cart-sync";
 
 const REDIRECT_SECONDS = 6;
 
@@ -154,6 +155,7 @@ const PaymentCallback = () => {
       // The order now exists and the cart has been emptied server-side.
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["cart"] });
+      notifyCartChanged();
     } catch (error) {
       console.log("❌ Verify failed:", error.response?.status, error.response?.data);
 
