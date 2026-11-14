@@ -1,8 +1,13 @@
 // pages/Account.jsx — the signed-in account hub. Every area of the account is a
 // section the shopper opens in place rather than a page they navigate away to,
 // so the whole account reads as one sheet.
-import React, { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import React, { useContext, useState } from "react";
+import {
+  AnimatePresence,
+  motion,
+  PresenceContext,
+  useIsPresent,
+} from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { IoChevronDown } from "react-icons/io5";
 import { FiChevronDown, FiEdit2, FiX } from "react-icons/fi";
@@ -512,6 +517,31 @@ const CurrencyPreference = () => {
   );
 };
 
+// The panel clips its content only while its height is animating. Left
+// clipped once open, it hides popovers that hang below it, such as the
+// currency menu.
+const SectionPanel = ({ id, children }) => {
+  const isPresent = useIsPresent();
+  // A section opened by a deep link mounts without an enter animation, so
+  // nothing would ever report it as settled.
+  const skipsEnter = useContext(PresenceContext)?.initial === false;
+  const [settled, setSettled] = useState(skipsEnter);
+
+  return (
+    <motion.div
+      data-testid={`account-panel-${id}`}
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+      onAnimationComplete={() => setSettled(true)}
+      className={settled && isPresent ? "" : "overflow-hidden"}
+    >
+      <div className="px-5 pb-6 pt-1 border-t border-[#F0EFEA]">{children}</div>
+    </motion.div>
+  );
+};
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 // `initialSection` lets a deep link such as /address-book land with that
@@ -619,17 +649,9 @@ const Account = ({ initialSection = null }) => {
 
                   <AnimatePresence initial={false}>
                     {isOpen && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-5 pb-6 pt-1 border-t border-[#F0EFEA]">
-                          {section.panel}
-                        </div>
-                      </motion.div>
+                      <SectionPanel id={section.id}>
+                        {section.panel}
+                      </SectionPanel>
                     )}
                   </AnimatePresence>
                 </div>
