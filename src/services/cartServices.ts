@@ -28,3 +28,8 @@ export const applyCouponAPI = async (code: string) => {
   const response = await api.post("/v1/cart/apply-coupon", { code });
   return response.data;
 };
+
+export const removeCouponAPI = async () => {
+  const response = await api.delete("/v1/cart/coupon");
+  return response.data;
+};

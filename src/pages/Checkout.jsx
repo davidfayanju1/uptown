@@ -25,7 +25,7 @@ import { useCart } from "../hooks/useCart";
 import api from "../lib/axios";
 import EmptyCart from "../components/checkout/EmptyCart";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { applyCouponAPI } from "../services/cartServices";
+import { applyCouponAPI, removeCouponAPI } from "../services/cartServices";
 import { notifyCartChanged } from "../lib/cart-sync";
 import {
   buildQuotePayload as buildCheckoutQuotePayload,
@@ -548,6 +548,46 @@ const Checkout = () => {
     onError: (error) => {
       setCouponError(
         error?.response?.data?.message || "This promo code isn't valid",
+      );
+    },
+  });
+
+  const removeCouponMutation = useMutation({
+    mutationFn: removeCouponAPI,
+    onSuccess: (data) => {
+      if (!data?.status) {
+        setCouponError(data?.message || "We couldn't remove that promo code");
+        return;
+      }
+
+      setCouponError("");
+      setIsEditingCoupon(false);
+      setCouponCode("");
+      // The quote and its token were priced with the discount
+      setQuoteData(null);
+      setCheckoutToken(null);
+      // The cart is where the code is read from, so clear it there now
+      // rather than showing it until the refetch lands.
+      queryClient.setQueryData(["cart"], (cart) =>
+        cart
+          ? {
+              ...cart,
+              coupon_code: null,
+              cart: cart.cart ? { ...cart.cart, coupon_code: null } : cart.cart,
+            }
+          : cart,
+      );
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      notifyCartChanged();
+      toast.success("Promo code removed");
+
+      if (canQuote) {
+        quoteMutation.mutate({ payload: buildQuotePayload(), silent: true });
+      }
+    },
+    onError: (error) => {
+      setCouponError(
+        error?.response?.data?.message || "We couldn't remove that promo code",
       );
     },
   });
@@ -1722,16 +1762,27 @@ const Checkout = () => {
                       <FiTag className="text-gray-500" />
                       {appliedCoupon}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditingCoupon(true);
-                        setCouponCode("");
-                      }}
-                      className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors"
-                    >
-                      Change
-                    </button>
+                    <span className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingCoupon(true);
+                          setCouponCode("");
+                        }}
+                        disabled={removeCouponMutation.isPending}
+                        className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors disabled:opacity-50"
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCouponMutation.mutate()}
+                        disabled={removeCouponMutation.isPending}
+                        className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors disabled:opacity-50"
+                      >
+                        {removeCouponMutation.isPending ? "Removing..." : "Remove"}
+                      </button>
+                    </span>
                   </div>
                 ) : (
                   <div className="flex">

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
@@ -279,5 +279,49 @@ describe("Checkout in Nigeria", () => {
       ),
     ).toBe(true);
     expect(quoteCalls()).toHaveLength(0);
+  });
+});
+
+describe("Checkout promo code", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useCurrencyStore.setState({ currency: "NGN" });
+    cartState.coupon = "WELCOME10";
+    api.get.mockResolvedValue({ data: { status: true, data: [] } });
+  });
+
+  afterEach(() => {
+    cartState.coupon = null;
+  });
+
+  it("removes an applied code from the cart", async () => {
+    api.delete.mockImplementation(() => {
+      cartState.coupon = null;
+      return Promise.resolve({ data: { status: true } });
+    });
+    const user = userEvent.setup();
+    renderCheckout();
+
+    expect(screen.getByText("WELCOME10")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+
+    expect(api.delete).toHaveBeenCalledWith("/v1/cart/coupon");
+    await waitFor(() =>
+      expect(screen.queryByText("WELCOME10")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByPlaceholderText("Enter promo code")).toBeInTheDocument();
+  });
+
+  it("keeps the code and says so when it can't be removed", async () => {
+    api.delete.mockRejectedValue({
+      response: { data: { message: "Something went wrong" } },
+    });
+    const user = userEvent.setup();
+    renderCheckout();
+
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+
+    expect(await screen.findByText("Something went wrong")).toBeInTheDocument();
+    expect(screen.getByText("WELCOME10")).toBeInTheDocument();
   });
 });
