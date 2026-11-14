@@ -162,3 +162,156 @@ describe("api client", () => {
     expect(adapter).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("token refresh", () => {
+  const respond = (config, status, data) =>
+    status < 400
+      ? Promise.resolve({ data, status, headers: {}, config })
+      : Promise.reject(
+          Object.assign(new Error(`Request failed with status code ${status}`), {
+            config,
+            response: { status, data },
+          }),
+        );
+
+  // Stands in for a server that retires a refresh token once it is used.
+  const rotatingServer = () => {
+    let generation = 1;
+    let validRefresh = "refresh-token";
+    const refreshCalls = [];
+
+    const adapter = vi.fn((config) => {
+      if (config.url.includes("/v1/auth/refresh")) {
+        const sent = JSON.parse(config.data).refresh_token;
+        refreshCalls.push(sent);
+        if (sent !== validRefresh) return respond(config, 401, {});
+        generation += 1;
+        validRefresh = `refresh-token-${generation}`;
+        return respond(config, 200, {
+          data: {
+            tokens: {
+              access_token: `access-token-${generation}`,
+              refresh_token: validRefresh,
+            },
+          },
+        });
+      }
+
+      const fresh = config.headers.Authorization !== "Bearer access-token";
+      return fresh
+        ? respond(config, 200, { status: true })
+        : respond(config, 401, {});
+    });
+
+    return { adapter, refreshCalls };
+  };
+
+  let originalAdapter;
+  beforeEach(() => {
+    vi.useRealTimers();
+    originalAdapter = api.defaults.adapter;
+  });
+  afterEach(() => {
+    api.defaults.adapter = originalAdapter;
+    vi.useFakeTimers();
+  });
+
+  it("refreshes once when several requests find the token expired together", async () => {
+    const { adapter, refreshCalls } = rotatingServer();
+    api.defaults.adapter = adapter;
+
+    const responses = await Promise.all([
+      api.get("/v1/cart"),
+      api.get("/v1/orders"),
+      api.get("/v1/me/addresses"),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([200, 200, 200]);
+    expect(refreshCalls).toEqual(["refresh-token"]);
+    expect(useUserStore.getState()).toMatchObject({
+      isAuthenticated: true,
+      accessToken: "access-token-2",
+      refreshToken: "refresh-token-2",
+    });
+  });
+
+  it("starts a new refresh the next time the token expires", async () => {
+    const { adapter, refreshCalls } = rotatingServer();
+    api.defaults.adapter = adapter;
+
+    await api.get("/v1/cart");
+    useUserStore.getState().setTokens("access-token", "refresh-token-2");
+    await api.get("/v1/cart");
+
+    expect(refreshCalls).toEqual(["refresh-token", "refresh-token-2"]);
+  });
+
+  it("signs the shopper out when the server refuses the refresh token", async () => {
+    api.defaults.adapter = vi.fn((config) => respond(config, 401, {}));
+
+    await expect(api.get("/v1/orders")).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+    expect(useUserStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it("keeps the shopper signed in when the refresh never gets an answer", async () => {
+    api.defaults.adapter = vi.fn((config) =>
+      config.url.includes("/v1/auth/refresh")
+        ? Promise.reject(Object.assign(new Error("Network Error"), { config }))
+        : respond(config, 401, {}),
+    );
+
+    await expect(api.get("/v1/orders")).rejects.toThrow("Network Error");
+    expect(useUserStore.getState()).toMatchObject({
+      isAuthenticated: true,
+      refreshToken: "refresh-token",
+    });
+  });
+
+  it("keeps the shopper signed in when the API is erroring", async () => {
+    api.defaults.adapter = vi.fn((config) =>
+      config.url.includes("/v1/auth/refresh")
+        ? respond(config, 503, {})
+        : respond(config, 401, {}),
+    );
+
+    await expect(api.get("/v1/orders")).rejects.toMatchObject({
+      response: { status: 503 },
+    });
+    expect(useUserStore.getState().isAuthenticated).toBe(true);
+  });
+
+  it("adopts the tokens another tab already refreshed instead of signing out", async () => {
+    const adapter = vi.fn((config) => {
+      if (config.url.includes("/v1/auth/refresh")) {
+        // The other tab's refresh landed first and wrote its pair to storage.
+        localStorage.setItem(
+          "user-storage",
+          JSON.stringify({
+            state: {
+              user: { id: "u1" },
+              accessToken: "access-token-other-tab",
+              refreshToken: "refresh-token-other-tab",
+              isAuthenticated: true,
+            },
+            version: 0,
+          }),
+        );
+        return respond(config, 401, {});
+      }
+      return config.headers.Authorization === "Bearer access-token-other-tab"
+        ? respond(config, 200, { status: true })
+        : respond(config, 401, {});
+    });
+    api.defaults.adapter = adapter;
+
+    const response = await api.get("/v1/orders");
+
+    expect(response.status).toBe(200);
+    expect(useUserStore.getState()).toMatchObject({
+      isAuthenticated: true,
+      refreshToken: "refresh-token-other-tab",
+    });
+  });
+});

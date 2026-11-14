@@ -1,5 +1,5 @@
 // Checkout.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiCreditCard,
@@ -25,9 +25,20 @@ import { useCart } from "../hooks/useCart";
 import api from "../lib/axios";
 import EmptyCart from "../components/checkout/EmptyCart";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { applyCouponAPI } from "../services/cartServices";
+import { applyCouponAPI, removeCouponAPI } from "../services/cartServices";
 import { notifyCartChanged } from "../lib/cart-sync";
-import { buildQuotePayload as buildCheckoutQuotePayload } from "../utils/checkout";
+import {
+  buildQuotePayload as buildCheckoutQuotePayload,
+  describeCheckoutError,
+} from "../utils/checkout";
+import {
+  getAddressFields,
+  getDestination,
+  hasCountryCode,
+  isCourierAddressComplete,
+  usesCourierQuote,
+  US_STATES,
+} from "../domain/shipping";
 import { toast } from "sonner";
 import useUserStore from "../stores/auth-store";
 import { useCurrency } from "../hooks/useCurrency";
@@ -116,6 +127,13 @@ const Checkout = () => {
   const { user } = useUserStore();
   const queryClient = useQueryClient();
 
+  const destination = getDestination(currency);
+  const courierQuoted = usesCourierQuote(destination.country);
+  const addressFields = getAddressFields(destination.country);
+  // The address book is Nigeria-only on the API, so a signed-in shopper in
+  // another region types the address the way a guest does.
+  const usesAddressBook = !!user && !courierQuoted;
+
   // Set when a gateway redirects back here instead of /payment/callback.
   const returningPaymentRef =
     new URLSearchParams(location.search).get("txnref") ||
@@ -183,7 +201,7 @@ const Checkout = () => {
   // A signed-in user's addresses live on the account, so load the book and open
   // on their default. Guests have no book at all.
   useEffect(() => {
-    if (!user) {
+    if (!usesAddressBook) {
       setAddresses([]);
       setSelectedAddressId(null);
       return;
@@ -216,7 +234,7 @@ const Checkout = () => {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [usesAddressBook]);
 
   // Calculate total weight from cart items
   useEffect(() => {
@@ -240,6 +258,7 @@ const Checkout = () => {
       const response = await api.get("/v1/shipping/states");
       return response.data;
     },
+    enabled: !courierQuoted,
   });
 
   const shippingStates = shippingStatesData?.data || [];
@@ -247,6 +266,8 @@ const Checkout = () => {
   // Fetch shipping rates when state changes OR totalWeight changes
   useEffect(() => {
     const fetchShippingRates = async () => {
+      if (courierQuoted) return;
+
       // Don't fetch if no state selected
       if (!formData.state) {
         console.log("No state selected yet, skipping rates fetch");
@@ -317,7 +338,58 @@ const Checkout = () => {
     };
 
     fetchShippingRates();
-  }, [formData.state, totalWeight]);
+  }, [formData.state, totalWeight, courierQuoted]);
+
+  // Outside Nigeria the couriers come from the quote itself, which needs the
+  // whole address. The key doubles as the request body, so any change to the
+  // address re-asks.
+  const courierQuoteKey =
+    courierQuoted &&
+    contactConfirmed &&
+    totalWeight > 0 &&
+    isCourierAddressComplete(formData)
+      ? JSON.stringify(buildCheckoutQuotePayload(formData, undefined, currency))
+      : null;
+  const courierRequest = useRef(0);
+  const [courierRetry, setCourierRetry] = useState(0);
+
+  useEffect(() => {
+    if (!courierQuoted) return undefined;
+
+    // Whatever was offered or priced belonged to the previous address.
+    const requestId = ++courierRequest.current;
+    setShippingRates([]);
+    setSelectedShipping(null);
+    setQuoteData(null);
+    setCheckoutToken(null);
+
+    if (!courierQuoteKey) {
+      setIsFetchingRates(false);
+      setHasAttemptedFetch(false);
+      return undefined;
+    }
+
+    setIsFetchingRates(true);
+    // Debounced: the shopper is usually still typing the postcode.
+    const timer = setTimeout(async () => {
+      let options = [];
+      try {
+        const response = await api.post(
+          "/v1/checkout/quote",
+          JSON.parse(courierQuoteKey),
+        );
+        options = response.data?.data?.shipping_options || [];
+      } catch (error) {
+        console.error("🔴 Error fetching courier options:", error);
+      }
+      if (requestId !== courierRequest.current) return;
+      setShippingRates(options);
+      setHasAttemptedFetch(true);
+      setIsFetchingRates(false);
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [courierQuoted, courierQuoteKey, courierRetry]);
 
   // Calculate subtotal from cart items
   const subtotal = cartItems.reduce(
@@ -402,7 +474,10 @@ const Checkout = () => {
         setCheckoutToken(data.data.checkout_token);
 
         // Update selected shipping with the correct amount from quote
+        // Courier amounts are always NGN, so outside Nigeria the selection
+        // never carries one — the price shown is the quote's own total.
         if (
+          !courierQuoted &&
           data.data.shipping_options &&
           data.data.shipping_options.length > 0 &&
           selectedShipping
@@ -473,6 +548,46 @@ const Checkout = () => {
     onError: (error) => {
       setCouponError(
         error?.response?.data?.message || "This promo code isn't valid",
+      );
+    },
+  });
+
+  const removeCouponMutation = useMutation({
+    mutationFn: removeCouponAPI,
+    onSuccess: (data) => {
+      if (!data?.status) {
+        setCouponError(data?.message || "We couldn't remove that promo code");
+        return;
+      }
+
+      setCouponError("");
+      setIsEditingCoupon(false);
+      setCouponCode("");
+      // The quote and its token were priced with the discount
+      setQuoteData(null);
+      setCheckoutToken(null);
+      // The cart is where the code is read from, so clear it there now
+      // rather than showing it until the refetch lands.
+      queryClient.setQueryData(["cart"], (cart) =>
+        cart
+          ? {
+              ...cart,
+              coupon_code: null,
+              cart: cart.cart ? { ...cart.cart, coupon_code: null } : cart.cart,
+            }
+          : cart,
+      );
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      notifyCartChanged();
+      toast.success("Promo code removed");
+
+      if (canQuote) {
+        quoteMutation.mutate({ payload: buildQuotePayload(), silent: true });
+      }
+    },
+    onError: (error) => {
+      setCouponError(
+        error?.response?.data?.message || "We couldn't remove that promo code",
       );
     },
   });
@@ -593,16 +708,6 @@ const Checkout = () => {
     navigate("/signin", { state: { from: "/checkout" } });
   };
 
-  // A guest's address is whatever is in the form; a signed-in user's is saved
-  const addressReady = user
-    ? !!savedAddress
-    : !!formData.firstName &&
-      !!formData.lastName &&
-      !!formData.address &&
-      !!formData.city &&
-      !!formData.state &&
-      !!formData.phone;
-
   const addressFieldsFilled =
     !!formData.firstName &&
     !!formData.lastName &&
@@ -610,6 +715,9 @@ const Checkout = () => {
     !!formData.city &&
     !!formData.state &&
     !!formData.phone;
+
+  // The address is whatever is in the form, unless it comes from the book
+  const addressReady = usesAddressBook ? !!savedAddress : addressFieldsFilled;
 
   // Adding starts from a blank form — only the account name carries over
   const handleAddAddress = () => {
@@ -719,6 +827,14 @@ const Checkout = () => {
       return;
     }
 
+    if (courierQuoted && !hasCountryCode(formData.phone)) {
+      toast.error(
+        "Please enter your mobile number with its country code, e.g. " +
+          addressFields.phonePlaceholder,
+      );
+      return;
+    }
+
     if (!selectedShipping) {
       toast.error("Please select a shipping method");
       return;
@@ -738,6 +854,28 @@ const Checkout = () => {
         error?.message || "Failed to generate quote. Please try again.",
       );
       setIsProcessing(false);
+    }
+  };
+
+  // Picking a courier re-quotes straight away: that quote is the only place
+  // its price exists in the shopper's currency.
+  const handleSelectCourier = async (rate) => {
+    setSelectedShipping({ id: rate.id, name: rate.name, eta: rate.eta });
+    setQuoteData(null);
+    setCheckoutToken(null);
+
+    try {
+      const quote = await quoteMutation.mutateAsync({
+        payload: buildCheckoutQuotePayload(formData, rate.id, currency),
+        silent: true,
+      });
+      if (!quote?.status) throw new Error(quote?.message);
+    } catch (error) {
+      console.error("🔴 Error pricing courier:", error);
+      setSelectedShipping(null);
+      toast.error(
+        "We couldn't price that delivery option. Please try again or choose another.",
+      );
     }
   };
 
@@ -844,7 +982,7 @@ const Checkout = () => {
       }
 
       toast.error(
-        error?.response?.data?.message ||
+        describeCheckoutError(error?.response?.data?.message) ||
           error?.message ||
           "Failed to proceed to payment. Please try again.",
       );
@@ -886,19 +1024,24 @@ const Checkout = () => {
   }
 
   // Determine shipping section state
+  const shippingInputsReady = courierQuoted
+    ? !!courierQuoteKey
+    : !!formData.state && totalWeight > 0;
   const showShippingOptions = !isFetchingRates && shippingRates.length > 0;
   const showShippingPlaceholder =
     !isFetchingRates &&
-    formData.state &&
-    totalWeight > 0 &&
+    shippingInputsReady &&
     shippingRates.length === 0 &&
     hasAttemptedFetch;
-  const showShippingLoading =
-    isFetchingRates && formData.state && totalWeight > 0;
-  const showShippingWaiting = !formData.state || totalWeight === 0;
+  const showShippingLoading = isFetchingRates && shippingInputsReady;
+  const showShippingWaiting = !shippingInputsReady;
 
-  // Guests fill the address inline; signed-in users get an address book + modal
-  const isGuest = !user;
+  // A picked courier has no price until its quote lands
+  const isPricingCourier = courierQuoted && !!selectedShipping && !quoteData;
+
+  // The address is typed inline unless it comes from the book, which opens
+  // the same fields in a modal
+  const isGuest = !usesAddressBook;
 
   const addressFormFields = (
                   <div className="space-y-4">
@@ -976,25 +1119,42 @@ const Checkout = () => {
                         htmlFor="state"
                         className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
-                        State *
+                        {addressFields.stateLabel} *
                       </label>
-                      <div className="relative">
-                        <FiChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        <select
+                      {destination.country === "GB" ? (
+                        <input
+                          type="text"
                           id="state"
                           name="state"
                           value={formData.state}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none appearance-none transition-colors"
-                        >
-                          <option value="">Select State</option>
-                          {shippingStates.map((state) => (
-                            <option key={state.id} value={state.state}>
-                              {state.state}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                          className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="relative">
+                          <FiChevronDown className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                          <select
+                            id="state"
+                            name="state"
+                            value={formData.state}
+                            onChange={handleInputChange}
+                            className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none appearance-none transition-colors"
+                          >
+                            <option value="">Select State</option>
+                            {destination.country === "US"
+                              ? US_STATES.map((state) => (
+                                  <option key={state.code} value={state.code}>
+                                    {state.name}
+                                  </option>
+                                ))
+                              : shippingStates.map((state) => (
+                                  <option key={state.id} value={state.state}>
+                                    {state.state}
+                                  </option>
+                                ))}
+                          </select>
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -1002,7 +1162,8 @@ const Checkout = () => {
                         htmlFor="zipCode"
                         className="block text-[0.9375rem] font-semibold text-gray-900 mb-2"
                       >
-                        ZIP code
+                        {addressFields.zipLabel}
+                        {courierQuoted ? " *" : ""}
                       </label>
                       <input
                         type="text"
@@ -1027,10 +1188,29 @@ const Checkout = () => {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
-                        placeholder="Mobile number"
+                        placeholder={addressFields.phonePlaceholder}
                         className="w-full border border-gray-200 px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-colors"
                       />
+                      {courierQuoted && (
+                        <p
+                          className={`mt-2 text-sm ${
+                            formData.phone && !hasCountryCode(formData.phone)
+                              ? "text-red-600"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          Include the country code, e.g.{" "}
+                          {addressFields.phonePlaceholder}
+                        </p>
+                      )}
                     </div>
+
+                    {courierQuoted && (
+                      <p className="text-sm text-gray-500">
+                        Delivering to {destination.name}. To ship somewhere
+                        else, change your region.
+                      </p>
+                    )}
                   </div>
   );
 
@@ -1278,7 +1458,8 @@ const Checkout = () => {
               <div
                 className={`bg-white shadow-sm p-6 mb-6 ${
                   contactConfirmed &&
-                  (user ? !!savedAddress : !!formData.state)
+                  (courierQuoted ||
+                    (usesAddressBook ? !!savedAddress : !!formData.state))
                     ? ""
                     : "hidden"
                 }`}
@@ -1307,14 +1488,33 @@ const Checkout = () => {
                       Shipping options will appear here
                     </p>
                     <p className="text-xs text-gray-400">
-                      {!formData.state
-                        ? "Please select a state in your shipping address"
-                        : "Calculating package weight..."}
+                      {courierQuoted
+                        ? "Complete your address, including the postcode and a mobile number with its country code"
+                        : !formData.state
+                          ? "Please select a state in your shipping address"
+                          : "Calculating package weight..."}
                     </p>
                   </div>
                 )}
 
-                {showShippingPlaceholder && (
+                {showShippingPlaceholder && courierQuoted && (
+                  <div className="text-center py-8 px-4 bg-yellow-50 border border-yellow-200">
+                    <FiAlertCircle className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
+                    <p className="text-sm font-medium text-yellow-700">
+                      We couldn't find delivery options for this address.
+                      Please check the postcode and try again.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setCourierRetry((attempt) => attempt + 1)}
+                      className="mt-4 border border-gray-900 px-6 py-2.5 text-sm font-medium text-gray-900 hover:bg-white transition-colors cursor-pointer"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {showShippingPlaceholder && !courierQuoted && (
                   <div className="text-center py-8 bg-yellow-50 border border-yellow-200">
                     <FiAlertCircle className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
                     <p className="text-sm font-medium text-yellow-700 mb-1">
@@ -1344,14 +1544,17 @@ const Checkout = () => {
                             name="shipping"
                             value={rate.id}
                             checked={selectedShipping?.id === rate.id}
+                            disabled={courierQuoted && quoteMutation.isPending}
                             onChange={() =>
-                              setSelectedShipping({
-                                id: rate.id,
-                                name: rate.name,
-                                amount: rate.amount || rate.cost || 0,
-                                currency: rate.currency,
-                                eta: rate.eta,
-                              })
+                              courierQuoted
+                                ? handleSelectCourier(rate)
+                                : setSelectedShipping({
+                                    id: rate.id,
+                                    name: rate.name,
+                                    amount: rate.amount || rate.cost || 0,
+                                    currency: rate.currency,
+                                    eta: rate.eta,
+                                  })
                             }
                             className="mr-3"
                           />
@@ -1365,13 +1568,25 @@ const Checkout = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-gray-900">
-                            {getCurrencySymbol(rate.currency)}
-                            {(rate.amount || rate.cost || 0).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-gray-500">incl. VAT</p>
-                        </div>
+                        {courierQuoted ? (
+                          // rate.amount is NGN whatever the region, so the
+                          // only price shown is the quoted one for the pick.
+                          selectedShipping?.id === rate.id && (
+                            <p className="font-semibold text-gray-900 text-right">
+                              {isPricingCourier
+                                ? "Calculating..."
+                                : `${currencySymbol}${displayShipping.toLocaleString()}`}
+                            </p>
+                          )
+                        ) : (
+                          <div className="text-right">
+                            <p className="font-semibold text-gray-900">
+                              {getCurrencySymbol(rate.currency)}
+                              {(rate.amount || rate.cost || 0).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-gray-500">incl. VAT</p>
+                          </div>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -1384,7 +1599,8 @@ const Checkout = () => {
                   isProcessing ||
                   !selectedShipping ||
                   totalWeight === 0 ||
-                  isFetchingRates
+                  isFetchingRates ||
+                  isPricingCourier
                 }
                 className="w-full cursor-pointer bg-gray-900 text-white py-4 font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1395,7 +1611,7 @@ const Checkout = () => {
                   </>
                 ) : !selectedShipping && !isFetchingRates && formData.state ? (
                   "Select a shipping method"
-                ) : isFetchingRates ? (
+                ) : isFetchingRates || isPricingCourier ? (
                   "Calculating shipping..."
                 ) : (
                   <>
@@ -1484,7 +1700,7 @@ const Checkout = () => {
                   <span className="text-gray-900 font-medium">
                     {displayShipping > 0
                       ? `${shippingSymbol}${displayShipping.toLocaleString()}`
-                      : isFetchingRates
+                      : isFetchingRates || isPricingCourier
                         ? "Calculating..."
                         : shippingRates.length > 0 && !selectedShipping
                           ? "Select a shipping method"
@@ -1546,16 +1762,27 @@ const Checkout = () => {
                       <FiTag className="text-gray-500" />
                       {appliedCoupon}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsEditingCoupon(true);
-                        setCouponCode("");
-                      }}
-                      className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors"
-                    >
-                      Change
-                    </button>
+                    <span className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingCoupon(true);
+                          setCouponCode("");
+                        }}
+                        disabled={removeCouponMutation.isPending}
+                        className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors disabled:opacity-50"
+                      >
+                        Change
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCouponMutation.mutate()}
+                        disabled={removeCouponMutation.isPending}
+                        className="text-sm text-gray-500 hover:text-gray-900 underline transition-colors disabled:opacity-50"
+                      >
+                        {removeCouponMutation.isPending ? "Removing..." : "Remove"}
+                      </button>
+                    </span>
                   </div>
                 ) : (
                   <div className="flex">

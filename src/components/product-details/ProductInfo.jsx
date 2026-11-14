@@ -4,7 +4,6 @@ import SizeSelector from "./SizeSelector";
 import StickyAddToCart from "./StickyAddToCart";
 import ProductAccordion from "./ProductAccordion";
 import SizeGuideModal from "./SizeGuideModal";
-import { IoBookmark, IoBookmarkOutline } from "react-icons/io5";
 import { normalizeSizeGuide } from "../../utils/sizeGuide";
 
 // Shown until a product carries its own size guide.
@@ -32,6 +31,22 @@ const writeWishlist = (ids) => {
     // Private browsing or blocked storage — the toggle still updates visually.
   }
 };
+
+// Square-cornered to match the design — the icon sets only ship rounded bookmarks.
+const BookmarkIcon = ({ filled }) => (
+  <svg
+    viewBox="0 0 17 20"
+    className="h-[1.25rem] w-[1.0625rem]"
+    fill={filled ? "currentColor" : "none"}
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinejoin="miter"
+    strokeMiterlimit="2"
+    aria-hidden="true"
+  >
+    <path d="M1 1H16V18.6L8.5 11.9L1 18.6Z" />
+  </svg>
+);
 
 const FIT_NOTE_PLACEHOLDER =
   "Slightly cropped boxy shape, it\u2019s recommended you get your actual size.";
@@ -124,17 +139,17 @@ const ProductInfo = ({
   ];
 
   return (
-    <div className="lg:w-1/2 w-full px-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
-      <div className="flex items-start justify-between gap-4">
-        <h1 className="font-now text-[1.0625rem] md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
+    <div className="lg:w-1/2 w-full pl-[0.875rem] pr-4 sm:px-6 lg:pr-60 lg:sticky lg:top-0 lg:h-screen lg:flex lg:flex-col lg:justify-center lg:overflow-y-auto self-start">
+      <div className="flex items-baseline justify-between gap-4">
+        <h1 className="font-now text-[1.125rem] md:text-xl lg:text-2xl font-bold uppercase tracking-tight leading-tight text-gray-900">
           {product.name}
         </h1>
-        <p className="font-now text-[1.3125rem] lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
+        <p className="font-now text-[1.125rem] md:text-xl lg:text-2xl font-bold whitespace-nowrap text-[#8f7355]">
           {currentPrice}
         </p>
       </div>
 
-      <div className="flex items-center justify-between gap-4 mt-[0.625rem]">
+      <div className="flex items-end justify-between gap-4 lg:items-center lg:mt-[0.625rem]">
         {modelFitNote ? (
           <p className="font-now text-[0.6875rem] text-[#8f7355]">
             {modelFitNote}
@@ -148,21 +163,17 @@ const ProductInfo = ({
           aria-pressed={isSaved}
           aria-label={isSaved ? "Remove from wishlist" : "Save for later"}
           title={isSaved ? "Remove from wishlist" : "Save for later"}
-          className="shrink-0 -mr-1 p-1 text-gray-900 transition-colors hover:text-[#8f7355]"
+          className="shrink-0 -mr-1 -mb-0.5 lg:mb-0 p-1 text-gray-900 transition-colors hover:text-[#8f7355]"
         >
-          {isSaved ? (
-            <IoBookmark className="h-5 w-5" />
-          ) : (
-            <IoBookmarkOutline className="h-5 w-5" />
-          )}
+          <BookmarkIcon filled={isSaved} />
         </button>
       </div>
 
-      <div ref={addToCartRef} className="mt-[1.5rem]">
+      <div ref={addToCartRef} className="mt-[0.875rem] lg:mt-[1.5rem] -mx-2 sm:mx-0">
         <button
           onClick={onAddToCart}
           disabled={isAddingToCart || !hasAnyAvailableVariant}
-          className={`w-full py-[1.25rem] px-8 flex items-center justify-center font-now text-[0.9125rem] font-bold uppercase tracking-[0.06em] transition-all ${
+          className={`w-full py-[0.925rem] lg:py-[1.25rem] px-8 flex items-center justify-center font-now text-[1.0625rem] lg:text-[0.9125rem] font-bold uppercase tracking-[0.02em] lg:tracking-[0.06em] transition-all ${
             !isAddingToCart && hasAnyAvailableVariant
               ? "bg-black text-white hover:bg-gray-800"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
