@@ -76,6 +76,67 @@ if (typeof window !== "undefined") {
   sessionId = localStorage.getItem("x-session-id");
 }
 
+const isRefusedRefresh = (error) =>
+  [400, 401, 403].includes(error?.response?.status);
+
+const requestNewTokens = async (refreshToken) => {
+  const response = await api.post(REFRESH_URL, {
+    refresh_token: refreshToken,
+  });
+  const tokens = response.data?.data?.tokens || {};
+  const newToken = tokens.access_token;
+
+  if (!newToken) throw new Error("No access token in refresh response");
+
+  // Keep the store and localStorage in sync
+  useUserStore
+    .getState()
+    .setTokens(newToken, tokens.refresh_token || refreshToken);
+  api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+
+  // Capture session ID from refresh response as well
+  const refreshSessionId = response.headers["x-session-id"];
+  if (refreshSessionId) {
+    sessionId = refreshSessionId;
+    localStorage.setItem("x-session-id", refreshSessionId);
+  }
+
+  return newToken;
+};
+
+// Each refresh retires the refresh token it used. A page load fires several
+// requests at once, so when the access token has expired they all get a 401
+// together — and if each refreshed for itself, every one after the first
+// would present a retired token and sign the shopper out. They share one.
+let refreshInFlight = null;
+
+const refreshAccessToken = () => {
+  if (!refreshInFlight) {
+    const refreshToken = getRefreshToken();
+    refreshInFlight = requestNewTokens(refreshToken)
+      .catch(async (error) => {
+        if (!isRefusedRefresh(error)) throw error;
+
+        // Another tab may have refreshed first, retiring this tab's copy of
+        // the token. Its newer pair is already in storage.
+        await useUserStore.persist.rehydrate();
+        const latest = useUserStore.getState();
+        if (
+          latest.accessToken &&
+          latest.refreshToken &&
+          latest.refreshToken !== refreshToken
+        ) {
+          return latest.accessToken;
+        }
+        throw error;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+};
+
 // Request interceptor to add auth token and session ID
 api.interceptors.request.use(
   (config) => {
@@ -153,29 +214,9 @@ api.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
-      const refreshToken = getRefreshToken();
-      if (refreshToken) {
+      if (getRefreshToken()) {
         try {
-          const response = await api.post(REFRESH_URL, {
-            refresh_token: refreshToken,
-          });
-          const tokens = response.data?.data?.tokens || {};
-          const newToken = tokens.access_token;
-
-          if (!newToken) throw new Error("No access token in refresh response");
-
-          // Keep the store and localStorage in sync
-          useUserStore
-            .getState()
-            .setTokens(newToken, tokens.refresh_token || refreshToken);
-          api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-
-          // Capture session ID from refresh response as well
-          const refreshSessionId = response.headers["x-session-id"];
-          if (refreshSessionId) {
-            sessionId = refreshSessionId;
-            localStorage.setItem("x-session-id", refreshSessionId);
-          }
+          const newToken = await refreshAccessToken();
 
           // Retry original request with new token
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -184,8 +225,12 @@ api.interceptors.response.use(
           }
           return api(originalRequest);
         } catch (refreshError) {
-          console.log("Token refresh failed, logging out user");
-          logoutUser();
+          // A refresh that never got an answer (offline, a cold API) says
+          // nothing about the session, so only a refusal ends it.
+          if (isRefusedRefresh(refreshError)) {
+            console.log("Token refresh failed, logging out user");
+            logoutUser();
+          }
           return Promise.reject(refreshError);
         }
       }
